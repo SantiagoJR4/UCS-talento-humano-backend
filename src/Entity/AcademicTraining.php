@@ -2,44 +2,88 @@
 
 namespace App\Entity;
 
-use App\Repository\AcademicTrainingRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: AcademicTrainingRepository::class)]
+/**
+ * AcademicTraining
+ *
+ * @ORM\Table(name="academic_training")
+ * @ORM\Entity
+ */
 class AcademicTraining
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="id", type="integer", nullable=false)
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="IDENTITY")
+     */
+    private $id;
 
-    #[ORM\Column(length: 3)]
-    private ?string $academicModality = null;
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="academic_modality", type="string", length=3, nullable=false)
+     */
+    private $academicModality;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTimeInterface $date = null;
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="date", type="date", nullable=false)
+     */
+    private $date;
 
-    #[ORM\Column(length: 255)]
-    private ?string $titleName = null;
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="title_name", type="string", length=255, nullable=false)
+     */
+    private $titleName;
 
-    #[ORM\Column(length: 4, nullable: true)]
-    private ?string $snies = null;
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="snies", type="string", length=4, nullable=true)
+     */
+    private $snies;
 
-    #[ORM\Column]
-    private ?bool $isForeignUniversity = null;
+    /**
+     * @var bool
+     *
+     * @ORM\Column(name="is_foreign_university", type="boolean", nullable=false)
+     */
+    private $isForeignUniversity;
 
-    #[ORM\Column(length: 255)]
-    private ?string $nameUniversity = null;
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="name_university", type="string", length=255, nullable=false)
+     */
+    private $nameUniversity;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $degreePdf = null;
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="degree_pdf", type="text", length=0, nullable=true)
+     */
+    private $degreePdf;
 
-    #[ORM\Column]
-    private ?bool $certifiedTitle = null;
+    /**
+     * @var bool
+     *
+     * @ORM\Column(name="certified_title", type="boolean", nullable=false)
+     */
+    private $certifiedTitle;
 
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $certifiedTitlePdf = null;
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="certified_title_pdf", type="text", length=0, nullable=true)
+     */
+    private $certifiedTitlePdf;
 
     public function getId(): ?int
     {
@@ -153,4 +197,6 @@ class AcademicTraining
 
         return $this;
     }
+
+
 }
