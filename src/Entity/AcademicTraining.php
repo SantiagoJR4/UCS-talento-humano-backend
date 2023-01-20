@@ -72,13 +72,6 @@ class AcademicTraining
     private $degreePdf;
 
     /**
-     * @var bool
-     *
-     * @ORM\Column(name="isCertified_title", type="boolean", nullable=false)
-     */
-    private $iscertifiedTitle;
-
-    /**
      * @var string|null
      *
      * @ORM\Column(name="certified_title_pdf", type="text", length=0, nullable=true)
@@ -170,18 +163,6 @@ class AcademicTraining
     public function setDegreePdf(?string $degreePdf): self
     {
         $this->degreePdf = $degreePdf;
-
-        return $this;
-    }
-
-    public function isIscertifiedTitle(): ?bool
-    {
-        return $this->iscertifiedTitle;
-    }
-
-    public function setIscertifiedTitle(bool $iscertifiedTitle): self
-    {
-        $this->iscertifiedTitle = $iscertifiedTitle;
 
         return $this;
     }

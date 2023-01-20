@@ -93,9 +93,9 @@ class TeachingExperience
     private $courseload;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="certifiedPdf", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="certifiedPdf", type="text", length=65535, nullable=true)
      */
     private $certifiedpdf;
 
@@ -229,7 +229,7 @@ class TeachingExperience
         return $this->certifiedpdf;
     }
 
-    public function setCertifiedpdf(string $certifiedpdf): self
+    public function setCertifiedpdf(?string $certifiedpdf): self
     {
         $this->certifiedpdf = $certifiedpdf;
 

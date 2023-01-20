@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\AcademicTraining;
 use App\Entity\FurtherTraining;
 use App\Entity\TeachingExperience;
+use App\Entity\WorkExperience;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -29,7 +30,6 @@ class CurriculumVitaeController extends AbstractController
             $academicTraining->setIsForeignUniversity($value['isForeignUniversity']);
             $academicTraining->setNameUniversity($value['nameUniversity']);
             $academicTraining->setDegreePdf($value['degreePdf']);
-            $academicTraining->setisCertifiedTitle($value['isCertifiedTitle']);
             $academicTraining->setCertifiedTitlePdf($value['certifiedTitlePdf']);
 
             $entityManager = $doctrine->getManager();
@@ -86,13 +86,20 @@ class CurriculumVitaeController extends AbstractController
             $teachingExperience -> setNameuniversity($value['nameUniversity']);
             $teachingExperience -> setFaculty($value['faculty']);
             $teachingExperience -> setProgram($value['program']);
-            $teachingExperience -> setDateadmission(new DateTime($value['dateAdmission']));
+            $teachingExperience -> setDateadmission(new DateTime($value['admissionDate']));
             $teachingExperience -> setIsactive($value['isActive']);
-            $teachingExperience -> setRetirementdate(new DateTime($value['retirementDate']));
+
             $teachingExperience -> setContractmodality($value['contractModality']);
-            $teachingExperience -> setCourseload($value['courseLoad']);
+            $teachingExperience -> setCourseload(json_encode($value['courseLoad']));
             $teachingExperience -> setCertifiedpdf($value['certifiedPdf']);
          
+            if($value['retirementDate'] !== NULL){
+                $teachingExperience -> setRetirementdate(new DateTime($value['retirementDate']));
+            }
+            else{
+                $teachingExperience -> setRetirementdate(NULL);
+            }
+                
         
             $entityManager=$doctrine->getManager();
             $entityManager->persist($teachingExperience);
@@ -101,6 +108,47 @@ class CurriculumVitaeController extends AbstractController
 
         $response=new Response();
         $response->setContent(json_encode(['respuesta' => 'Guardada nueva experiencia docente']));
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+
+    }
+
+    #[Route('/curriculum-vitae/work-experience', name: 'app_curriculum_vitae_work_experience')]
+    public function workExperience(ManagerRegistry $doctrine): Response
+    {
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(), true);
+
+        foreach($data as $key => $value){
+
+            $workExperience = new WorkExperience();
+            $workExperience -> setCompanyname($value['companyName']);
+            $workExperience -> setPosition($value['position']);
+            $workExperience -> setDependence($value['dependence']);
+            $workExperience -> setDepartment($value['department']);
+            $workExperience -> setMunicipality($value['municipality']);
+            $workExperience -> setCompanyaddress($value['companyAddress']);
+            $workExperience -> setBossname($value['bossName']);
+            $workExperience -> setPhone($value['phone']);
+            $workExperience -> setAdmissiondate(new DateTime($value['admissionDate']));
+            $workExperience -> setIsworking($value['isWorking']);
+            $workExperience -> setCertifiedpdf($value['certifiedPdf']);
+         
+            if($value['retirementDate'] !== NULL){
+                $workExperience -> setRetirementdate(new DateTime($value['retirementDate']));
+            }
+            else{
+                $workExperience -> setRetirementdate(NULL);
+            }
+        
+            $entityManager=$doctrine->getManager();
+            $entityManager->persist($workExperience);
+            $entityManager->flush();
+        }
+
+        $response=new Response();
+        $response->setContent(json_encode(['respuesta' => 'Guardada nueva experiencia laboral']));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
