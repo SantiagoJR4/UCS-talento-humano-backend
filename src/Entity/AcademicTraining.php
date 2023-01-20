@@ -74,9 +74,9 @@ class AcademicTraining
     /**
      * @var bool
      *
-     * @ORM\Column(name="certified_title", type="boolean", nullable=false)
+     * @ORM\Column(name="isCertified_title", type="boolean", nullable=false)
      */
-    private $certifiedTitle;
+    private $iscertifiedTitle;
 
     /**
      * @var string|null
@@ -174,14 +174,14 @@ class AcademicTraining
         return $this;
     }
 
-    public function isCertifiedTitle(): ?bool
+    public function isIscertifiedTitle(): ?bool
     {
-        return $this->certifiedTitle;
+        return $this->iscertifiedTitle;
     }
 
-    public function setCertifiedTitle(bool $certifiedTitle): self
+    public function setIscertifiedTitle(bool $iscertifiedTitle): self
     {
-        $this->certifiedTitle = $certifiedTitle;
+        $this->iscertifiedTitle = $iscertifiedTitle;
 
         return $this;
     }

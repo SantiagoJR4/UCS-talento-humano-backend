@@ -81,7 +81,7 @@ class TeachingExperience
     /**
      * @var string
      *
-     * @ORM\Column(name="contractModality", type="string", length=2, nullable=false, options={"fixed"=true})
+     * @ORM\Column(name="contractModality", type="string", length=2, nullable=false)
      */
     private $contractmodality;
 

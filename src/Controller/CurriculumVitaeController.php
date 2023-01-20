@@ -29,7 +29,7 @@ class CurriculumVitaeController extends AbstractController
             $academicTraining->setIsForeignUniversity($value['isForeignUniversity']);
             $academicTraining->setNameUniversity($value['nameUniversity']);
             $academicTraining->setDegreePdf($value['degreePdf']);
-            $academicTraining->setCertifiedTitle($value['isCertifiedTitle']);
+            $academicTraining->setisCertifiedTitle($value['isCertifiedTitle']);
             $academicTraining->setCertifiedTitlePdf($value['certifiedTitlePdf']);
 
             $entityManager = $doctrine->getManager();
