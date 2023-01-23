@@ -15,8 +15,17 @@ class UploadFileController extends AbstractController
     {
         $request = Request::createFromGlobals();
         $file = $request->files->get('file');
+        $name = $request->request->get('name');
+        $extension = $request->request->get('extension');
+        if ( $extension !== $file->guessExtension() ) {
+            $response = new Response();
+            $response->setStatusCode(500);
+            $response->setContent('El archivo no es un '.$extension.' es un '.$file->guessExtension());
+            $response->headers->set('Content-Type', 'application/json');
+            return $response;
+        }
         if ($file instanceof UploadedFile) {
-            $newFileName = 'new_pdf'.time().'.'.$file->guessExtension();
+            $newFileName = $name.time().'.'.$file->guessExtension();
             $file->move(
                 $this->getParameter('uploads_directory'),
                 $newFileName
