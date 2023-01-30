@@ -9,6 +9,7 @@ use App\Entity\WorkExperience;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -16,26 +17,58 @@ use Symfony\Component\Routing\Annotation\Route;
 class CurriculumVitaeController extends AbstractController
 {
     #[Route('/curriculum-vitae/academic-training', name: 'app_curriculum_vitae_academic_training')]
-    public function academicTraining(ManagerRegistry $doctrine): Response
+    public function academicTraining(ManagerRegistry $doctrine, Request $request): Response
     {
-        $request = Request::createFromGlobals();
-        $data = json_decode($request->getContent(), true);
-
-        foreach($data as $key => $value){
-            $academicTraining = new AcademicTraining();
-            $academicTraining->setAcademicModality($value['academicModality']);
-            $academicTraining->setDate(new DateTime($value['date']));
-            $academicTraining->setTitleName($value['titleName']);
-            $academicTraining->setSnies($value['snies']);
-            $academicTraining->setIsForeignUniversity($value['isForeignUniversity']);
-            $academicTraining->setNameUniversity($value['nameUniversity']);
-            $academicTraining->setDegreePdf($value['degreePdf']);
-            $academicTraining->setCertifiedTitlePdf($value['certifiedTitlePdf']);
-
-            $entityManager = $doctrine->getManager();
-            $entityManager->persist($academicTraining);
-            $entityManager->flush();
+        $formData = $request->request->all();
+        $degreeFile = $request->files->get('degreePdfFile');
+        $formValues = [];
+        foreach( $formData as $key => $value ) {
+            $formValues[$key] = json_decode($value);
         }
+        $academicTraining = new AcademicTraining();
+        $academicTraining->setAcademicModality($formValues['academicModality']);
+        $academicTraining->setDate(new DateTime($formValues['date']));
+        $academicTraining->setTitleName($formValues['titleName']);
+        $academicTraining->setSnies($formValues['snies']);
+        $academicTraining->setIsForeignUniversity($formValues['isForeignUniversity']);
+        $academicTraining->setNameUniversity($formValues['nameUniversity']);
+        $academicTraining->setCertifiedTitlePdf($formValues['certifiedTitlePdf']);
+        if( $formValues['degreePdfExtension'] !== $degreeFile->guessExtension() ) {
+            $response = new Response();
+            $response->setStatusCode(500);
+            $response->setContent('El archivo no es un '.$formValues['degreePdfExtension'].' es un '.$degreeFile->guessExtension());
+            $response->headers->set('Content-Type', 'application/json');
+            return $response;
+        }
+        if ($degreeFile instanceof UploadedFile) {
+            $newFileName = $formValues['degreePdfName'].time().'.'.$degreeFile->guessExtension();
+            $degreeFile->move(
+                $this->getParameter('uploads_directory'),
+                $newFileName
+            );
+            $academicTraining->setDegreePdf($newFileName);
+        }
+
+        $entityManager = $doctrine->getManager();
+        $entityManager->persist($academicTraining);
+        $entityManager->flush();
+        // $data = json_decode($request->getContent(), true);
+
+        // foreach($data as $key => $value){
+        // $academicTraining = new AcademicTraining();
+        // $academicTraining->setAcademicModality($data['academicModality']);
+        // $academicTraining->setDate(new DateTime($data['date']));
+        // $academicTraining->setTitleName($data['titleName']);
+        // $academicTraining->setSnies($data['snies']);
+        // $academicTraining->setIsForeignUniversity($data['isForeignUniversity']);
+        // $academicTraining->setNameUniversity($data['nameUniversity']);
+        // $academicTraining->setDegreePdf($data['degreePdf']);
+        // $academicTraining->setCertifiedTitlePdf($data['certifiedTitlePdf']);
+
+        // $entityManager = $doctrine->getManager();
+        // $entityManager->persist($academicTraining);
+        // $entityManager->flush();
+        // }
 
         $response=new Response();
         $response->setContent(json_encode(['respuesta' => 'Guardado nueva formación academica con nombre: '.$academicTraining->getTitlename()]));
