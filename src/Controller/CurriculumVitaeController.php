@@ -21,6 +21,7 @@ class CurriculumVitaeController extends AbstractController
     {
         $formData = $request->request->all();
         $degreeFile = $request->files->get('degreePdfFile');
+        $certifiedFile = $request->files->get('certifiedTitlePdfFile') !== NULL ? $request->files->get('certifiedTitlePdfFile') : NULL;
         $formValues = [];
         foreach( $formData as $key => $value ) {
             $formValues[$key] = json_decode($value);
@@ -32,21 +33,28 @@ class CurriculumVitaeController extends AbstractController
         $academicTraining->setSnies($formValues['snies']);
         $academicTraining->setIsForeignUniversity($formValues['isForeignUniversity']);
         $academicTraining->setNameUniversity($formValues['nameUniversity']);
-        $academicTraining->setCertifiedTitlePdf($formValues['certifiedTitlePdf']);
-        if( $formValues['degreePdfExtension'] !== $degreeFile->guessExtension() ) {
-            $response = new Response();
-            $response->setStatusCode(500);
-            $response->setContent('El archivo no es un '.$formValues['degreePdfExtension'].' es un '.$degreeFile->guessExtension());
-            $response->headers->set('Content-Type', 'application/json');
-            return $response;
-        }
-        if ($degreeFile instanceof UploadedFile) {
+        // if( $formValues['degreePdfExtension'] !== $degreeFile->guessExtension() || $formValues['certifiedTitlePdfExtension'] !== $certifiedFile->guessExtension() ) {
+        //     $response = new Response();
+        //     $response->setStatusCode(500);
+        //     $response->setContent('El archivo no es un '.$formValues['degreePdfExtension'].' es un '.$degreeFile->guessExtension());
+        //     $response->headers->set('Content-Type', 'application/json');
+        //     return $response;
+        // }
+        if( $degreeFile instanceof UploadedFile ) {
             $newFileName = $formValues['degreePdfName'].time().'.'.$degreeFile->guessExtension();
             $degreeFile->move(
                 $this->getParameter('uploads_directory'),
                 $newFileName
             );
             $academicTraining->setDegreePdf($newFileName);
+        }
+        if ($certifiedFile !== NULL && $certifiedFile instanceof UploadedFile) {
+            $newFileName = $formValues['certifiedTitlePdfName'].time().'.'.$certifiedFile->guessExtension();
+            $certifiedFile->move(
+                $this->getParameter('uploads_directory'),
+                $newFileName
+            );
+            $academicTraining->setCertifiedTitlePdf($newFileName);
         }
 
         $entityManager = $doctrine->getManager();
