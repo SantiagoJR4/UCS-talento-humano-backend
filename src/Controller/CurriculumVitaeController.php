@@ -33,20 +33,14 @@ class CurriculumVitaeController extends AbstractController
         $academicTraining->setSnies($formValues['snies']);
         $academicTraining->setIsForeignUniversity($formValues['isForeignUniversity']);
         $academicTraining->setNameUniversity($formValues['nameUniversity']);
-        // if( $formValues['degreePdfExtension'] !== $degreeFile->guessExtension() || $formValues['certifiedTitlePdfExtension'] !== $certifiedFile->guessExtension() ) {
-        //     $response = new Response();
-        //     $response->setStatusCode(500);
-        //     $response->setContent('El archivo no es un '.$formValues['degreePdfExtension'].' es un '.$degreeFile->guessExtension());
-        //     $response->headers->set('Content-Type', 'application/json');
-        //     return $response;
-        // }
         if( $degreeFile instanceof UploadedFile ) {
             $newFileName = $formValues['degreePdfName'].time().'.'.$degreeFile->guessExtension();
             $degreeFile->move(
                 $this->getParameter('uploads_directory'),
                 $newFileName
             );
-            $academicTraining->setDegreePdf($newFileName);
+            $degreePath = $this->getParameter('uploads_directory').'/'.$newFileName;
+            $academicTraining->setDegreePdf($degreePath);
         }
         if ($certifiedFile !== NULL && $certifiedFile instanceof UploadedFile) {
             $newFileName = $formValues['certifiedTitlePdfName'].time().'.'.$certifiedFile->guessExtension();
@@ -54,32 +48,16 @@ class CurriculumVitaeController extends AbstractController
                 $this->getParameter('uploads_directory'),
                 $newFileName
             );
-            $academicTraining->setCertifiedTitlePdf($newFileName);
+            $certifiedPath = $this->getParameter('uploads_directory').'/'.$newFileName;
+            $academicTraining->setCertifiedTitlePdf($certifiedPath);
         }
 
         $entityManager = $doctrine->getManager();
         $entityManager->persist($academicTraining);
         $entityManager->flush();
-        // $data = json_decode($request->getContent(), true);
-
-        // foreach($data as $key => $value){
-        // $academicTraining = new AcademicTraining();
-        // $academicTraining->setAcademicModality($data['academicModality']);
-        // $academicTraining->setDate(new DateTime($data['date']));
-        // $academicTraining->setTitleName($data['titleName']);
-        // $academicTraining->setSnies($data['snies']);
-        // $academicTraining->setIsForeignUniversity($data['isForeignUniversity']);
-        // $academicTraining->setNameUniversity($data['nameUniversity']);
-        // $academicTraining->setDegreePdf($data['degreePdf']);
-        // $academicTraining->setCertifiedTitlePdf($data['certifiedTitlePdf']);
-
-        // $entityManager = $doctrine->getManager();
-        // $entityManager->persist($academicTraining);
-        // $entityManager->flush();
-        // }
 
         $response=new Response();
-        $response->setContent(json_encode(['respuesta' => 'Guardado nueva formación academica con nombre: '.$academicTraining->getTitlename()]));
+        $response->setContent(json_encode(['degreePdf' => $degreePath,'certifiedTitlePdf' => $certifiedPath]));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
