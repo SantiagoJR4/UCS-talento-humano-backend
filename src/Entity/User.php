@@ -46,6 +46,20 @@ class User
     /**
      * @var string
      *
+     * @ORM\Column(name="tipoIdentificacion", type="string", length=2, nullable=false, options={"fixed"=true})
+     */
+    private $tipoidentificacion;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="numeroIdentificacion", type="string", length=12, nullable=false)
+     */
+    private $numeroidentificacion;
+
+    /**
+     * @var string
+     *
      * @ORM\Column(name="correo", type="string", length=255, nullable=false)
      */
     private $correo;
@@ -122,6 +136,30 @@ class User
     public function setApellidos(string $apellidos): self
     {
         $this->apellidos = $apellidos;
+
+        return $this;
+    }
+
+    public function getTipoidentificacion(): ?string
+    {
+        return $this->tipoidentificacion;
+    }
+
+    public function setTipoidentificacion(string $tipoidentificacion): self
+    {
+        $this->tipoidentificacion = $tipoidentificacion;
+
+        return $this;
+    }
+
+    public function getNumeroidentificacion(): ?string
+    {
+        return $this->numeroidentificacion;
+    }
+
+    public function setNumeroidentificacion(string $numeroidentificacion): self
+    {
+        $this->numeroidentificacion = $numeroidentificacion;
 
         return $this;
     }

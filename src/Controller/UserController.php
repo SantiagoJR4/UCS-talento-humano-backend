@@ -30,8 +30,20 @@ class UserController extends AbstractController
             'contraseña' => $parameters['password']
         ]);
 
-        $json = $helpers->serializador($user);
-        return $json;
+        if($user === NULL){
+            $response = new Response();
+            $response->setStatusCode(404);
+            $response->setContent('El usuario y contraseña son incorrectos!!');
+            $response->headers->set('Content-Type', 'application/json');
+            return $response;
+        }
 
+        $response=new Response();
+        $json = $helpers->serializador($user);
+        //meter validación si se necesita evaluar el estado 200
+        //Si es necesario, no enviar la contraseña en la respuesta
+        $response->setContent(json_encode(['respuesta' => $json]));
+
+        return $json;
     }
 }
