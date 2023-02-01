@@ -33,6 +33,8 @@ class CurriculumVitaeController extends AbstractController
         $academicTraining->setSnies($formValues['snies']);
         $academicTraining->setIsForeignUniversity($formValues['isForeignUniversity']);
         $academicTraining->setNameUniversity($formValues['nameUniversity']);
+        $degreePath = '';
+        $certifiedPath = '';
         if( $degreeFile instanceof UploadedFile ) {
             $newFileName = $formValues['degreePdfName'].time().'.'.$degreeFile->guessExtension();
             $degreeFile->move(
