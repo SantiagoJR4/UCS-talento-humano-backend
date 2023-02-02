@@ -39,6 +39,13 @@ class AcademicTraining
     /**
      * @var string
      *
+     * @ORM\Column(name="program_methodology", type="string", length=3, nullable=false, options={"fixed"=true})
+     */
+    private $programMethodology;
+
+    /**
+     * @var string
+     *
      * @ORM\Column(name="title_name", type="string", length=255, nullable=false)
      */
     private $titleName;
@@ -103,6 +110,18 @@ class AcademicTraining
     public function setDate(\DateTimeInterface $date): self
     {
         $this->date = $date;
+
+        return $this;
+    }
+
+    public function getProgramMethodology(): ?string
+    {
+        return $this->programMethodology;
+    }
+
+    public function setProgramMethodology(string $programMethodology): self
+    {
+        $this->programMethodology = $programMethodology;
 
         return $this;
     }

@@ -25,16 +25,16 @@ class FurtherTraining
     /**
      * @var string
      *
-     * @ORM\Column(name="complementaryModality", type="string", length=2, nullable=false)
+     * @ORM\Column(name="complementary_modality", type="string", length=2, nullable=false)
      */
-    private $complementarymodality;
+    private $complementaryModality;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="titleName", type="string", length=255, nullable=false)
+     * @ORM\Column(name="title_name", type="string", length=255, nullable=false)
      */
-    private $titlename;
+    private $titleName;
 
     /**
      * @var string
@@ -60,35 +60,35 @@ class FurtherTraining
     /**
      * @var string|null
      *
-     * @ORM\Column(name="certifiedPdf", type="string", length=255, nullable=true)
+     * @ORM\Column(name="certified_pdf", type="string", length=255, nullable=true)
      */
-    private $certifiedpdf;
+    private $certifiedPdf;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getComplementarymodality(): ?string
+    public function getComplementaryModality(): ?string
     {
-        return $this->complementarymodality;
+        return $this->complementaryModality;
     }
 
-    public function setComplementarymodality(string $complementarymodality): self
+    public function setComplementaryModality(string $complementaryModality): self
     {
-        $this->complementarymodality = $complementarymodality;
+        $this->complementaryModality = $complementaryModality;
 
         return $this;
     }
 
-    public function getTitlename(): ?string
+    public function getTitleName(): ?string
     {
-        return $this->titlename;
+        return $this->titleName;
     }
 
-    public function setTitlename(string $titlename): self
+    public function setTitleName(string $titleName): self
     {
-        $this->titlename = $titlename;
+        $this->titleName = $titleName;
 
         return $this;
     }
@@ -129,14 +129,14 @@ class FurtherTraining
         return $this;
     }
 
-    public function getCertifiedpdf(): ?string
+    public function getCertifiedPdf(): ?string
     {
-        return $this->certifiedpdf;
+        return $this->certifiedPdf;
     }
 
-    public function setCertifiedpdf(?string $certifiedpdf): self
+    public function setCertifiedPdf(?string $certifiedPdf): self
     {
-        $this->certifiedpdf = $certifiedpdf;
+        $this->certifiedPdf = $certifiedPdf;
 
         return $this;
     }

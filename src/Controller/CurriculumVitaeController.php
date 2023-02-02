@@ -29,6 +29,7 @@ class CurriculumVitaeController extends AbstractController
         $academicTraining = new AcademicTraining();
         $academicTraining->setAcademicModality($formValues['academicModality']);
         $academicTraining->setDate(new DateTime($formValues['date']));
+        $academicTraining->setProgramMethodology($formValues['programMethodology']);
         $academicTraining->setTitleName($formValues['titleName']);
         $academicTraining->setSnies($formValues['snies']);
         $academicTraining->setIsForeignUniversity($formValues['isForeignUniversity']);

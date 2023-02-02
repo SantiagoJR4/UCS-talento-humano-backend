@@ -25,9 +25,9 @@ class TeachingExperience
     /**
      * @var bool|null
      *
-     * @ORM\Column(name="isForeignUniversity", type="boolean", nullable=true)
+     * @ORM\Column(name="is_foreign_university", type="boolean", nullable=true)
      */
-    private $isforeignuniversity;
+    private $isForeignUniversity;
 
     /**
      * @var string
@@ -39,9 +39,9 @@ class TeachingExperience
     /**
      * @var string
      *
-     * @ORM\Column(name="nameUniversity", type="string", length=255, nullable=false)
+     * @ORM\Column(name="name_university", type="string", length=255, nullable=false)
      */
-    private $nameuniversity;
+    private $nameUniversity;
 
     /**
      * @var string
@@ -60,58 +60,58 @@ class TeachingExperience
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="dateAdmission", type="date", nullable=false)
+     * @ORM\Column(name="date_admission", type="date", nullable=false)
      */
-    private $dateadmission;
+    private $dateAdmission;
 
     /**
      * @var bool|null
      *
-     * @ORM\Column(name="isActive", type="boolean", nullable=true)
+     * @ORM\Column(name="is_active", type="boolean", nullable=true)
      */
-    private $isactive;
+    private $isActive;
 
     /**
      * @var \DateTime|null
      *
-     * @ORM\Column(name="retirementDate", type="date", nullable=true)
+     * @ORM\Column(name="retirement_date", type="date", nullable=true)
      */
-    private $retirementdate;
+    private $retirementDate;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="contractModality", type="string", length=2, nullable=false)
+     * @ORM\Column(name="contract_modality", type="string", length=2, nullable=false)
      */
-    private $contractmodality;
+    private $contractModality;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="courseLoad", type="text", length=0, nullable=false)
+     * @ORM\Column(name="course_load", type="text", length=0, nullable=false)
      */
-    private $courseload;
+    private $courseLoad;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="certifiedPdf", type="text", length=65535, nullable=true)
+     * @ORM\Column(name="certified_pdf", type="text", length=65535, nullable=true)
      */
-    private $certifiedpdf;
+    private $certifiedPdf;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function isIsforeignuniversity(): ?bool
+    public function isIsForeignUniversity(): ?bool
     {
-        return $this->isforeignuniversity;
+        return $this->isForeignUniversity;
     }
 
-    public function setIsforeignuniversity(?bool $isforeignuniversity): self
+    public function setIsForeignUniversity(?bool $isForeignUniversity): self
     {
-        $this->isforeignuniversity = $isforeignuniversity;
+        $this->isForeignUniversity = $isForeignUniversity;
 
         return $this;
     }
@@ -128,14 +128,14 @@ class TeachingExperience
         return $this;
     }
 
-    public function getNameuniversity(): ?string
+    public function getNameUniversity(): ?string
     {
-        return $this->nameuniversity;
+        return $this->nameUniversity;
     }
 
-    public function setNameuniversity(string $nameuniversity): self
+    public function setNameUniversity(string $nameUniversity): self
     {
-        $this->nameuniversity = $nameuniversity;
+        $this->nameUniversity = $nameUniversity;
 
         return $this;
     }
@@ -164,74 +164,74 @@ class TeachingExperience
         return $this;
     }
 
-    public function getDateadmission(): ?\DateTimeInterface
+    public function getDateAdmission(): ?\DateTimeInterface
     {
-        return $this->dateadmission;
+        return $this->dateAdmission;
     }
 
-    public function setDateadmission(\DateTimeInterface $dateadmission): self
+    public function setDateAdmission(\DateTimeInterface $dateAdmission): self
     {
-        $this->dateadmission = $dateadmission;
+        $this->dateAdmission = $dateAdmission;
 
         return $this;
     }
 
-    public function isIsactive(): ?bool
+    public function isIsActive(): ?bool
     {
-        return $this->isactive;
+        return $this->isActive;
     }
 
-    public function setIsactive(?bool $isactive): self
+    public function setIsActive(?bool $isActive): self
     {
-        $this->isactive = $isactive;
+        $this->isActive = $isActive;
 
         return $this;
     }
 
-    public function getRetirementdate(): ?\DateTimeInterface
+    public function getRetirementDate(): ?\DateTimeInterface
     {
-        return $this->retirementdate;
+        return $this->retirementDate;
     }
 
-    public function setRetirementdate(?\DateTimeInterface $retirementdate): self
+    public function setRetirementDate(?\DateTimeInterface $retirementDate): self
     {
-        $this->retirementdate = $retirementdate;
+        $this->retirementDate = $retirementDate;
 
         return $this;
     }
 
-    public function getContractmodality(): ?string
+    public function getContractModality(): ?string
     {
-        return $this->contractmodality;
+        return $this->contractModality;
     }
 
-    public function setContractmodality(string $contractmodality): self
+    public function setContractModality(string $contractModality): self
     {
-        $this->contractmodality = $contractmodality;
+        $this->contractModality = $contractModality;
 
         return $this;
     }
 
-    public function getCourseload(): ?string
+    public function getCourseLoad(): ?string
     {
-        return $this->courseload;
+        return $this->courseLoad;
     }
 
-    public function setCourseload(string $courseload): self
+    public function setCourseLoad(string $courseLoad): self
     {
-        $this->courseload = $courseload;
+        $this->courseLoad = $courseLoad;
 
         return $this;
     }
 
-    public function getCertifiedpdf(): ?string
+    public function getCertifiedPdf(): ?string
     {
-        return $this->certifiedpdf;
+        return $this->certifiedPdf;
     }
 
-    public function setCertifiedpdf(?string $certifiedpdf): self
+    public function setCertifiedPdf(?string $certifiedPdf): self
     {
-        $this->certifiedpdf = $certifiedpdf;
+        $this->certifiedPdf = $certifiedPdf;
 
         return $this;
     }

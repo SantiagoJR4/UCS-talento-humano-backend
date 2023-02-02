@@ -25,9 +25,9 @@ class WorkExperience
     /**
      * @var string
      *
-     * @ORM\Column(name="companyName", type="string", length=255, nullable=false)
+     * @ORM\Column(name="company_name", type="string", length=255, nullable=false)
      */
-    private $companyname;
+    private $companyName;
 
     /**
      * @var string
@@ -60,16 +60,16 @@ class WorkExperience
     /**
      * @var string
      *
-     * @ORM\Column(name="companyAddress", type="string", length=255, nullable=false)
+     * @ORM\Column(name="company_address", type="string", length=255, nullable=false)
      */
-    private $companyaddress;
+    private $companyAddress;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="bossName", type="string", length=255, nullable=false)
+     * @ORM\Column(name="boss_name", type="string", length=255, nullable=false)
      */
-    private $bossname;
+    private $bossName;
 
     /**
      * @var string
@@ -81,44 +81,44 @@ class WorkExperience
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="admissionDate", type="date", nullable=false)
+     * @ORM\Column(name="admission_date", type="date", nullable=false)
      */
-    private $admissiondate;
+    private $admissionDate;
 
     /**
      * @var bool|null
      *
-     * @ORM\Column(name="isWorking", type="boolean", nullable=true)
+     * @ORM\Column(name="is_working", type="boolean", nullable=true)
      */
-    private $isworking;
+    private $isWorking;
 
     /**
      * @var \DateTime|null
      *
-     * @ORM\Column(name="retirementDate", type="date", nullable=true)
+     * @ORM\Column(name="retirement_date", type="date", nullable=true)
      */
-    private $retirementdate;
+    private $retirementDate;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="certifiedPdf", type="text", length=65535, nullable=true)
+     * @ORM\Column(name="certified_pdf", type="text", length=65535, nullable=true)
      */
-    private $certifiedpdf;
+    private $certifiedPdf;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getCompanyname(): ?string
+    public function getCompanyName(): ?string
     {
-        return $this->companyname;
+        return $this->companyName;
     }
 
-    public function setCompanyname(string $companyname): self
+    public function setCompanyName(string $companyName): self
     {
-        $this->companyname = $companyname;
+        $this->companyName = $companyName;
 
         return $this;
     }
@@ -171,26 +171,26 @@ class WorkExperience
         return $this;
     }
 
-    public function getCompanyaddress(): ?string
+    public function getCompanyAddress(): ?string
     {
-        return $this->companyaddress;
+        return $this->companyAddress;
     }
 
-    public function setCompanyaddress(string $companyaddress): self
+    public function setCompanyAddress(string $companyAddress): self
     {
-        $this->companyaddress = $companyaddress;
+        $this->companyAddress = $companyAddress;
 
         return $this;
     }
 
-    public function getBossname(): ?string
+    public function getBossName(): ?string
     {
-        return $this->bossname;
+        return $this->bossName;
     }
 
-    public function setBossname(string $bossname): self
+    public function setBossName(string $bossName): self
     {
-        $this->bossname = $bossname;
+        $this->bossName = $bossName;
 
         return $this;
     }
@@ -207,50 +207,50 @@ class WorkExperience
         return $this;
     }
 
-    public function getAdmissiondate(): ?\DateTimeInterface
+    public function getAdmissionDate(): ?\DateTimeInterface
     {
-        return $this->admissiondate;
+        return $this->admissionDate;
     }
 
-    public function setAdmissiondate(\DateTimeInterface $admissiondate): self
+    public function setAdmissionDate(\DateTimeInterface $admissionDate): self
     {
-        $this->admissiondate = $admissiondate;
+        $this->admissionDate = $admissionDate;
 
         return $this;
     }
 
-    public function isIsworking(): ?bool
+    public function isIsWorking(): ?bool
     {
-        return $this->isworking;
+        return $this->isWorking;
     }
 
-    public function setIsworking(?bool $isworking): self
+    public function setIsWorking(?bool $isWorking): self
     {
-        $this->isworking = $isworking;
+        $this->isWorking = $isWorking;
 
         return $this;
     }
 
-    public function getRetirementdate(): ?\DateTimeInterface
+    public function getRetirementDate(): ?\DateTimeInterface
     {
-        return $this->retirementdate;
+        return $this->retirementDate;
     }
 
-    public function setRetirementdate(?\DateTimeInterface $retirementdate): self
+    public function setRetirementDate(?\DateTimeInterface $retirementDate): self
     {
-        $this->retirementdate = $retirementdate;
+        $this->retirementDate = $retirementDate;
 
         return $this;
     }
 
-    public function getCertifiedpdf(): ?string
+    public function getCertifiedPdf(): ?string
     {
-        return $this->certifiedpdf;
+        return $this->certifiedPdf;
     }
 
-    public function setCertifiedpdf(?string $certifiedpdf): self
+    public function setCertifiedPdf(?string $certifiedPdf): self
     {
-        $this->certifiedpdf = $certifiedpdf;
+        $this->certifiedPdf = $certifiedPdf;
 
         return $this;
     }
