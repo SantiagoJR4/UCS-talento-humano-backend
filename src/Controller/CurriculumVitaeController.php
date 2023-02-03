@@ -23,9 +23,7 @@ class CurriculumVitaeController extends AbstractController
         $degreeFile = $request->files->get('degreePdfFile');
         $certifiedFile = $request->files->get('certifiedTitlePdfFile') !== NULL ? $request->files->get('certifiedTitlePdfFile') : NULL;
         $formValues = [];
-        foreach( $formData as $key => $value ) {
-            $formValues[$key] = json_decode($value);
-        }
+        foreach( $formData as $key => $value ) { $formValues[$key] = json_decode($value); }
         $academicTraining = new AcademicTraining();
         $academicTraining->setAcademicModality($formValues['academicModality']);
         $academicTraining->setDate(new DateTime($formValues['date']));
@@ -67,27 +65,35 @@ class CurriculumVitaeController extends AbstractController
     }
 
     #[Route('/curriculum-vitae/further-training', name: 'app_curriculum_vitae_further_training')]
-    public function furtherTraining(ManagerRegistry $doctrine): Response
+    public function furtherTraining(ManagerRegistry $doctrine, Request $request): Response
     {
-        $request = Request::createFromGlobals();
-        $data = json_decode($request->getContent(), true);
-
-        foreach($data as $key => $value){
-            $furtherTraining = new FurtherTraining();
-            $furtherTraining->setComplementarymodality($value['complementaryModality']);
-            $furtherTraining->setTitlename($value['titleName']);
-            $furtherTraining->setInstitution($value['institution']);
-            $furtherTraining->setHours($value['hours']);
-            $furtherTraining->setDate(new DateTime($value['date']));
-            $furtherTraining->setCertifiedpdf($value['certifiedPdf']);
-        
-            $entityManager=$doctrine->getManager();
-            $entityManager->persist($furtherTraining);
-            $entityManager->flush();
+        $formData = $request->request->all();
+        $certifiedFile = $request->files->get('certifiedPdfFile');
+        $formValues = [];
+        foreach( $formData as $key => $value ) { $formValues[$key] = json_decode($value); }
+        $furtherTraining = new FurtherTraining();
+        $furtherTraining->setComplementarymodality($formValues['complementaryModality']);
+        $furtherTraining->setTitlename($formValues['titleName']);
+        $furtherTraining->setInstitution($formValues['institution']);
+        $furtherTraining->setHours($formValues['hours']);
+        $furtherTraining->setDate(new DateTime($formValues['date']));
+        $certifiedPath = '';
+        if ($certifiedFile instanceof UploadedFile) {
+            $newFileName = $formValues['certifiedPdfName'].time().'.'.$certifiedFile->guessExtension();
+            $certifiedFile->move(
+                $this->getParameter('uploads_directory'),
+                $newFileName
+            );
+            $certifiedPath = $this->getParameter('uploads_directory').'/'.$newFileName;
+            $furtherTraining->setCertifiedPdf($certifiedPath);
         }
+    
+        $entityManager=$doctrine->getManager();
+        $entityManager->persist($furtherTraining);
+        $entityManager->flush();
 
         $response=new Response();
-        $response->setContent(json_encode(['respuesta' => 'Guardado nueva formación complementaria con nombre: '.$furtherTraining->getTitlename()]));
+        $response->setContent(json_encode(['certified   Pdf' => $certifiedPath]));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
