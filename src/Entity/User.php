@@ -25,213 +25,213 @@ class User
     /**
      * @var string
      *
-     * @ORM\Column(name="username", type="string", length=255, nullable=false)
+     * @ORM\Column(name="names", type="string", length=255, nullable=false)
      */
-    private $username;
+    private $names;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="nombres", type="string", length=255, nullable=false)
+     * @ORM\Column(name="last_names", type="string", length=255, nullable=false)
      */
-    private $nombres;
+    private $lastNames;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="apellidos", type="string", length=255, nullable=false)
+     * @ORM\Column(name="type_identification", type="string", length=2, nullable=false, options={"fixed"=true})
      */
-    private $apellidos;
+    private $typeIdentification;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="tipoIdentificacion", type="string", length=2, nullable=false, options={"fixed"=true})
+     * @ORM\Column(name="identification", type="string", length=12, nullable=false)
      */
-    private $tipoidentificacion;
+    private $identification;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="numeroIdentificacion", type="string", length=12, nullable=false)
+     * @ORM\Column(name="email", type="string", length=255, nullable=false)
      */
-    private $numeroidentificacion;
+    private $email;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="birthdate", type="date", nullable=false)
+     */
+    private $birthdate;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="correo", type="string", length=255, nullable=false)
+     * @ORM\Column(name="alternate_email", type="string", length=255, nullable=false)
      */
-    private $correo;
+    private $alternateEmail;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="correoAlterno", type="string", length=255, nullable=false)
+     * @ORM\Column(name="phone", type="string", length=20, nullable=false)
      */
-    private $correoalterno;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="celular", type="string", length=20, nullable=false)
-     */
-    private $celular;
+    private $phone;
 
     /**
      * @var bool
      *
-     * @ORM\Column(name="estadoCorreo", type="boolean", nullable=false)
+     * @ORM\Column(name="email_status", type="boolean", nullable=false)
      */
-    private $estadocorreo;
+    private $emailStatus;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="contraseña", type="string", length=255, nullable=false)
+     * @ORM\Column(name="password", type="string", length=255, nullable=false)
      */
-    private $contraseña;
+    private $password;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="urlFoto", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="url_photo", type="text", length=65535, nullable=false)
      */
-    private $urlfoto;
+    private $urlPhoto;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getUsername(): ?string
+    public function getNames(): ?string
     {
-        return $this->username;
+        return $this->names;
     }
 
-    public function setUsername(string $username): self
+    public function setNames(string $names): self
     {
-        $this->username = $username;
+        $this->names = $names;
 
         return $this;
     }
 
-    public function getNombres(): ?string
+    public function getLastNames(): ?string
     {
-        return $this->nombres;
+        return $this->lastNames;
     }
 
-    public function setNombres(string $nombres): self
+    public function setLastNames(string $lastNames): self
     {
-        $this->nombres = $nombres;
+        $this->lastNames = $lastNames;
 
         return $this;
     }
 
-    public function getApellidos(): ?string
+    public function getTypeIdentification(): ?string
     {
-        return $this->apellidos;
+        return $this->typeIdentification;
     }
 
-    public function setApellidos(string $apellidos): self
+    public function setTypeIdentification(string $typeIdentification): self
     {
-        $this->apellidos = $apellidos;
+        $this->typeIdentification = $typeIdentification;
 
         return $this;
     }
 
-    public function getTipoidentificacion(): ?string
+    public function getIdentification(): ?string
     {
-        return $this->tipoidentificacion;
+        return $this->identification;
     }
 
-    public function setTipoidentificacion(string $tipoidentificacion): self
+    public function setIdentification(string $identification): self
     {
-        $this->tipoidentificacion = $tipoidentificacion;
+        $this->identification = $identification;
 
         return $this;
     }
 
-    public function getNumeroidentificacion(): ?string
+    public function getEmail(): ?string
     {
-        return $this->numeroidentificacion;
+        return $this->email;
     }
 
-    public function setNumeroidentificacion(string $numeroidentificacion): self
+    public function setEmail(string $email): self
     {
-        $this->numeroidentificacion = $numeroidentificacion;
+        $this->email = $email;
 
         return $this;
     }
 
-    public function getCorreo(): ?string
+    public function getBirthdate(): ?\DateTimeInterface
     {
-        return $this->correo;
+        return $this->birthdate;
     }
 
-    public function setCorreo(string $correo): self
+    public function setBirthdate(\DateTimeInterface $birthdate): self
     {
-        $this->correo = $correo;
+        $this->birthdate = $birthdate;
 
         return $this;
     }
 
-    public function getCorreoalterno(): ?string
+    public function getAlternateEmail(): ?string
     {
-        return $this->correoalterno;
+        return $this->alternateEmail;
     }
 
-    public function setCorreoalterno(string $correoalterno): self
+    public function setAlternateEmail(string $alternateEmail): self
     {
-        $this->correoalterno = $correoalterno;
+        $this->alternateEmail = $alternateEmail;
 
         return $this;
     }
 
-    public function getCelular(): ?string
+    public function getPhone(): ?string
     {
-        return $this->celular;
+        return $this->phone;
     }
 
-    public function setCelular(string $celular): self
+    public function setPhone(string $phone): self
     {
-        $this->celular = $celular;
+        $this->phone = $phone;
 
         return $this;
     }
 
-    public function isEstadocorreo(): ?bool
+    public function isEmailStatus(): ?bool
     {
-        return $this->estadocorreo;
+        return $this->emailStatus;
     }
 
-    public function setEstadocorreo(bool $estadocorreo): self
+    public function setEmailStatus(bool $emailStatus): self
     {
-        $this->estadocorreo = $estadocorreo;
+        $this->emailStatus = $emailStatus;
 
         return $this;
     }
 
-    public function getContraseña(): ?string
+    public function getPassword(): ?string
     {
-        return $this->contraseña;
+        return $this->password;
     }
 
-    public function setContraseña(string $contraseña): self
+    public function setPassword(string $password): self
     {
-        $this->contraseña = $contraseña;
+        $this->password = $password;
 
         return $this;
     }
 
-    public function getUrlfoto(): ?string
+    public function getUrlPhoto(): ?string
     {
-        return $this->urlfoto;
+        return $this->urlPhoto;
     }
 
-    public function setUrlfoto(string $urlfoto): self
+    public function setUrlPhoto(string $urlPhoto): self
     {
-        $this->urlfoto = $urlfoto;
+        $this->urlPhoto = $urlPhoto;
 
         return $this;
     }
