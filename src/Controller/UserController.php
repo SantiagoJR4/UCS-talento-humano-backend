@@ -4,7 +4,10 @@ namespace App\Controller;
 
 use App\Service\Helpers;
 use App\Entity\User;
-use DateTime;
+
+use Switf_Mailer;
+use Switf_Message;
+
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -41,8 +44,6 @@ class UserController extends AbstractController
             return $response;
         }
 
-        
-
         $response=new Response();
         $json = $helpers->serializador($user);
         //meter validación si se necesita evaluar el estado 200
@@ -56,27 +57,50 @@ class UserController extends AbstractController
     public function registerUser(ManagerRegistry $doctrine): Response
     {
         $request = Request::createFromGlobals();
-        $data = json_decode($request->getContent(), true);
+        $dataRegister = json_decode($request->getContent(), true);
 
-        $userData = new User();
-        $userData->setNames($data['names']);
-        $userData->setLastNames($data['lastNames']);
-        $userData->setTypeIdentification($data['typeIdentification']);
-        $userData->setIdentification($data['identification']);
-        $userData->setEmail($data['email']);
-        $userData->setBirthdate(new DateTime($data['birthdate']));
-        $userData->setPassword(hash('sha256',$data['password']));
-
-        $entityManager=$doctrine->getManager();
-        $entityManager->persist($userData);
-        $entityManager->flush();
-
-        $response= new Response();
-        $response->setContent(json_encode(['respuesta' => 'Usuario registrado exitosamente']));
-        $response->headers->set('Content-Type', 'application/json');
-
-        return $response;
-
+        $data_db = $doctrine->getRepository(User::class)->findOneBy([
+            'typeIdentification' => $dataRegister['typeIdentification'],
+            'identification' => $dataRegister['identification']
+        ]);
+        if($data_db !== NULL){
+            $response = new Response();
+            $response->setStatusCode(404);
+            $response->setContent('El usuario ya existe!!');
+            $response->headers->set('Content-Type', 'application/json');
+            return $response;
+        }
+        else{
+            $userData = new User();
+            $userData->setNames($dataRegister['names']);
+            $userData->setLastNames($dataRegister['lastNames']);
+            $userData->setTypeIdentification($dataRegister['typeIdentification']);
+            $userData->setIdentification($dataRegister['identification']);
+            $userData->setEmail($dataRegister['email']);
+            $userData->setPhone($dataRegister['phone']);
+            $userData->setPassword(hash('sha256',$dataRegister['password']));
+    
+            $entityManager=$doctrine->getManager();
+            $entityManager->persist($userData);
+            $entityManager->flush();
+    
+            $response= new Response();
+            $response->setContent(json_encode(['respuesta' => 'Usuario registrado exitosamente']));
+            $response->headers->set('Content-Type', 'application/json');
+    
+            return $response;
+        }
     }
+
+    //TODO : HACER VERIFICACIÓN DE CORREO
+
+    // #[Route('/verifyEmail', name:'user_verifyemail')]
+    // public function verifyEmail(Request $request, Swift_Mailer $mailer)
+    // {
+    //     $email = $request->request->get('email');
+    //     $names = $request->request->get('names');
+
+    //     $message = (new Swift_Message)
+    // }
 
 }

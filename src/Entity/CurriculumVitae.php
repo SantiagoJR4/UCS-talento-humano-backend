@@ -44,6 +44,34 @@ class CurriculumVitae
     private $municipality;
 
     /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="date_issue", type="date", nullable=false)
+     */
+    private $dateIssue;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="place_issue", type="string", length=255, nullable=false)
+     */
+    private $placeIssue;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="birthdate", type="date", nullable=false)
+     */
+    private $birthdate;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="birthplace", type="string", length=255, nullable=false)
+     */
+    private $birthplace;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="gender", type="string", length=1, nullable=false, options={"fixed"=true})
@@ -143,6 +171,54 @@ class CurriculumVitae
     public function setMunicipality(string $municipality): self
     {
         $this->municipality = $municipality;
+
+        return $this;
+    }
+
+    public function getDateIssue(): ?\DateTimeInterface
+    {
+        return $this->dateIssue;
+    }
+
+    public function setDateIssue(\DateTimeInterface $dateIssue): self
+    {
+        $this->dateIssue = $dateIssue;
+
+        return $this;
+    }
+
+    public function getPlaceIssue(): ?string
+    {
+        return $this->placeIssue;
+    }
+
+    public function setPlaceIssue(string $placeIssue): self
+    {
+        $this->placeIssue = $placeIssue;
+
+        return $this;
+    }
+
+    public function getBirthdate(): ?\DateTimeInterface
+    {
+        return $this->birthdate;
+    }
+
+    public function setBirthdate(\DateTimeInterface $birthdate): self
+    {
+        $this->birthdate = $birthdate;
+
+        return $this;
+    }
+
+    public function getBirthplace(): ?string
+    {
+        return $this->birthplace;
+    }
+
+    public function setBirthplace(string $birthplace): self
+    {
+        $this->birthplace = $birthplace;
 
         return $this;
     }

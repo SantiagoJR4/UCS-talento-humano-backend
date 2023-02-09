@@ -58,16 +58,9 @@ class User
     private $email;
 
     /**
-     * @var \DateTime
+     * @var string|null
      *
-     * @ORM\Column(name="birthdate", type="date", nullable=false)
-     */
-    private $birthdate;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="alternate_email", type="string", length=255, nullable=false)
+     * @ORM\Column(name="alternate_email", type="string", length=255, nullable=true)
      */
     private $alternateEmail;
 
@@ -79,9 +72,9 @@ class User
     private $phone;
 
     /**
-     * @var bool
+     * @var bool|null
      *
-     * @ORM\Column(name="email_status", type="boolean", nullable=false)
+     * @ORM\Column(name="email_status", type="boolean", nullable=true)
      */
     private $emailStatus;
 
@@ -93,9 +86,9 @@ class User
     private $password;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="url_photo", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="url_photo", type="text", length=65535, nullable=true)
      */
     private $urlPhoto;
 
@@ -164,24 +157,12 @@ class User
         return $this;
     }
 
-    public function getBirthdate(): ?\DateTimeInterface
-    {
-        return $this->birthdate;
-    }
-
-    public function setBirthdate(\DateTimeInterface $birthdate): self
-    {
-        $this->birthdate = $birthdate;
-
-        return $this;
-    }
-
     public function getAlternateEmail(): ?string
     {
         return $this->alternateEmail;
     }
 
-    public function setAlternateEmail(string $alternateEmail): self
+    public function setAlternateEmail(?string $alternateEmail): self
     {
         $this->alternateEmail = $alternateEmail;
 
@@ -205,7 +186,7 @@ class User
         return $this->emailStatus;
     }
 
-    public function setEmailStatus(bool $emailStatus): self
+    public function setEmailStatus(?bool $emailStatus): self
     {
         $this->emailStatus = $emailStatus;
 
@@ -229,7 +210,7 @@ class User
         return $this->urlPhoto;
     }
 
-    public function setUrlPhoto(string $urlPhoto): self
+    public function setUrlPhoto(?string $urlPhoto): self
     {
         $this->urlPhoto = $urlPhoto;
 
