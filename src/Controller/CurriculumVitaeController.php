@@ -182,4 +182,23 @@ class CurriculumVitaeController extends AbstractController
         return $response;
 
     }
+    //--------------------------------------------------------------------
+    #[Route('/curriculum-vitae/prodIntellectual', name: 'app_curriculum_vitae_prod_intellectual')]
+    public function prodIntellectual(ManagerRegistry $doctrine): Response
+    {
+        $response=new Response();
+        $response->setContent(json_encode(['respuesta' => 'Guardada nueva producción intelectual']));
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+    }
+    #[Route('/curriculum-vitae/references', name: 'app_curriculum_vitae_references')]
+    public function references(ManagerRegistry $doctrine): Response
+    {
+        $response=new Response();
+        $response->setContent(json_encode(['respuesta' => 'Guardados datos referencias personales y laborales']));
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+    }
 }

@@ -5,9 +5,6 @@ namespace App\Controller;
 use App\Service\Helpers;
 use App\Entity\User;
 
-use Switf_Mailer;
-use Switf_Message;
-
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
