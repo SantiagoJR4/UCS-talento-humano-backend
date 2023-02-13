@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\AcademicTraining;
 use App\Entity\FurtherTraining;
+use App\Entity\IntellectualProduction;
+use App\Entity\ReferencesData;
 use App\Entity\TeachingExperience;
 use App\Entity\WorkExperience;
 use DateTime;
@@ -186,6 +188,22 @@ class CurriculumVitaeController extends AbstractController
     #[Route('/curriculum-vitae/prodIntellectual', name: 'app_curriculum_vitae_prod_intellectual')]
     public function prodIntellectual(ManagerRegistry $doctrine): Response
     {
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(),true);
+
+        foreach($data as $key => $value){
+            $prodIntellectual = new IntellectualProduction();
+            $prodIntellectual -> setUrlCvlac($value['urlCvlac']);
+            $prodIntellectual -> setTypeProd($value['typeProd']);
+            $prodIntellectual -> setTitleProd($value['titleProd']);
+            $prodIntellectual -> setUrlVerification($value['urlVerification']);
+
+            $entityManager=$doctrine->getManager();
+            $entityManager->persist($prodIntellectual);
+            $entityManager->flush();
+        }
+
+
         $response=new Response();
         $response->setContent(json_encode(['respuesta' => 'Guardada nueva producción intelectual']));
         $response->headers->set('Content-Type', 'application/json');
@@ -195,6 +213,22 @@ class CurriculumVitaeController extends AbstractController
     #[Route('/curriculum-vitae/references', name: 'app_curriculum_vitae_references')]
     public function references(ManagerRegistry $doctrine): Response
     {
+        $request = Request::createFromGlobals();
+        $data = json_decode($request->getContent(),true);
+
+        foreach($data as $key => $value){
+            $references = new ReferencesData();
+            $references -> setNames($value['names']);
+            $references -> setRelationship($value['relationship']);
+            $references -> setOccupation($value['occupation']);
+            $references -> setPhone($value['phone']);
+
+            $entityManager = $doctrine->getManager();
+            $entityManager -> persist($references);
+            $entityManager -> flush();
+        }
+
+
         $response=new Response();
         $response->setContent(json_encode(['respuesta' => 'Guardados datos referencias personales y laborales']));
         $response->headers->set('Content-Type', 'application/json');
