@@ -3,10 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\AcademicTraining;
+use App\Entity\CurriculumVitae;
 use App\Entity\FurtherTraining;
 use App\Entity\IntellectualProduction;
 use App\Entity\ReferencesData;
 use App\Entity\TeachingExperience;
+use App\Entity\User;
 use App\Entity\WorkExperience;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
@@ -18,6 +20,52 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class CurriculumVitaeController extends AbstractController
 {
+    #[Route('/curriculum-vitae/personal-data', name:'app_curriculum_vitae_personal-data')]
+    public function personalData(ManagerRegistry $doctrine, Request $request): Response
+    {
+        $formData = $request->request->all();
+        $url_photo = $request->files->get('url_photo');
+        $formValues =[];
+
+        foreach($formData as $key => $value) {$formValues[$key] = json_decode($value);}
+        $personalData = new CurriculumVitae();
+        $personalData -> setResidenceAddress($formValues['residenceAddress']);
+        $personalData -> setDepartment($formValues['department']);
+        $personalData -> setMunicipality($formValues['municipality']);
+        $personalData -> setDateIssue(new DateTime($formValues['date_issue']));
+        $personalData -> setPlaceIssue($formValues['place_issue']);
+        $personalData -> setBirthdate(new DateTime($formValues['birthdate']));
+        $personalData -> setBirthplace($formValues['birthplace']);
+        $personalData -> setGender($formValues['gender']);
+        $personalData -> setBloodType($formValues['bloodType']);
+        $personalData -> setMaritalStatus($formValues['maritalStatus']);
+        $personalData -> setEps($formValues['eps']);
+        $personalData -> setPension($formValues['pension']);
+        
+        $user = $doctrine -> getRepository(User::class)->find($formValues['id']);
+        $personalData -> setUser($user);
+
+        $url_photoPath='';
+        if($url_photo instanceof UploadedFile){
+            $newFileName = $formValues['urlPhotoName'].time().'.'.$url_photo->guessExtension();
+            $url_photo->move(
+                $this->getParameter('uploads_directory'),
+                $newFileName
+            );
+            $url_photoPath = $this->getParameter('uploads_directory').'/'.$newFileName;
+            $personalData -> setUrlPhoto($url_photoPath);
+        }
+        $entityManager = $doctrine->getManager();
+        $entityManager->persist($personalData);
+        $entityManager->flush();
+
+        $response=new Response();
+        $response->setContent(json_encode(['urlPhoto' => $url_photoPath]));
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+    }
+
     #[Route('/curriculum-vitae/academic-training', name: 'app_curriculum_vitae_academic_training')]
     public function academicTraining(ManagerRegistry $doctrine, Request $request): Response
     {

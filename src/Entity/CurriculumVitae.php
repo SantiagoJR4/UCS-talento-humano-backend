@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * CurriculumVitae
  *
- * @ORM\Table(name="curriculum_vitae")
+ * @ORM\Table(name="curriculum_vitae", indexes={@ORM\Index(name="user_id", columns={"user_id"})})
  * @ORM\Entity
  */
 class CurriculumVitae
@@ -16,7 +16,7 @@ class CurriculumVitae
     /**
      * @var int
      *
-     * @ORM\Column(name="id", type="integer", nullable=false)
+     * @ORM\Column(name="id", type="integer", nullable=false, options={"unsigned"=true})
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
@@ -93,6 +93,13 @@ class CurriculumVitae
     private $maritalStatus;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="url_photo", type="text", length=65535, nullable=true)
+     */
+    private $urlPhoto;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="eps", type="string", length=255, nullable=false)
@@ -107,32 +114,14 @@ class CurriculumVitae
     private $pension;
 
     /**
-     * @var string|null
+     * @var \User
      *
-     * @ORM\Column(name="cvlac_pdf", type="text", length=65535, nullable=true)
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * })
      */
-    private $cvlacPdf;
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="intellectual_production", type="text", length=0, nullable=true)
-     */
-    private $intellectualProduction;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="references_data", type="text", length=0, nullable=false)
-     */
-    private $referencesData;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="languages", type="text", length=0, nullable=false)
-     */
-    private $languages;
+    private $user;
 
     public function getId(): ?int
     {
@@ -259,6 +248,18 @@ class CurriculumVitae
         return $this;
     }
 
+    public function getUrlPhoto(): ?string
+    {
+        return $this->urlPhoto;
+    }
+
+    public function setUrlPhoto(?string $urlPhoto): self
+    {
+        $this->urlPhoto = $urlPhoto;
+
+        return $this;
+    }
+
     public function getEps(): ?string
     {
         return $this->eps;
@@ -283,50 +284,14 @@ class CurriculumVitae
         return $this;
     }
 
-    public function getCvlacPdf(): ?string
+    public function getUser(): ?User
     {
-        return $this->cvlacPdf;
+        return $this->user;
     }
 
-    public function setCvlacPdf(?string $cvlacPdf): self
+    public function setUser(?User $user): self
     {
-        $this->cvlacPdf = $cvlacPdf;
-
-        return $this;
-    }
-
-    public function getIntellectualProduction(): ?string
-    {
-        return $this->intellectualProduction;
-    }
-
-    public function setIntellectualProduction(?string $intellectualProduction): self
-    {
-        $this->intellectualProduction = $intellectualProduction;
-
-        return $this;
-    }
-
-    public function getReferencesData(): ?string
-    {
-        return $this->referencesData;
-    }
-
-    public function setReferencesData(string $referencesData): self
-    {
-        $this->referencesData = $referencesData;
-
-        return $this;
-    }
-
-    public function getLanguages(): ?string
-    {
-        return $this->languages;
-    }
-
-    public function setLanguages(string $languages): self
-    {
-        $this->languages = $languages;
+        $this->user = $user;
 
         return $this;
     }

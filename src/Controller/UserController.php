@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\CurriculumVitae;
 use App\Service\Helpers;
 use App\Entity\User;
 
@@ -14,11 +15,20 @@ use Symfony\Component\Routing\Annotation\Route;
 class UserController extends AbstractController
 {
     #[Route('/listarUser/{id}', name: 'app_user')]
-    public function user(ManagerRegistry $doctrine, Helpers $helpers, int $id): Response
+    public function user(ManagerRegistry $doctrine, Helpers $helpers, int $id): Response 
     {
         $datosUser = $doctrine->getRepository(User::class)->find($id);
 
         $json = $helpers->serializador($datosUser);
+        return $json;
+    }
+
+    #[Route('/listarCurriculmVitae/{id}', name:'app_listar_curriculumVitae')]
+    public function listCurriculumVitae(ManagerRegistry $doctrine, Helpers $helpers,int $id): Response
+    {
+        $curriculumVitaeData = $doctrine->getRepository(CurriculumVitae::class)->find($id);
+
+        $json = $helpers->serializador($curriculumVitaeData);
         return $json;
     }
 
@@ -38,6 +48,7 @@ class UserController extends AbstractController
             $response->setStatusCode(404);
             $response->setContent('El usuario y contraseña son incorrectos!!');
             $response->headers->set('Content-Type', 'application/json');
+            
             return $response;
         }
 
