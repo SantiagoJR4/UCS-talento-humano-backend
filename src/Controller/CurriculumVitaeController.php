@@ -42,7 +42,7 @@ class CurriculumVitaeController extends AbstractController
         $personalData -> setEps($formValues['eps']);
         $personalData -> setPension($formValues['pension']);
         
-        $user = $doctrine -> getRepository(User::class)->find($formValues['id']);
+        $user = $doctrine -> getRepository(User::class)->find($request->get('id'));
         $personalData -> setUser($user);
 
         $url_photoPath='';
