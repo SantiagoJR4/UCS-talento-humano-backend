@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * IntellectualProduction
  *
- * @ORM\Table(name="intellectual_production")
+ * @ORM\Table(name="intellectual_production", indexes={@ORM\Index(name="fk_intellectualProd_user", columns={"user_id"})})
  * @ORM\Entity
  */
 class IntellectualProduction
@@ -49,6 +49,16 @@ class IntellectualProduction
      * @ORM\Column(name="url_verification", type="text", length=65535, nullable=false)
      */
     private $urlVerification;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * })
+     */
+    private $user;
 
     public function getId(): ?int
     {
@@ -99,6 +109,18 @@ class IntellectualProduction
     public function setUrlVerification(string $urlVerification): self
     {
         $this->urlVerification = $urlVerification;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

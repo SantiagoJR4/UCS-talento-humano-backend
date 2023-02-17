@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * FurtherTraining
  *
- * @ORM\Table(name="further_training")
+ * @ORM\Table(name="further_training", indexes={@ORM\Index(name="fk_furtherTraining_user", columns={"user_id"})})
  * @ORM\Entity
  */
 class FurtherTraining
@@ -63,6 +63,16 @@ class FurtherTraining
      * @ORM\Column(name="certified_pdf", type="string", length=255, nullable=true)
      */
     private $certifiedPdf;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * })
+     */
+    private $user;
 
     public function getId(): ?int
     {
@@ -137,6 +147,18 @@ class FurtherTraining
     public function setCertifiedPdf(?string $certifiedPdf): self
     {
         $this->certifiedPdf = $certifiedPdf;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

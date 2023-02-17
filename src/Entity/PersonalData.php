@@ -6,12 +6,12 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * CurriculumVitae
+ * PersonalData
  *
- * @ORM\Table(name="curriculum_vitae", indexes={@ORM\Index(name="user_id", columns={"user_id"})})
+ * @ORM\Table(name="personal_data", uniqueConstraints={@ORM\UniqueConstraint(name="userid_curriculumVitae", columns={"user_id"})})
  * @ORM\Entity
  */
-class CurriculumVitae
+class PersonalData
 {
     /**
      * @var int
