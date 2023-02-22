@@ -19,6 +19,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+/**
+ * @Route("/api")
+ */
+
 class CurriculumVitaeController extends AbstractController
 {
     #[Route('/curriculum-vitae/personal-data', name:'app_curriculum_vitae_personal-data')]
@@ -43,8 +47,8 @@ class CurriculumVitaeController extends AbstractController
         $personalData -> setEps($formValues['eps']);
         $personalData -> setPension($formValues['pension']);
         
-        $user = $doctrine -> getRepository(User::class)->find($request->get('id'));
-        $personalData -> setUser($user);
+        // $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+        $personalData -> setUserId($formValues['sub']);
 
         $urlPhotoPath='';
         if($urlPhotoFile instanceof UploadedFile){
@@ -84,8 +88,8 @@ class CurriculumVitaeController extends AbstractController
         $academicTraining->setIsForeignUniversity($formValues['isForeignUniversity']);
         $academicTraining->setNameUniversity($formValues['nameUniversity']);
 
-        $user = $doctrine -> getRepository(User::class)->find($request->get('id'));
-        $academicTraining -> setUser($user);
+        //$user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+        $academicTraining -> setUserId($$formValues['sub']);
 
         $degreePath = '';
         $certifiedPath = '';
@@ -133,8 +137,8 @@ class CurriculumVitaeController extends AbstractController
         $furtherTraining->setHours($formValues['hours']);
         $furtherTraining->setDate(new DateTime($formValues['date']));
         
-        $user = $doctrine -> getRepository(User::class)->find($request->get('id'));
-        $furtherTraining -> setUser($user);
+        //$user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+        $furtherTraining -> setUserId($formValues['sub']);
 
         $certifiedPath = '';
         if ($certifiedFile instanceof UploadedFile) {
@@ -180,8 +184,8 @@ class CurriculumVitaeController extends AbstractController
             $teachingExperience -> setCourseload(json_encode($value['courseLoad']));
             $teachingExperience -> setCertifiedpdf($value['certifiedPdf']);
 
-            $user = $doctrine -> getRepository(User::class)->find($request->get('id'));
-            $teachingExperience -> setUser($user);
+            //$user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+            $teachingExperience -> setUserId($value['sub']);
          
             if($value['retirementDate'] !== NULL){
                 $teachingExperience -> setRetirementdate(new DateTime($value['retirementDate']));
@@ -225,8 +229,8 @@ class CurriculumVitaeController extends AbstractController
             $workExperience -> setIsworking($value['isWorking']);
             $workExperience -> setCertifiedpdf($value['certifiedPdf']);
          
-            $user = $doctrine -> getRepository(User::class)->find($request->get('id'));
-            $workExperience -> setUser($user);
+            //$user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+            $workExperience -> setUserId($value['sub']);
 
             if($value['retirementDate'] !== NULL){
                 $workExperience -> setRetirementdate(new DateTime($value['retirementDate']));
@@ -261,8 +265,8 @@ class CurriculumVitaeController extends AbstractController
             $prodIntellectual -> setTitleProd($value['titleProd']);
             $prodIntellectual -> setUrlVerification($value['urlVerification']);
 
-            $user = $doctrine -> getRepository(User::class)->find($request->get('id'));
-            $prodIntellectual -> setUser($user);
+            //$user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+            $prodIntellectual -> setUserId($value['sub']);
 
             $entityManager=$doctrine->getManager();
             $entityManager->persist($prodIntellectual);
@@ -289,8 +293,8 @@ class CurriculumVitaeController extends AbstractController
             $references -> setOccupation($value['occupation']);
             $references -> setPhone($value['phone']);
 
-            $user = $doctrine -> getRepository(User::class)->find($request->get('id'));
-            $references -> setUser($user);
+            //$user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+            $references -> setUserId($value['sub']);
 
             $entityManager = $doctrine->getManager();
             $entityManager -> persist($references);

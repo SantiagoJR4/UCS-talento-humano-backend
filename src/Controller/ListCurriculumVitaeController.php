@@ -17,7 +17,6 @@ class ListCurriculumVitaeController extends AbstractController
     #[Route('/listCurriculum-vitae/{id}', name: 'app_list_curriculum_vitae')]
     public function listPersonalData(ManagerRegistry $doctrine, Helpers $helper, int $id, Request $request): Response
     {
-       
         if($id === NULL){
             $response = new Response();
             $response->setStatusCode(404);
@@ -30,6 +29,8 @@ class ListCurriculumVitaeController extends AbstractController
             $personaldata = $doctrine->getRepository(PersonalData::class)->findOneBy(['user'=>$request->get('id')]);
             $academicTraining = $doctrine->getRepository(AcademicTraining::class)->findBy(['user'=>$request->get('id')]);
         }
+
+        
 
         $json = $helper->serializador($academicTraining);
 

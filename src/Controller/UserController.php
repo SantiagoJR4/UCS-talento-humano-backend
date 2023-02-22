@@ -14,23 +14,23 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class UserController extends AbstractController
 {
-    #[Route('/listarUser/{id}', name: 'app_user')]
-    public function user(ManagerRegistry $doctrine, Helpers $helpers, int $id): Response 
-    {
-        $datosUser = $doctrine->getRepository(User::class)->find($id);
+    // #[Route('/listarUser/{id}', name: 'app_user')]
+    // public function user(ManagerRegistry $doctrine, Helpers $helpers, int $id): Response 
+    // {
+    //     $datosUser = $doctrine->getRepository(User::class)->find($id);
 
-        $json = $helpers->serializador($datosUser);
-        return $json;
-    }
+    //     $json = $helpers->serializador($datosUser);
+    //     return $json;
+    // }
 
-    #[Route('/listarCurriculmVitae/{id}', name:'app_listar_curriculumVitae')]
-    public function listCurriculumVitae(ManagerRegistry $doctrine, Helpers $helpers,int $id): Response
-    {
-        $curriculumVitaeData = $doctrine->getRepository(CurriculumVitae::class)->find($id);
+    // #[Route('/listarCurriculmVitae/{id}', name:'app_listar_curriculumVitae')]
+    // public function listCurriculumVitae(ManagerRegistry $doctrine, Helpers $helpers,int $id): Response
+    // {
+    //     $curriculumVitaeData = $doctrine->getRepository(CurriculumVitae::class)->find($id);
 
-        $json = $helpers->serializador($curriculumVitaeData);
-        return $json;
-    }
+    //     $json = $helpers->serializador($curriculumVitaeData);
+    //     return $json;
+    // }
 
     #[Route('/login', name:'user_login')]
     public function loginUser(ManagerRegistry $doctrine, Helpers $helpers, Request $request): Response{
