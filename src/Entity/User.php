@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * User
@@ -11,7 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(name="user")
  * @ORM\Entity
  */
-class User
+class User implements UserInterface
 {
     /**
      * @var int
@@ -91,6 +92,22 @@ class User
      * @ORM\Column(name="url_photo", type="text", length=65535, nullable=true)
      */
     private $urlPhoto;
+
+    public function getRoles(): array
+    {
+        return array('ROLE_USER');
+    }
+
+    public function eraseCredentials()
+    {
+        
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return $this->identification;
+    }
+
 
     public function getId(): ?int
     {

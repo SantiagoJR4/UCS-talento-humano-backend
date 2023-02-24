@@ -2,11 +2,10 @@
 
 namespace App\Controller;
 
-use App\Entity\CurriculumVitae;
 use App\Service\Helpers;
 use App\Entity\User;
-
 use Doctrine\Persistence\ManagerRegistry;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,26 +13,8 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class UserController extends AbstractController
 {
-    // #[Route('/listarUser/{id}', name: 'app_user')]
-    // public function user(ManagerRegistry $doctrine, Helpers $helpers, int $id): Response 
-    // {
-    //     $datosUser = $doctrine->getRepository(User::class)->find($id);
-
-    //     $json = $helpers->serializador($datosUser);
-    //     return $json;
-    // }
-
-    // #[Route('/listarCurriculmVitae/{id}', name:'app_listar_curriculumVitae')]
-    // public function listCurriculumVitae(ManagerRegistry $doctrine, Helpers $helpers,int $id): Response
-    // {
-    //     $curriculumVitaeData = $doctrine->getRepository(CurriculumVitae::class)->find($id);
-
-    //     $json = $helpers->serializador($curriculumVitaeData);
-    //     return $json;
-    // }
-
-    #[Route('/login', name:'user_login')]
-    public function loginUser(ManagerRegistry $doctrine, Helpers $helpers, Request $request): Response{
+    #[Route('/api/login', name:'user_login')]
+    public function loginUser(ManagerRegistry $doctrine, Helpers $helpers, Request $request, JWTTokenManagerInterface $JWTManager): Response{
         $parameters = json_decode($request->getContent(), true);
 
         $passHash = hash('sha256', $parameters['password']);
@@ -52,8 +33,14 @@ class UserController extends AbstractController
             return $response;
         }
 
+        // $token = $JWTManager->create($user);
+        
+        // return new Response(json_encode([
+        //     'token' => $token,
+        // ]), 200,  ['content-Type' => 'application/json']);
+
         $response=new Response();
-        $json = $helpers->serializador($user);
+        $json = $helpers->serializador($response);
         //meter validación si se necesita evaluar el estado 200
         //Si es necesario, no enviar la contraseña en la respuesta
         $response->setContent(json_encode(['respuesta' => $json]));
