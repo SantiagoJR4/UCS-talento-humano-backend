@@ -33,16 +33,22 @@ class UserController extends AbstractController
             return $response;
         }
 
+        // $authorizationHeader = $request->headers->get('Authorization');
+        // $token = str_replace('Bearer', '', $authorizationHeader);
+
+        // $decodedToken = $JWTManager->decode($token);
+
         // $token = $JWTManager->create($user);
         
         // return new Response(json_encode([
         //     'token' => $token,
         // ]), 200,  ['content-Type' => 'application/json']);
 
-        $response=new Response();
-        $json = $helpers->serializador($response);
+        
         //meter validación si se necesita evaluar el estado 200
         //Si es necesario, no enviar la contraseña en la respuesta
+        $response=new Response();
+        $json = $helpers->serializador($response);
         $response->setContent(json_encode(['respuesta' => $json]));
 
         return $json;
