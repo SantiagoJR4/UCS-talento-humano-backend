@@ -7,6 +7,8 @@ use App\Service\Helpers;
 use App\Entity\User;
 
 use Doctrine\Persistence\ManagerRegistry;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -98,6 +100,16 @@ class UserController extends AbstractController
     
             return $response;
         }
+    }
+
+    #[Route('/login-jwt', name:'login-jwt')]
+    public function loginJwt(Request $request): Response
+    {
+        $jwtToken = $request->request->get('jwt_token');
+        $decodedToken = JWT::decode($jwtToken, new Key('Un1c4t0l1c4', 'HS256'));
+        $response = new Response();
+        $response->setContent(json_encode(['test' => $decodedToken]));
+        return $response;
     }
 
     //TODO : HACER VERIFICACIÓN DE CORREO
