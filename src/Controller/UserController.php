@@ -10,6 +10,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -103,13 +104,42 @@ class UserController extends AbstractController
     }
 
     #[Route('/login-jwt', name:'login-jwt')]
-    public function loginJwt(Request $request): Response
+    public function loginJwt(Request $request, ManagerRegistry $doctrine): Response
     {
-        $jwtToken = $request->request->get('jwt_token');
-        $decodedToken = JWT::decode($jwtToken, new Key('Un1c4t0l1c4', 'HS256'));
-        $response = new Response();
-        $response->setContent(json_encode(['test' => $decodedToken]));
-        return $response;
+        $data = json_decode($request->request->get('json'), true);
+        // $response = new Response();
+        // $response->setContent(json_encode(['json'=>$array]));
+        // return $response;
+        $client = HttpClient::create();
+        $responseIctus = $client->request('POST', 'https://ictus.unicatolicadelsur.edu.co/unicat/web/login',[
+            'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
+            'body' => http_build_query(['json' => json_encode($data)])
+        ]);
+        //if ($responseIctus->getStatusCode() === 200) {
+            $content = $responseIctus->getContent();
+            $response = new Response();
+            $response->setContent($content);
+            return $response;
+            // do something with the response content
+        //}
+        //return new Response('f');
+        // $passHash = hash('sha256', $parameters['password']);
+
+        // $user = $doctrine->getRepository(User::class)->findOneBy([
+        //     'type_identification' => $parameters[ 'tipoIdentificacion'],
+        //     'identification' => $parameters['identification'],
+        //     'password' => $passHash
+        // ]);
+        // if($user !== NULL){
+
+        // }
+        // works start
+        // $jwtToken = $request->request->get('jwt_token');
+        // $decodedToken = JWT::decode($jwtToken, new Key('Un1c4t0l1c4', 'HS256'));
+        // $response = new Response();
+        // $response->setContent(json_encode(['test' => $decodedToken]));
+        // return $response;
+        // works end
     }
 
     //TODO : HACER VERIFICACIÓN DE CORREO
