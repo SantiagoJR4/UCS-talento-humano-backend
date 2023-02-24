@@ -6,6 +6,8 @@ use App\Entity\AcademicTraining;
 use App\Entity\CurriculumVitae;
 use App\Entity\FurtherTraining;
 use App\Entity\IntellectualProduction;
+use App\Entity\Language;
+use App\Entity\Record;
 use App\Entity\ReferencesData;
 use App\Entity\TeachingExperience;
 use App\Entity\User;
@@ -149,6 +151,41 @@ class CurriculumVitaeController extends AbstractController
         return $response;
 
     }
+
+    #[Route('/curriculum-vitae/languages', name:'app_curriculum_vitae_languages')]
+    public function languages(ManagerRegistry $doctrine, Request $request): Response
+    {
+        $formData = $request->request->all();
+        $languagePdf = $request->files->get('languagePdf');
+        $formValues = [];
+        foreach($formData as $key => $value) { $formValues[$key] = json_decode($value); }
+        $language = new Language();
+        $language->setNameLanguage($formValues['language']);
+        $language->setToSpeak($formValues['speak']);
+        $language->setToRead($formValues['read']);
+        $language->setToWrite($formValues['write']);
+        $languagePath = '';
+        if($languagePdf instanceof UploadedFile){
+            $newFileName = $formValues['languagePdfName'].time().'.'.$languagePdf->guessExtension();
+            $languagePdf->move(
+                $this->getParameter('uploads_directory'),
+                $newFileName
+            );
+            $languagePdf = $this->getParameter('uploads_directory').'/'.$newFileName;
+            $language->setCertifiedPdf($languagePdf);
+        }
+
+        $entityManager=$doctrine->getManager();
+        $entityManager->persist($language);
+        $entityManager->flush();
+
+        $response=new Response();
+        $response->setContent(json_encode(['certified   Pdf' => $languagePdf]));
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+
+    }
     
     #[Route('/curriculum-vitae/teaching-experience', name: 'app_curriculum_vitae_teaching_experience')]
     public function teachingExperience(ManagerRegistry $doctrine): Response
@@ -258,6 +295,7 @@ class CurriculumVitaeController extends AbstractController
 
         return $response;
     }
+
     #[Route('/curriculum-vitae/references', name: 'app_curriculum_vitae_references')]
     public function references(ManagerRegistry $doctrine): Response
     {
@@ -279,6 +317,68 @@ class CurriculumVitaeController extends AbstractController
 
         $response=new Response();
         $response->setContent(json_encode(['respuesta' => 'Guardados datos referencias personales y laborales']));
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+    }
+
+    #[Route('/curriculum-vitae/record', name:'app_curriculum_vitae_record')]
+    public function record(ManagerRegistry $doctrine, Request $request): Response
+    {
+        $taxRecordFile = $request->files->get('taxRecordPdfFile');
+        $judicialRecordFile = $request->files->get('judicialRecordFile');
+        $disciplinaryRecordFile = $request->files->get('disciplinaryRecordFile');
+        $correctiveMeasuresFile = $request->files->get('correctiveMeasuresFile');
+
+        $formValues = [];
+        $record = new Record();
+
+        $taxRecordPath ='';
+        $judicialRecordPath ='';
+        $disciplinaryRecordPath = '';
+        $correctiveMeasuresPath = '';
+        
+        if($taxRecordFile && $judicialRecordFile && $disciplinaryRecordFile && $correctiveMeasuresFile instanceof UploadedFile){
+            $newFileNameTax = $formValues['taxRecordPdfName'].time().'.'.$taxRecordFile->guessExtension();
+            $taxRecordFile->move(
+                $this->getParameter('uploads_directory'),
+                $newFileNameTax
+            );
+            $taxRecordPath = $this->getParameter('uploads_directory').'/'.$newFileNameTax;
+            $record->setTaxrecordPdf($taxRecordPath);
+
+
+            $newFileNameJudicial = $formValues['taxRecordPdfName'].time().'.'.$judicialRecordFile->guessExtension();
+            $judicialRecordFile->move(
+                $this->getParameter('uploads_directory'),
+                $newFileNameJudicial
+            );
+            $judicialRecordPath = $this->getParameter('uploads_directory').'/'.$newFileNameJudicial;
+            $record->setJudicialrecordPdf($judicialRecordPath);
+
+            $newFileNameDisciplinary = $formValues['taxRecordPdfName'].time().'.'.$disciplinaryRecordFile->guessExtension();
+            $disciplinaryRecordFile->move(
+                $this->getParameter('uploads_directory'),
+                $newFileNameDisciplinary
+            );
+            $disciplinaryRecordPath = $this->getParameter('uploads_directory').'/'.$newFileNameDisciplinary;
+            $record->setDisciplinaryrecordPdf($disciplinaryRecordPath);
+
+            $newFileNameCorrective = $formValues['taxRecordPdfName'].time().'.'.$correctiveMeasuresFile->guessExtension();
+            $correctiveMeasuresFile->move(
+                $this->getParameter('uploads_directory'),
+                $newFileNameCorrective
+            );
+            $correctiveMeasuresPath = $this->getParameter('uploads_directory').'/'.$newFileNameCorrective;
+            $record->setCorrectivemeasuresPdf($correctiveMeasuresPath);
+
+        }
+        $entityManager = $doctrine->getManager();
+        $entityManager->persist($record);
+        $entityManager->flush();
+
+        $response=new Response();
+        $response->setContent(json_encode(['taxRecordPdf' => $taxRecordPath,'judicialRecordPdf' => $judicialRecordPath, 'disciplinaryRecordPdf' => $disciplinaryRecordPath, 'correctiveMeasuresPdf' => $correctiveMeasuresPath]));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;

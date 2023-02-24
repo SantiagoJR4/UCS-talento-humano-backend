@@ -41,7 +41,8 @@ class UserController extends AbstractController
         $passHash = hash('sha256', $parameters['password']);
 
         $user = $doctrine->getRepository(User::class)->findOneBy([
-            'identification' => $parameters['identification'],
+            'typeIdentification' => $parameters['tipo'],
+            'identification' => $parameters['numero'],
             'password' => $passHash
         ]);
 
