@@ -26,7 +26,9 @@ class CurriculumVitaeController extends AbstractController
     public function personalData(ManagerRegistry $doctrine, Request $request): Response
     {
         $formData = $request->request->all();
-        $url_photo = $request->files->get('url_photo');
+        $identificationFile = $request->files->get('identificationPdfFile');
+        $epsFile = $request->files->get('epsPdfFile');
+        $pensionFile = $request->files->get('pensionPdfFile');
         $formValues =[];
 
         foreach($formData as $key => $value) {$formValues[$key] = json_decode($value);}
@@ -44,25 +46,45 @@ class CurriculumVitaeController extends AbstractController
         $personalData -> setEps($formValues['eps']);
         $personalData -> setPension($formValues['pension']);
         
-        $user = $doctrine -> getRepository(User::class)->find($request->get('id'));
+        $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
         $personalData -> setUser($user);
 
-        $url_photoPath='';
-        if($url_photo instanceof UploadedFile){
-            $newFileName = $formValues['urlPhotoName'].time().'.'.$url_photo->guessExtension();
-            $url_photo->move(
+        $identificationPath='';
+        $epsPath = '';
+        $pensionPath = '';
+
+        if($identificationFile && $epsFile && $pensionFile instanceof UploadedFile){
+            $identificationName = $formValues['identificationPdfName'].time().'.'.$identificationFile->guessExtension();
+            $identificationFile->move(
                 $this->getParameter('uploads_directory'),
-                $newFileName
+                $identificationName
             );
-            $url_photoPath = $this->getParameter('uploads_directory').'/'.$newFileName;
-            $personalData -> setUrlPhoto($url_photoPath);
+            $identificationPath = $this->getParameter('uploads_directory').'/'.$identificationName;
+            $personalData -> setUrlPhoto($identificationPath);
+
+            $epsName = $formValues['epsPdfName'].time().'.'.$epsFile->guessExtension();
+            $epsFile->move(
+                $this->getParameter('uploads_directory'),
+                $epsName
+            );
+            $epsPath = $this->getParameter('uploads_directory').'/'.$epsName;
+            $personalData -> setUrlPhoto($epsPath);
+
+            $pensionName = $formValues['pensionPdfName'].time().'.'.$pensionFile->guessExtension();
+            $pensionFile->move(
+                $this->getParameter('uploads_directory'),
+                $pensionName
+            );
+            $pensionPath = $this->getParameter('uploads_directory').'/'.$pensionName;
+            $personalData -> setUrlPhoto($pensionPath);
+            
         }
         $entityManager = $doctrine->getManager();
         $entityManager->persist($personalData);
         $entityManager->flush();
 
         $response=new Response();
-        $response->setContent(json_encode(['urlPhoto' => $url_photoPath]));
+        $response->setContent(json_encode(['identificationPdf' => $identificationPath, 'epsPdf' => $epsPath, 'pensionPdf' => $pensionPath]));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
@@ -84,6 +106,10 @@ class CurriculumVitaeController extends AbstractController
         $academicTraining->setSnies($formValues['snies']);
         $academicTraining->setIsForeignUniversity($formValues['isForeignUniversity']);
         $academicTraining->setNameUniversity($formValues['nameUniversity']);
+
+        $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+        $academicTraining -> setUser($user);
+
         $degreePath = '';
         $certifiedPath = '';
         if( $degreeFile instanceof UploadedFile ) {
@@ -129,6 +155,10 @@ class CurriculumVitaeController extends AbstractController
         $furtherTraining->setInstitution($formValues['institution']);
         $furtherTraining->setHours($formValues['hours']);
         $furtherTraining->setDate(new DateTime($formValues['date']));
+
+        $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+        $furtherTraining -> setUser($user);
+
         $certifiedPath = '';
         if ($certifiedFile instanceof UploadedFile) {
             $newFileName = $formValues['certifiedPdfName'].time().'.'.$certifiedFile->guessExtension();
@@ -164,6 +194,10 @@ class CurriculumVitaeController extends AbstractController
         $language->setToSpeak($formValues['speak']);
         $language->setToRead($formValues['read']);
         $language->setToWrite($formValues['write']);
+
+        $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+        $language -> setUser($user);
+
         $languagePath = '';
         if($languagePdf instanceof UploadedFile){
             $newFileName = $formValues['languagePdfName'].time().'.'.$languagePdf->guessExtension();
@@ -171,8 +205,8 @@ class CurriculumVitaeController extends AbstractController
                 $this->getParameter('uploads_directory'),
                 $newFileName
             );
-            $languagePdf = $this->getParameter('uploads_directory').'/'.$newFileName;
-            $language->setCertifiedPdf($languagePdf);
+            $languagePath = $this->getParameter('uploads_directory').'/'.$newFileName;
+            $language->setCertifiedPdf($languagePath);
         }
 
         $entityManager=$doctrine->getManager();
@@ -180,7 +214,7 @@ class CurriculumVitaeController extends AbstractController
         $entityManager->flush();
 
         $response=new Response();
-        $response->setContent(json_encode(['certified   Pdf' => $languagePdf]));
+        $response->setContent(json_encode(['certified   Pdf' => $languagePath]));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
@@ -208,6 +242,9 @@ class CurriculumVitaeController extends AbstractController
             $teachingExperience -> setCourseload(json_encode($value['courseLoad']));
             $teachingExperience -> setCertifiedpdf($value['certifiedPdf']);
          
+            $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+            $teachingExperience -> setUser($user);
+
             if($value['retirementDate'] !== NULL){
                 $teachingExperience -> setRetirementdate(new DateTime($value['retirementDate']));
             }
@@ -250,6 +287,9 @@ class CurriculumVitaeController extends AbstractController
             $workExperience -> setIsworking($value['isWorking']);
             $workExperience -> setCertifiedpdf($value['certifiedPdf']);
          
+            $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+            $workExperience -> setUser($user);
+
             if($value['retirementDate'] !== NULL){
                 $workExperience -> setRetirementdate(new DateTime($value['retirementDate']));
             }
@@ -288,6 +328,8 @@ class CurriculumVitaeController extends AbstractController
             $entityManager->flush();
         }
 
+        $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+        $prodIntellectual -> setUser($user);
 
         $response=new Response();
         $response->setContent(json_encode(['respuesta' => 'Guardada nueva producción intelectual']));
@@ -314,6 +356,8 @@ class CurriculumVitaeController extends AbstractController
             $entityManager -> flush();
         }
 
+        $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+        $references -> setUser($user);
 
         $response=new Response();
         $response->setContent(json_encode(['respuesta' => 'Guardados datos referencias personales y laborales']));
@@ -332,6 +376,9 @@ class CurriculumVitaeController extends AbstractController
 
         $formValues = [];
         $record = new Record();
+
+        $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
+        $record -> setUser($user);
 
         $taxRecordPath ='';
         $judicialRecordPath ='';

@@ -41,6 +41,7 @@ class UserController extends AbstractController
 
         $passHash = hash('sha256', $parameters['password']);
 
+        //TODO: Verificar si hacer conexion con la base de datos del inge, para comparar los datos de login
         $user = $doctrine->getRepository(User::class)->findOneBy([
             'typeIdentification' => $parameters['tipo'],
             'identification' => $parameters['numero'],
@@ -135,11 +136,11 @@ class UserController extends AbstractController
 
         // }
         // works start
-        // $jwtToken = $request->request->get('jwt_token');
-        // $decodedToken = JWT::decode($jwtToken, new Key('Un1c4t0l1c4', 'HS256'));
-        // $response = new Response();
-        // $response->setContent(json_encode(['test' => $decodedToken]));
-        // return $response;
+        $jwtToken = $request->request->get('jwt_token');
+        $decodedToken = JWT::decode($jwtToken, new Key('Un1c4t0l1c4', 'HS256'));
+        $response = new Response();
+        $response->setContent(json_encode(['test' => $decodedToken]));
+        return $response;
         // works end
     }
 
