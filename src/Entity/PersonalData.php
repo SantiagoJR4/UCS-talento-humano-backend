@@ -114,11 +114,32 @@ class PersonalData
     private $pension;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="identification_pdf", type="text", length=65535, nullable=false)
+     */
+    private $identificationPdf;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="eps_pdf", type="text", length=65535, nullable=false)
+     */
+    private $epsPdf;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="pension_pdf", type="text", length=65535, nullable=false)
+     */
+    private $pensionPdf;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="sub")
      * })
      */
     private $user;
@@ -280,6 +301,42 @@ class PersonalData
     public function setPension(string $pension): self
     {
         $this->pension = $pension;
+
+        return $this;
+    }
+
+    public function getIdentificationPdf(): ?string
+    {
+        return $this->identificationPdf;
+    }
+
+    public function setIdentificationPdf(string $identificationPdf): self
+    {
+        $this->identificationPdf = $identificationPdf;
+
+        return $this;
+    }
+
+    public function getEpsPdf(): ?string
+    {
+        return $this->epsPdf;
+    }
+
+    public function setEpsPdf(string $epsPdf): self
+    {
+        $this->epsPdf = $epsPdf;
+
+        return $this;
+    }
+
+    public function getPensionPdf(): ?string
+    {
+        return $this->pensionPdf;
+    }
+
+    public function setPensionPdf(string $pensionPdf): self
+    {
+        $this->pensionPdf = $pensionPdf;
 
         return $this;
     }

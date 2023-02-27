@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * User
  *
- * @ORM\Table(name="user")
+ * @ORM\Table(name="user", uniqueConstraints={@ORM\UniqueConstraint(name="sub", columns={"sub"})})
  * @ORM\Entity
  */
 class User
@@ -91,6 +91,13 @@ class User
      * @ORM\Column(name="url_photo", type="text", length=65535, nullable=true)
      */
     private $urlPhoto;
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="sub", type="integer", nullable=false, options={"unsigned"=true})
+     */
+    private $sub;
 
     public function getId(): ?int
     {
@@ -213,6 +220,18 @@ class User
     public function setUrlPhoto(?string $urlPhoto): self
     {
         $this->urlPhoto = $urlPhoto;
+
+        return $this;
+    }
+
+    public function getSub(): ?int
+    {
+        return $this->sub;
+    }
+
+    public function setSub(int $sub): self
+    {
+        $this->sub = $sub;
 
         return $this;
     }

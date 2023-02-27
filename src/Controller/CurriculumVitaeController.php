@@ -3,10 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\AcademicTraining;
-use App\Entity\CurriculumVitae;
 use App\Entity\FurtherTraining;
 use App\Entity\IntellectualProduction;
 use App\Entity\Language;
+use App\Entity\PersonalData;
 use App\Entity\Record;
 use App\Entity\ReferencesData;
 use App\Entity\TeachingExperience;
@@ -32,7 +32,7 @@ class CurriculumVitaeController extends AbstractController
         $formValues =[];
 
         foreach($formData as $key => $value) {$formValues[$key] = json_decode($value);}
-        $personalData = new CurriculumVitae();
+        $personalData = new PersonalData();
         $personalData -> setResidenceAddress($formValues['residenceAddress']);
         $personalData -> setDepartment($formValues['department']);
         $personalData -> setMunicipality($formValues['municipality']);
@@ -60,7 +60,7 @@ class CurriculumVitaeController extends AbstractController
                 $identificationName
             );
             $identificationPath = $this->getParameter('uploads_directory').'/'.$identificationName;
-            $personalData -> setUrlPhoto($identificationPath);
+            $personalData -> setIdentificationPdf($identificationPath);
 
             $epsName = $formValues['epsPdfName'].time().'.'.$epsFile->guessExtension();
             $epsFile->move(
@@ -68,7 +68,7 @@ class CurriculumVitaeController extends AbstractController
                 $epsName
             );
             $epsPath = $this->getParameter('uploads_directory').'/'.$epsName;
-            $personalData -> setUrlPhoto($epsPath);
+            $personalData -> setEpsPdf($epsPath);
 
             $pensionName = $formValues['pensionPdfName'].time().'.'.$pensionFile->guessExtension();
             $pensionFile->move(
@@ -76,7 +76,7 @@ class CurriculumVitaeController extends AbstractController
                 $pensionName
             );
             $pensionPath = $this->getParameter('uploads_directory').'/'.$pensionName;
-            $personalData -> setUrlPhoto($pensionPath);
+            $personalData -> setPensionPdf($pensionPath);
             
         }
         $entityManager = $doctrine->getManager();
