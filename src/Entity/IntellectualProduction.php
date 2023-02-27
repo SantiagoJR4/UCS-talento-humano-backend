@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * IntellectualProduction
  *
- * @ORM\Table(name="intellectual_production", uniqueConstraints={@ORM\UniqueConstraint(name="sub", columns={"user_id"})})
+ * @ORM\Table(name="intellectual_production", indexes={@ORM\Index(name="fk_intellectualProd_user", columns={"user_id"})})
  * @ORM\Entity
  */
 class IntellectualProduction
@@ -21,13 +21,6 @@ class IntellectualProduction
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="url_cvlac", type="text", length=65535, nullable=false)
-     */
-    private $urlCvlac;
 
     /**
      * @var string
@@ -51,27 +44,18 @@ class IntellectualProduction
     private $urlVerification;
 
     /**
-     * @var int
+     * @var \User
      *
-     * @ORM\Column(name="user_id", type="integer", nullable=false)
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="sub")
+     * })
      */
-    private $userId;
+    private $user;
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getUrlCvlac(): ?string
-    {
-        return $this->urlCvlac;
-    }
-
-    public function setUrlCvlac(string $urlCvlac): self
-    {
-        $this->urlCvlac = $urlCvlac;
-
-        return $this;
     }
 
     public function getTypeProd(): ?string
@@ -110,14 +94,14 @@ class IntellectualProduction
         return $this;
     }
 
-    public function getUserId(): ?int
+    public function getUser(): ?User
     {
-        return $this->userId;
+        return $this->user;
     }
 
-    public function setUserId(int $userId): self
+    public function setUser(?User $user): self
     {
-        $this->userId = $userId;
+        $this->user = $user;
 
         return $this;
     }

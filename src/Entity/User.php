@@ -95,7 +95,7 @@ class User
     /**
      * @var int
      *
-     * @ORM\Column(name="sub", type="integer", nullable=false)
+     * @ORM\Column(name="sub", type="integer", nullable=false, options={"unsigned"=true})
      */
     private $sub;
 

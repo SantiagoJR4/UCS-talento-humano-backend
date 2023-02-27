@@ -29,7 +29,7 @@ function createJwtResponse($user) {
     $payload = [
         'sub' => $user->getSub(),
         'iat' => time(),
-        'exp' => time() + 3600
+        'exp' => time() + 604800
     ];
     $token = JWT::encode($payload, $jwtKey, 'HS256');
     return new JsonResponse(['token'=>$token, 'user'=>$resp]);
@@ -121,7 +121,7 @@ class UserController extends AbstractController
             if (isset($verifyError['status']) && $verifyError['status'] === 'error') {
                 return new JsonResponse(['status' => $verifyError['status'], 'data' => $verifyError['data']]);
             }
-            $decodedToken = JWT::decode($content, new Key($jwtKey, 'HS256'), ['HS256']);
+            $decodedToken = JWT::decode(trim($content, '"'), new Key($jwtKey, 'HS256'));
             $json = json_encode($decodedToken);
             $array = json_decode($json, true);
             $registerUser = $userService->createUser($array);
@@ -135,7 +135,7 @@ class UserController extends AbstractController
         $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
         $token = $request->query->get('token');
         try {
-            $decodedToken = JWT::decode($token, new Key($jwtKey, 'HS256'), ['HS256']);
+            $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
         } catch (\Exception $e) {
             return new JsonResponse(false);
         }

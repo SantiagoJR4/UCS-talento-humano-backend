@@ -12,6 +12,8 @@ use App\Entity\User;
 use App\Entity\WorkExperience;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -118,7 +120,11 @@ class CurriculumVitaeController extends AbstractController
     public function furtherTraining(ManagerRegistry $doctrine, Request $request): Response
     {
         $formData = $request->request->all();
-        $certifiedFile = $request->files->get('certifiedPdfFile');
+        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $token = $request->query->get('token');
+        $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
+        $sub= $decodedToken->sub;
+        // $certifiedFile = $request->files->get('certifiedPdfFile');
         $formValues = [];
         foreach( $formData as $key => $value ) { $formValues[$key] = json_decode($value); }
         $furtherTraining = new FurtherTraining();
@@ -127,23 +133,24 @@ class CurriculumVitaeController extends AbstractController
         $furtherTraining->setInstitution($formValues['institution']);
         $furtherTraining->setHours($formValues['hours']);
         $furtherTraining->setDate(new DateTime($formValues['date']));
-        $certifiedPath = '';
-        if ($certifiedFile instanceof UploadedFile) {
-            $newFileName = $formValues['certifiedPdfName'].time().'.'.$certifiedFile->guessExtension();
-            $certifiedFile->move(
-                $this->getParameter('uploads_directory'),
-                $newFileName
-            );
-            $certifiedPath = $this->getParameter('uploads_directory').'/'.$newFileName;
-            $furtherTraining->setCertifiedPdf($certifiedPath);
-        }
-    
+        $user = $doctrine -> getRepository(User::class)->findOneBy(['sub' => $sub]);
+        $furtherTraining -> setUser($user);
+        $certifiedPath = 'prueba';
+        // if ($certifiedFile instanceof UploadedFile) {
+            //     $newFileName = $formValues['certifiedPdfName'].time().'.'.$certifiedFile->guessExtension();
+            //     $certifiedFile->move(
+                //         $this->getParameter('uploads_directory'),
+                //         $newFileName
+                //     );
+                //     $certifiedPath = $this->getParameter('uploads_directory').'/'.$newFileName;
+        //$furtherTraining->setCertifiedPdf($certifiedPath);
+        // }
         $entityManager=$doctrine->getManager();
         $entityManager->persist($furtherTraining);
         $entityManager->flush();
 
         $response=new Response();
-        $response->setContent(json_encode(['certified   Pdf' => $certifiedPath]));
+        $response->setContent(json_encode(['certified Pdf' => $certifiedPath]));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
@@ -241,7 +248,7 @@ class CurriculumVitaeController extends AbstractController
 
         foreach($data as $key => $value){
             $prodIntellectual = new IntellectualProduction();
-            $prodIntellectual -> setUrlCvlac($value['urlCvlac']);
+            // $prodIntellectual -> setUrlCvlac($value['urlCvlac']);
             $prodIntellectual -> setTypeProd($value['typeProd']);
             $prodIntellectual -> setTitleProd($value['titleProd']);
             $prodIntellectual -> setUrlVerification($value['urlVerification']);

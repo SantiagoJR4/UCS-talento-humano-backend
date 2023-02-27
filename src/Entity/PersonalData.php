@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * PersonalData
  *
- * @ORM\Table(name="personal_data", uniqueConstraints={@ORM\UniqueConstraint(name="sub", columns={"user_id"})})
+ * @ORM\Table(name="personal_data", uniqueConstraints={@ORM\UniqueConstraint(name="userid_curriculumVitae", columns={"user_id"})})
  * @ORM\Entity
  */
 class PersonalData
@@ -114,11 +114,42 @@ class PersonalData
     private $pension;
 
     /**
-     * @var int
+     * @var string
      *
-     * @ORM\Column(name="user_id", type="integer", nullable=false)
+     * @ORM\Column(name="identification_pdf", type="text", length=65535, nullable=false)
      */
-    private $userId;
+    private $identificationPdf;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="eps_pdf", type="text", length=65535, nullable=false)
+     */
+    private $epsPdf;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="pension_pdf", type="text", length=65535, nullable=false)
+     */
+    private $pensionPdf;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="url_cvlac", type="string", length=255, nullable=true)
+     */
+    private $urlCvlac;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="sub")
+     * })
+     */
+    private $user;
 
     public function getId(): ?int
     {
@@ -281,14 +312,62 @@ class PersonalData
         return $this;
     }
 
-    public function getUserId(): ?int
+    public function getIdentificationPdf(): ?string
     {
-        return $this->userId;
+        return $this->identificationPdf;
     }
 
-    public function setUserId(int $userId): self
+    public function setIdentificationPdf(string $identificationPdf): self
     {
-        $this->userId = $userId;
+        $this->identificationPdf = $identificationPdf;
+
+        return $this;
+    }
+
+    public function getEpsPdf(): ?string
+    {
+        return $this->epsPdf;
+    }
+
+    public function setEpsPdf(string $epsPdf): self
+    {
+        $this->epsPdf = $epsPdf;
+
+        return $this;
+    }
+
+    public function getPensionPdf(): ?string
+    {
+        return $this->pensionPdf;
+    }
+
+    public function setPensionPdf(string $pensionPdf): self
+    {
+        $this->pensionPdf = $pensionPdf;
+
+        return $this;
+    }
+
+    public function getUrlCvlac(): ?string
+    {
+        return $this->urlCvlac;
+    }
+
+    public function setUrlCvlac(?string $urlCvlac): self
+    {
+        $this->urlCvlac = $urlCvlac;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }
