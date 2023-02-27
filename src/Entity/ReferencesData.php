@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * ReferencesData
  *
- * @ORM\Table(name="references_data", indexes={@ORM\Index(name="fk_references_user", columns={"user_id"})})
+ * @ORM\Table(name="references_data", uniqueConstraints={@ORM\UniqueConstraint(name="sub", columns={"user_id"})})
  * @ORM\Entity
  */
 class ReferencesData
@@ -50,14 +50,14 @@ class ReferencesData
     private $phone;
 
     /**
-     * @var \User
+     * @var int
      *
      * @ORM\ManyToOne(targetEntity="User")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="user_id", referencedColumnName="sub")
      * })
      */
-    private $user;
+    private $userId;
 
     public function getId(): ?int
     {
@@ -112,14 +112,14 @@ class ReferencesData
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getUserId(): ?int
     {
-        return $this->user;
+        return $this->userId;
     }
 
-    public function setUser(?User $user): self
+    public function setUserId(int $userId): self
     {
-        $this->user = $user;
+        $this->userId = $userId;
 
         return $this;
     }

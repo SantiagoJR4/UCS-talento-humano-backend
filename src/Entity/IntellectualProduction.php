@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * IntellectualProduction
  *
- * @ORM\Table(name="intellectual_production", indexes={@ORM\Index(name="fk_intellectualProd_user", columns={"user_id"})})
+ * @ORM\Table(name="intellectual_production", uniqueConstraints={@ORM\UniqueConstraint(name="sub", columns={"user_id"})})
  * @ORM\Entity
  */
 class IntellectualProduction
@@ -51,14 +51,14 @@ class IntellectualProduction
     private $urlVerification;
 
     /**
-     * @var \User
+     * @var int
      *
      * @ORM\ManyToOne(targetEntity="User")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="user_id", referencedColumnName="sub")
      * })
      */
-    private $user;
+    private $userId;
 
     public function getId(): ?int
     {
@@ -113,14 +113,14 @@ class IntellectualProduction
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getUserId(): ?int
     {
-        return $this->user;
+        return $this->userId;
     }
 
-    public function setUser(?User $user): self
+    public function setUserId(int $userId): self
     {
-        $this->user = $user;
+        $this->userId = $userId;
 
         return $this;
     }

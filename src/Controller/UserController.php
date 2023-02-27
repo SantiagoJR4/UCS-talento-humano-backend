@@ -4,16 +4,37 @@ namespace App\Controller;
 
 use App\Entity\CurriculumVitae;
 use App\Service\Helpers;
+use App\Service\UserService;
 use App\Entity\User;
-
+use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+
+function createJwtResponse($user) {
+    $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+    $resp = [
+        'names' => $user->getNames(),
+        'lastNames' => $user->getLastNames(),
+        'email' => $user->getEmail(),
+        'identification' => $user->getIdentification(),
+        'typeIdentification' => $user->getTypeIdentification()
+    ];
+    $payload = [
+        'sub' => $user->getSub(),
+        'iat' => time(),
+        'exp' => time() + 3600
+    ];
+    $token = JWT::encode($payload, $jwtKey, 'HS256');
+    return new JsonResponse(['token'=>$token, 'user'=>$resp]);
+}
+
 
 class UserController extends AbstractController
 {
@@ -34,38 +55,7 @@ class UserController extends AbstractController
         $json = $helpers->serializador($curriculumVitaeData);
         return $json;
     }
-
-    #[Route('/login', name:'user_login')]
-    public function loginUser(ManagerRegistry $doctrine, Helpers $helpers, Request $request): Response{
-        $parameters = json_decode($request->getContent(), true);
-
-        $passHash = hash('sha256', $parameters['password']);
-
-        //TODO: Verificar si hacer conexion con la base de datos del inge, para comparar los datos de login
-        $user = $doctrine->getRepository(User::class)->findOneBy([
-            'typeIdentification' => $parameters['tipo'],
-            'identification' => $parameters['numero'],
-            'password' => $passHash
-        ]);
-
-        if($user === NULL){
-            $response = new Response();
-            $response->setStatusCode(404);
-            $response->setContent('El usuario y contraseña son incorrectos!!');
-            $response->headers->set('Content-Type', 'application/json');
-            
-            return $response;
-        }
-
-        $response=new Response();
-        $json = $helpers->serializador($user);
-        //meter validación si se necesita evaluar el estado 200
-        //Si es necesario, no enviar la contraseña en la respuesta
-        $response->setContent(json_encode(['respuesta' => $json]));
-
-        return $json;
-    }
-
+    
     #[Route('/register', name:'user_register')]
     public function registerUser(ManagerRegistry $doctrine): Response
     {
@@ -105,45 +95,55 @@ class UserController extends AbstractController
         }
     }
 
-    #[Route('/login-jwt', name:'login-jwt')]
-    public function loginJwt(Request $request, ManagerRegistry $doctrine): Response
+    #[Route('/login', name: 'login')]
+    public function loginJwt(Request $request, ManagerRegistry $doctrine, UserService $userService): JsonResponse
     {
+        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
         $data = json_decode($request->request->get('json'), true);
-        // $response = new Response();
-        // $response->setContent(json_encode(['json'=>$array]));
-        // return $response;
+        $passHash = hash('sha256', $data['password']);
+        $user = $doctrine->getRepository(User::class)->findOneBy([
+            'typeIdentification' => $data['tipoIdentificacion'],
+            'identification' => $data['numero'],
+            'password' => $passHash
+        ]);
+
+        if ($user !== NULL) {
+            return createJwtResponse($user);
+        }
         $client = HttpClient::create();
-        $responseIctus = $client->request('POST', 'https://ictus.unicatolicadelsur.edu.co/unicat/web/login',[
+        $responseIctus = $client->request('POST', 'https://ictus.unicatolicadelsur.edu.co/unicat/web/login', [
             'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
             'body' => http_build_query(['json' => json_encode($data)])
         ]);
-        //if ($responseIctus->getStatusCode() === 200) {
+        if ($responseIctus->getStatusCode() === 200) {
             $content = $responseIctus->getContent();
-            $response = new Response();
-            $response->setContent($content);
-            return $response;
-            // do something with the response content
-        //}
-        //return new Response('f');
-        // $passHash = hash('sha256', $parameters['password']);
-
-        // $user = $doctrine->getRepository(User::class)->findOneBy([
-        //     'type_identification' => $parameters[ 'tipoIdentificacion'],
-        //     'identification' => $parameters['identification'],
-        //     'password' => $passHash
-        // ]);
-        // if($user !== NULL){
-
-        // }
-        // works start
-        $jwtToken = $request->request->get('jwt_token');
-        $decodedToken = JWT::decode($jwtToken, new Key('Un1c4t0l1c4', 'HS256'));
-        $response = new Response();
-        $response->setContent(json_encode(['test' => $decodedToken]));
-        return $response;
-        // works end
+            $verifyError = json_decode($content, true);
+            if (isset($verifyError['status']) && $verifyError['status'] === 'error') {
+                return new JsonResponse(['status' => $verifyError['status'], 'data' => $verifyError['data']]);
+            }
+            $decodedToken = JWT::decode($content, new Key($jwtKey, 'HS256'), ['HS256']);
+            $json = json_encode($decodedToken);
+            $array = json_decode($json, true);
+            $registerUser = $userService->createUser($array);
+            return createJwtResponse($registerUser);
+        }
     }
 
+    #[Route('/validate-token', name: 'validate-token')]
+    public function validateToken(Request $request): JsonResponse
+    {
+        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $token = $request->query->get('token');
+        try {
+            $decodedToken = JWT::decode($token, new Key($jwtKey, 'HS256'), ['HS256']);
+        } catch (\Exception $e) {
+            return new JsonResponse(false);
+        }
+        $expirationTime = $decodedToken->exp;
+        $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
+        return new JsonResponse($isTokenValid);
+    }
+ 
     //TODO : HACER VERIFICACIÓN DE CORREO
 
     // #[Route('/verifyEmail', name:'user_verifyemail')]
