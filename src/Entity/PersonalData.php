@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * PersonalData
  *
- * @ORM\Table(name="personal_data", uniqueConstraints={@ORM\UniqueConstraint(name="userid_curriculumVitae", columns={"user_id"})})
+ * @ORM\Table(name="personal_data", uniqueConstraints={@ORM\UniqueConstraint(name="sub", columns={"user_id"})})
  * @ORM\Entity
  */
 class PersonalData
@@ -114,14 +114,11 @@ class PersonalData
     private $pension;
 
     /**
-     * @var \User
+     * @var int
      *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     * })
+     * @ORM\Column(name="user_id", type="integer", nullable=false)
      */
-    private $user;
+    private $userId;
 
     public function getId(): ?int
     {
@@ -284,14 +281,14 @@ class PersonalData
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getUserId(): ?int
     {
-        return $this->user;
+        return $this->userId;
     }
 
-    public function setUser(?User $user): self
+    public function setUserId(int $userId): self
     {
-        $this->user = $user;
+        $this->userId = $userId;
 
         return $this;
     }

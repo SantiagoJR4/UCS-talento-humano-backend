@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Language
  *
- * @ORM\Table(name="language", indexes={@ORM\Index(name="fk_language_user", columns={"user_id"})})
+ * @ORM\Table(name="language", uniqueConstraints={@ORM\UniqueConstraint(name="sub", columns={"user_id"})})
  * @ORM\Entity
  */
 class Language
@@ -58,14 +58,11 @@ class Language
     private $certifiedPdf;
 
     /**
-     * @var \User
+     * @var int
      *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     * })
+     * @ORM\Column(name="user_id", type="integer", nullable=false)
      */
-    private $user;
+    private $userId;
 
     public function getId(): ?int
     {
@@ -132,14 +129,14 @@ class Language
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getUserId(): ?int
     {
-        return $this->user;
+        return $this->userId;
     }
 
-    public function setUser(?User $user): self
+    public function setUserId(int $userId): self
     {
-        $this->user = $user;
+        $this->userId = $userId;
 
         return $this;
     }
