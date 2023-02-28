@@ -26,14 +26,17 @@ use Symfony\Component\Routing\Annotation\Route;
 class CurriculumVitaeController extends AbstractController
 {
     #[Route('/curriculum-vitae/personal-data', name:'app_curriculum_vitae_personal-data')]
-    public function personalData(ManagerRegistry $doctrine, Request $request): Response
+    public function personalData(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): Response
     {
         $formData = $request->request->all();
-        $url_photo = $request->files->get('url_photo');
+        $identificationFile = $request->files->get('identificationPdfFile');
+        $epsFile = $request->files->get('epsPdfFile');
+        $pensionFile = $request->files->get('pensionPdfFile');
+        $token = $request->query->get('token');
+        $user = $vToken->getUserIdFromToken($token);
         $formValues =[];
-
         foreach($formData as $key => $value) {$formValues[$key] = json_decode($value);}
-        $personalData = new CurriculumVitae();
+        $personalData = new PersonalData();
         $personalData -> setResidenceAddress($formValues['residenceAddress']);
         $personalData -> setDepartment($formValues['department']);
         $personalData -> setMunicipality($formValues['municipality']);
@@ -46,35 +49,55 @@ class CurriculumVitaeController extends AbstractController
         $personalData -> setMaritalStatus($formValues['maritalStatus']);
         $personalData -> setEps($formValues['eps']);
         $personalData -> setPension($formValues['pension']);
-        
-        $user = $doctrine -> getRepository(User::class)->find($request->get('id'));
         $personalData -> setUser($user);
 
-        $url_photoPath='';
-        if($url_photo instanceof UploadedFile){
-            $newFileName = $formValues['urlPhotoName'].time().'.'.$url_photo->guessExtension();
-            $url_photo->move(
+        $identificationPath='';
+        $epsPath = '';
+        $pensionPath = '';
+
+        if($identificationFile && $epsFile && $pensionFile instanceof UploadedFile){
+            $identificationName = $formValues['identificationPdfName'].time().'.'.$identificationFile->guessExtension();
+            $identificationFile->move(
                 $this->getParameter('uploads_directory'),
-                $newFileName
+                $identificationName
             );
-            $url_photoPath = $this->getParameter('uploads_directory').'/'.$newFileName;
-            $personalData -> setUrlPhoto($url_photoPath);
+            $identificationPath = $this->getParameter('uploads_directory').'/'.$identificationName;
+            $personalData -> setIdentificationPdf($identificationPath);
+
+            $epsName = $formValues['epsPdfName'].time().'.'.$epsFile->guessExtension();
+            $epsFile->move(
+                $this->getParameter('uploads_directory'),
+                $epsName
+            );
+            $epsPath = $this->getParameter('uploads_directory').'/'.$epsName;
+            $personalData -> setEpsPdf($epsPath);
+
+            $pensionName = $formValues['pensionPdfName'].time().'.'.$pensionFile->guessExtension();
+            $pensionFile->move(
+                $this->getParameter('uploads_directory'),
+                $pensionName
+            );
+            $pensionPath = $this->getParameter('uploads_directory').'/'.$pensionName;
+            $personalData -> setPensionPdf($pensionPath);
+            
         }
         $entityManager = $doctrine->getManager();
         $entityManager->persist($personalData);
         $entityManager->flush();
 
         $response=new Response();
-        $response->setContent(json_encode(['urlPhoto' => $url_photoPath]));
+        $response->setContent(json_encode(['identificationPdf' => $identificationPath, 'epsPdf' => $epsPath, 'pensionPdf' => $pensionPath]));
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
     }
 
     #[Route('/curriculum-vitae/academic-training', name: 'app_curriculum_vitae_academic_training')]
-    public function academicTraining(ManagerRegistry $doctrine, Request $request): Response
+    public function academicTraining(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): Response
     {
         $formData = $request->request->all();
+        $token = $request->query->get('token');
+        $user = $vToken->getUserIdFromToken($token);
         $degreeFile = $request->files->get('degreePdfFile');
         $certifiedFile = $request->files->get('certifiedTitlePdfFile') !== NULL ? $request->files->get('certifiedTitlePdfFile') : NULL;
         $formValues = [];
@@ -87,6 +110,7 @@ class CurriculumVitaeController extends AbstractController
         $academicTraining->setSnies($formValues['snies']);
         $academicTraining->setIsForeignUniversity($formValues['isForeignUniversity']);
         $academicTraining->setNameUniversity($formValues['nameUniversity']);
+        $academicTraining->setUser($user);
         $degreePath = '';
         $certifiedPath = '';
         if( $degreeFile instanceof UploadedFile ) {
@@ -158,38 +182,45 @@ class CurriculumVitaeController extends AbstractController
     }
     
     #[Route('/curriculum-vitae/teaching-experience', name: 'app_curriculum_vitae_teaching_experience')]
-    public function teachingExperience(ManagerRegistry $doctrine): Response
+    public function teachingExperience(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): Response
     {
-        $request = Request::createFromGlobals();
-        $data = json_decode($request->getContent(), true);
-
-        foreach($data as $key => $value){
-
-            $teachingExperience = new TeachingExperience();
-            $teachingExperience -> setIsforeignuniversity($value['isForeignUniversity']);
-            $teachingExperience -> setSnies($value['snies']);
-            $teachingExperience -> setNameuniversity($value['nameUniversity']);
-            $teachingExperience -> setFaculty($value['faculty']);
-            $teachingExperience -> setProgram($value['program']);
-            $teachingExperience -> setDateadmission(new DateTime($value['admissionDate']));
-            $teachingExperience -> setIsactive($value['isActive']);
-
-            $teachingExperience -> setContractmodality($value['contractModality']);
-            $teachingExperience -> setCourseload(json_encode($value['courseLoad']));
-            $teachingExperience -> setCertifiedpdf($value['certifiedPdf']);
-         
-            if($value['retirementDate'] !== NULL){
-                $teachingExperience -> setRetirementdate(new DateTime($value['retirementDate']));
-            }
-            else{
-                $teachingExperience -> setRetirementdate(NULL);
-            }
-                
+        $formData = $request->request->all();
+        $token = $request->query->get('token');
+        $user = $vToken->getUserIdFromToken($token);
+        $certifiedFile = $request->files->get('certifiedPdfFile');
+        $formValues = [];
+        foreach( $formData as $key => $value ) { $formValues[$key] = json_decode($value); }
+        $teachingExperience = new TeachingExperience();
+        $teachingExperience -> setIsforeignuniversity($formValues['isForeignUniversity']);
+        $teachingExperience -> setSnies($formValues['snies']);
+        $teachingExperience -> setNameuniversity($formValues['nameUniversity']);
+        $teachingExperience -> setFaculty($formValues['faculty']);
+        $teachingExperience -> setProgram($formValues['program']);
+        $teachingExperience -> setDateadmission(new DateTime($formValues['admissionDate']));
+        $teachingExperience -> setIsactive($formValues['isActive']);
+        $teachingExperience -> setContractmodality($formValues['contractModality']);
+        $teachingExperience -> setCourseload(json_encode($formValues['courseLoad']));
+        $teachingExperience -> setCertifiedpdf($formValues['certifiedPdf']);
+        $teachingExperience->setUser($user);
         
-            $entityManager=$doctrine->getManager();
-            $entityManager->persist($teachingExperience);
-            $entityManager->flush();
+        if(isSet($formValues['retirementDate'])){
+            $teachingExperience -> setRetirementdate(new DateTime($formValues['retirementDate']));
         }
+        else{
+            $teachingExperience -> setRetirementdate(NULL);
+        }
+        if ($certifiedFile instanceof UploadedFile) {
+            $newFileName = $formValues['certifiedPdfName'].time().'.'.$certifiedFile->guessExtension();
+            $certifiedFile->move(
+                    $this->getParameter('uploads_directory'),
+                    $newFileName
+                );
+            $certifiedPath = $this->getParameter('uploads_directory').'/'.$newFileName;
+            $teachingExperience->setCertifiedPdf($certifiedPath);
+        }
+        $entityManager=$doctrine->getManager();
+        $entityManager->persist($teachingExperience);
+        $entityManager->flush();
 
         $response=new Response();
         $response->setContent(json_encode(['respuesta' => 'Guardada nueva experiencia docente']));
@@ -200,37 +231,45 @@ class CurriculumVitaeController extends AbstractController
     }
 
     #[Route('/curriculum-vitae/work-experience', name: 'app_curriculum_vitae_work_experience')]
-    public function workExperience(ManagerRegistry $doctrine): Response
+    public function workExperience(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): Response
     {
-        $request = Request::createFromGlobals();
-        $data = json_decode($request->getContent(), true);
-
-        foreach($data as $key => $value){
-
-            $workExperience = new WorkExperience();
-            $workExperience -> setCompanyname($value['companyName']);
-            $workExperience -> setPosition($value['position']);
-            $workExperience -> setDependence($value['dependence']);
-            $workExperience -> setDepartment($value['department']);
-            $workExperience -> setMunicipality($value['municipality']);
-            $workExperience -> setCompanyaddress($value['companyAddress']);
-            $workExperience -> setBossname($value['bossName']);
-            $workExperience -> setPhone($value['phone']);
-            $workExperience -> setAdmissiondate(new DateTime($value['admissionDate']));
-            $workExperience -> setIsworking($value['isWorking']);
-            $workExperience -> setCertifiedpdf($value['certifiedPdf']);
-         
-            if($value['retirementDate'] !== NULL){
-                $workExperience -> setRetirementdate(new DateTime($value['retirementDate']));
-            }
-            else{
-                $workExperience -> setRetirementdate(NULL);
-            }
-        
-            $entityManager=$doctrine->getManager();
-            $entityManager->persist($workExperience);
-            $entityManager->flush();
+        $formData = $request->request->all();
+        $token = $request->query->get('token');
+        $user = $vToken->getUserIdFromToken($token);
+        $certifiedFile = $request->files->get('certifiedPdfFile');
+        $formValues = [];
+        foreach( $formData as $key => $value ) { $formValues[$key] = json_decode($value); }
+        $workExperience = new WorkExperience();
+        $workExperience -> setCompanyname($formValues['companyName']);
+        $workExperience -> setPosition($formValues['position']);
+        $workExperience -> setDependence($formValues['dependence']);
+        $workExperience -> setDepartment($formValues['department']);
+        $workExperience -> setMunicipality($formValues['municipality']);
+        $workExperience -> setCompanyaddress($formValues['companyAddress']);
+        $workExperience -> setBossname($formValues['bossName']);
+        $workExperience -> setPhone($formValues['phone']);
+        $workExperience -> setAdmissiondate(new DateTime($formValues['admissionDate']));
+        $workExperience -> setIsworking($formValues['isWorking']);
+        $workExperience -> setCertifiedpdf($formValues['certifiedPdf']);
+        $workExperience -> setUser($user);
+        if($formValues['retirementDate'] !== NULL){
+            $workExperience -> setRetirementdate(new DateTime($formValues['retirementDate']));
         }
+        else{
+            $workExperience -> setRetirementdate(NULL);
+        }
+        if ($certifiedFile instanceof UploadedFile) {
+            $newFileName = $formValues['certifiedPdfName'].time().'.'.$certifiedFile->guessExtension();
+            $certifiedFile->move(
+                    $this->getParameter('uploads_directory'),
+                    $newFileName
+                );
+            $certifiedPath = $this->getParameter('uploads_directory').'/'.$newFileName;
+            $workExperience->setCertifiedPdf($certifiedPath);
+        }
+        $entityManager=$doctrine->getManager();
+        $entityManager->persist($workExperience);
+        $entityManager->flush();
 
         $response=new Response();
         $response->setContent(json_encode(['respuesta' => 'Guardada nueva experiencia laboral']));
