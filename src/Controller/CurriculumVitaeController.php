@@ -124,7 +124,7 @@ class CurriculumVitaeController extends AbstractController
         $token = $request->query->get('token');
         $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
         $sub= $decodedToken->sub;
-        // $certifiedFile = $request->files->get('certifiedPdfFile');
+        $certifiedFile = $request->files->get('certifiedPdfFile');
         $formValues = [];
         foreach( $formData as $key => $value ) { $formValues[$key] = json_decode($value); }
         $furtherTraining = new FurtherTraining();
@@ -135,16 +135,16 @@ class CurriculumVitaeController extends AbstractController
         $furtherTraining->setDate(new DateTime($formValues['date']));
         $user = $doctrine -> getRepository(User::class)->findOneBy(['sub' => $sub]);
         $furtherTraining -> setUser($user);
-        $certifiedPath = 'prueba';
-        // if ($certifiedFile instanceof UploadedFile) {
-            //     $newFileName = $formValues['certifiedPdfName'].time().'.'.$certifiedFile->guessExtension();
-            //     $certifiedFile->move(
-                //         $this->getParameter('uploads_directory'),
-                //         $newFileName
-                //     );
-                //     $certifiedPath = $this->getParameter('uploads_directory').'/'.$newFileName;
-        //$furtherTraining->setCertifiedPdf($certifiedPath);
-        // }
+        $certifiedPath = '';
+        if ($certifiedFile instanceof UploadedFile) {
+                $newFileName = $formValues['certifiedPdfName'].time().'.'.$certifiedFile->guessExtension();
+                $certifiedFile->move(
+                        $this->getParameter('uploads_directory'),
+                        $newFileName
+                    );
+                    $certifiedPath = $this->getParameter('uploads_directory').'/'.$newFileName;
+        $furtherTraining->setCertifiedPdf($certifiedPath);
+        }
         $entityManager=$doctrine->getManager();
         $entityManager->persist($furtherTraining);
         $entityManager->flush();
