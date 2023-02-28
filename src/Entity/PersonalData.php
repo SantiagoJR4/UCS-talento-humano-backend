@@ -135,6 +135,13 @@ class PersonalData
     private $pensionPdf;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="url_cvlac", type="string", length=255, nullable=true)
+     */
+    private $urlCvlac;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -337,6 +344,18 @@ class PersonalData
     public function setPensionPdf(string $pensionPdf): self
     {
         $this->pensionPdf = $pensionPdf;
+
+        return $this;
+    }
+
+    public function getUrlCvlac(): ?string
+    {
+        return $this->urlCvlac;
+    }
+
+    public function setUrlCvlac(?string $urlCvlac): self
+    {
+        $this->urlCvlac = $urlCvlac;
 
         return $this;
     }

@@ -9,7 +9,6 @@ use Doctrine\ORM\Mapping as ORM;
  * User
  *
  * @ORM\Table(name="user", uniqueConstraints={@ORM\UniqueConstraint(name="sub", columns={"sub"})})
- * @ORM\Table(name="user", uniqueConstraints={@ORM\UniqueConstraint(name="sub", columns={"sub"})})
  * @ORM\Entity
  */
 class User

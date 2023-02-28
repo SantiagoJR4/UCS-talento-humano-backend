@@ -107,8 +107,8 @@ class CurriculumVitaeController extends AbstractController
         $academicTraining->setIsForeignUniversity($formValues['isForeignUniversity']);
         $academicTraining->setNameUniversity($formValues['nameUniversity']);
 
-        $user = $doctrine -> getRepository(User::class)->find($request->get('sub'));
-        $academicTraining -> setUser($user);
+        $user = $doctrine -> getRepository(User::class)->find('sub');
+        $academicTraining -> setUser($user->getSub());
 
         $degreePath = '';
         $certifiedPath = '';
@@ -318,7 +318,10 @@ class CurriculumVitaeController extends AbstractController
 
         foreach($data as $key => $value){
             $prodIntellectual = new IntellectualProduction();
-            $prodIntellectual -> setUrlCvlac($value['urlCvlac']);
+            $personalData = new personalData();
+
+            $personalData -> setUrlCvlac($value['urlCvlac']);
+
             $prodIntellectual -> setTypeProd($value['typeProd']);
             $prodIntellectual -> setTitleProd($value['titleProd']);
             $prodIntellectual -> setUrlVerification($value['urlVerification']);
