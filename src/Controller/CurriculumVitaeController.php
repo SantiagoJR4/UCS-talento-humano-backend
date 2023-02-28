@@ -6,16 +6,19 @@ use App\Entity\AcademicTraining;
 use App\Entity\CurriculumVitae;
 use App\Entity\FurtherTraining;
 use App\Entity\IntellectualProduction;
+use App\Entity\Language;
+use App\Entity\PersonalData;
+use App\Entity\Record;
 use App\Entity\ReferencesData;
 use App\Entity\TeachingExperience;
 use App\Entity\User;
 use App\Entity\WorkExperience;
+use App\Service\ValidateToken;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -117,13 +120,11 @@ class CurriculumVitaeController extends AbstractController
     }
 
     #[Route('/curriculum-vitae/further-training', name: 'app_curriculum_vitae_further_training')]
-    public function furtherTraining(ManagerRegistry $doctrine, Request $request): Response
+    public function furtherTraining(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): Response
     {
         $formData = $request->request->all();
-        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
         $token = $request->query->get('token');
-        $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
-        $sub= $decodedToken->sub;
+        $user = $vToken->getUserIdFromToken($token);
         $certifiedFile = $request->files->get('certifiedPdfFile');
         $formValues = [];
         foreach( $formData as $key => $value ) { $formValues[$key] = json_decode($value); }
@@ -133,7 +134,6 @@ class CurriculumVitaeController extends AbstractController
         $furtherTraining->setInstitution($formValues['institution']);
         $furtherTraining->setHours($formValues['hours']);
         $furtherTraining->setDate(new DateTime($formValues['date']));
-        $user = $doctrine -> getRepository(User::class)->findOneBy(['sub' => $sub]);
         $furtherTraining -> setUser($user);
         $certifiedPath = '';
         if ($certifiedFile instanceof UploadedFile) {
@@ -239,7 +239,7 @@ class CurriculumVitaeController extends AbstractController
         return $response;
 
     }
-    //--------------------------------------------------------------------
+
     #[Route('/curriculum-vitae/prodIntellectual', name: 'app_curriculum_vitae_prod_intellectual')]
     public function prodIntellectual(ManagerRegistry $doctrine): Response
     {
@@ -265,6 +265,7 @@ class CurriculumVitaeController extends AbstractController
 
         return $response;
     }
+
     #[Route('/curriculum-vitae/references', name: 'app_curriculum_vitae_references')]
     public function references(ManagerRegistry $doctrine): Response
     {
@@ -289,5 +290,27 @@ class CurriculumVitaeController extends AbstractController
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
+    }
+
+    #[Route('/curriculum-vitae/read-cv', name: 'app_curriculum_vitae_read')]
+    public function read(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken  ): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        $userId = $user->getId();
+        $qb = function($class, $id) use ($doctrine) {
+            return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
+        };
+        return new JsonResponse([
+            'personalData' => $qb(PersonalData::class, $userId),
+            'academicTraining' => $qb(AcademicTraining::class, $userId),
+            'furtherTraining' => $qb(FurtherTraining::class, $userId),
+            'language' => $qb(Language::class, $userId),
+            'workExperience' => $qb(WorkExperience::class, $userId),
+            'teachingExperience' => $qb(TeachingExperience::class, $userId),
+            'intellectualproduction' => $qb(IntellectualProduction::class, $userId),
+            'references' => $qb(ReferencesData::class, $userId),
+            'records' => $qb(Record::class, $userId)
+        ]);
     }
 }
