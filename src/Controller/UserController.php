@@ -30,7 +30,7 @@ function createJwtResponse($user) {
         'sub' => $user->getSub(),
         
         'iat' => time(),
-        'exp' => time() + 3600
+        'exp' => time() + 604800
     ];
     $token = JWT::encode($payload, $jwtKey, 'HS256');
     return new JsonResponse(['token'=>$token, 'user'=>$resp]);
