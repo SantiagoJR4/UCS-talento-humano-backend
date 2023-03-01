@@ -23,6 +23,17 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+function convertDateTimeToString($data) {
+    foreach ($data as $key => $value) {
+        if (is_array($value)) {
+            $data[$key] = convertDateTimeToString($value);
+        } elseif ($value instanceof \DateTime) {
+            $data[$key] = $value->format('Y-m-d H:i:s');
+        }
+    }
+    return $data;
+}
+
 class CurriculumVitaeController extends AbstractController
 {
     #[Route('/curriculum-vitae/personal-data', name:'app_curriculum_vitae_personal-data')]
@@ -252,7 +263,7 @@ class CurriculumVitaeController extends AbstractController
         $workExperience -> setIsworking($formValues['isWorking']);
         $workExperience -> setCertifiedpdf($formValues['certifiedPdf']);
         $workExperience -> setUser($user);
-        if($formValues['retirementDate'] !== NULL){
+        if(isSet($formValues['retirementDate'])){
             $workExperience -> setRetirementdate(new DateTime($formValues['retirementDate']));
         }
         else{
@@ -341,15 +352,15 @@ class CurriculumVitaeController extends AbstractController
             return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
         };
         return new JsonResponse([
-            'personalData' => $qb(PersonalData::class, $userId),
-            'academicTraining' => $qb(AcademicTraining::class, $userId),
-            'furtherTraining' => $qb(FurtherTraining::class, $userId),
-            'language' => $qb(Language::class, $userId),
-            'workExperience' => $qb(WorkExperience::class, $userId),
-            'teachingExperience' => $qb(TeachingExperience::class, $userId),
-            'intellectualproduction' => $qb(IntellectualProduction::class, $userId),
-            'references' => $qb(ReferencesData::class, $userId),
-            'records' => $qb(Record::class, $userId)
+            'personalData' => convertDateTimeToString($qb(PersonalData::class, $userId)),
+            'academicTraining' => convertDateTimeToString($qb(AcademicTraining::class, $userId)),
+            'furtherTraining' => convertDateTimeToString($qb(FurtherTraining::class, $userId)),
+            'language' => convertDateTimeToString($qb(Language::class, $userId)),
+            'workExperience' => convertDateTimeToString($qb(WorkExperience::class, $userId)),
+            'teachingExperience' => convertDateTimeToString($qb(TeachingExperience::class, $userId)),
+            'intellectualproduction' => convertDateTimeToString($qb(IntellectualProduction::class, $userId)),
+            'references' => convertDateTimeToString($qb(ReferencesData::class, $userId)),
+            'records' => convertDateTimeToString($qb(Record::class, $userId))
         ]);
     }
 }
