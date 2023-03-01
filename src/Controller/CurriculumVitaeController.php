@@ -363,4 +363,35 @@ class CurriculumVitaeController extends AbstractController
             'records' => convertDateTimeToString($qb(Record::class, $userId))
         ]);
     }
+
+    #[Route('/curriculum-vitae/delete-cv', name: 'app_curriculum_vitae_delete')]
+    public function delete(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $table = ucfirst($request->query->get('table'));
+        $id = $request->query->get('id');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(isSet($user)){
+            $entityManager = $doctrine->getManager();
+            $objectToDelete = $entityManager->getRepository('App\\Entity\\'.$table)->find($id);
+            $entityManager->remove($objectToDelete);
+            $entityManager->flush();
+            return new JsonResponse(['response'=>'deleted '.$table.' with ID '.$id]);
+        }
+    }
+
+    #[Route('/curriculum-vitae/update-cv', name: 'app_curriculum_vitae_update')]
+    public function update(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $formData = $request->request->all();
+        var_dump($formData);
+        $token = $request->query->get('token');
+        $entity = $request->query->get('entity'); 
+        $id = $request->query->get('id');
+        $formValues = [];
+        foreach( $formData as $key => $value ) { $formValues[$key] = json_decode($value); }
+        //$test = $formValues['test'];
+        $user =  $vToken->getUserIdFromToken($token);
+        return new JsonResponse(['token' => $token, 'entity' => $entity, 'id'=> $id, 'formValues' => $formValues]);
+    }
 }
