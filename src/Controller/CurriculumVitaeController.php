@@ -383,15 +383,72 @@ class CurriculumVitaeController extends AbstractController
     #[Route('/curriculum-vitae/update-cv', name: 'app_curriculum_vitae_update')]
     public function update(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
     {
-        $formData = $request->request->all();
-        var_dump($formData);
         $token = $request->query->get('token');
-        $entity = $request->query->get('entity'); 
-        $id = $request->query->get('id');
-        $formValues = [];
-        foreach( $formData as $key => $value ) { $formValues[$key] = json_decode($value); }
-        //$test = $formValues['test'];
         $user =  $vToken->getUserIdFromToken($token);
-        return new JsonResponse(['token' => $token, 'entity' => $entity, 'id'=> $id, 'formValues' => $formValues]);
+        $id = $request->query->get('id');
+        $entity = 'App\\Entity\\'.ucFirst($request->query->get('entity'));
+        $entityManager = $doctrine->getManager();
+        $entityObj = $entityManager->getRepository($entity)->find($id);
+        if (!$entityObj) {
+            throw $this->createNotFoundException('Entity not found');
+        }
+        $fieldsToUpdate = $request->request->all();
+        $files = $request->files->all();
+        $fieldsToUpdate = array_merge($fieldsToUpdate, $files);
+        foreach ($fieldsToUpdate as $fieldName => $fieldValue) {
+            if (property_exists($entity, $fieldName)) {
+                if ($fieldValue instanceof UploadedFile) {
+                    $fileName = 
+                        ucfirst($request->query->get('entity')).'-'
+                        .$fieldName.'-'
+                        .$user->getTypeIdentification()
+                        .$user->getIdentification().'-'
+                        .time().'.'
+                        .$fieldValue->guessExtension();
+                    $fieldValue->move($this->getParameter('uploads_directory'), $fileName);
+                    $fieldValue = $fileName;
+                }
+                $entityObj->{'set'.$fieldName}($fieldValue);
+            }
+        }
+        $entityManager->persist($entityObj);
+        $entityManager->flush();
+        return new JsonResponse(['token' => $token, 'entity' => $entity, 'id'=> $id, 'ftU' =>$user->getIdentification()]);
+    }
+
+    #[Route('/curriculum-vitae/create-cv', name: 'app_curriculum_vitae_create')]
+    public function create(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        // $token = $request->query->get('token');
+        // $user =  $vToken->getUserIdFromToken($token);
+        // // $id = $request->query->get('id');
+        // $entity = 'App\\Entity\\'.ucFirst($request->query->get('entity'));
+        // $entityManager = $doctrine->getManager();
+        // // $entityObj = $entityManager->getRepository($entity)->find($id);
+        // // if (!$entityObj) {
+        // //     throw $this->createNotFoundException('Entity not found');
+        // // }
+        // $fieldsToUpdate = $request->request->all();
+        // $files = $request->files->all();
+        // $fieldsToUpdate = array_merge($fieldsToUpdate, $files);
+        // foreach ($fieldsToUpdate as $fieldName => $fieldValue) {
+        //     if (property_exists($entity, $fieldName)) {
+        //         if ($fieldValue instanceof UploadedFile) {
+        //             $fileName = 
+        //                 ucfirst($request->query->get('entity')).'-'
+        //                 .$fieldName.'-'
+        //                 .$user->getTypeIdentification()
+        //                 .$user->getIdentification().'-'
+        //                 .time().'.'
+        //                 .$fieldValue->guessExtension();
+        //             $fieldValue->move($this->getParameter('uploads_directory'), $fileName);
+        //             $fieldValue = $fileName;
+        //         }
+        //         $entityObj->{'set'.$fieldName}($fieldValue);
+        //     }
+        // }
+        // $entityManager->persist($entityObj);
+        // $entityManager->flush();
+        // return new JsonResponse(['token' => $token, 'entity' => $entity, 'id'=> $id, 'ftU' =>$user->getIdentification()]);
     }
 }
