@@ -30,25 +30,39 @@ class Language
     private $nameLanguage;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="to_speak", type="string", length=3, nullable=false, options={"fixed"=true})
+     * @ORM\Column(name="to_speak", type="string", length=7, nullable=true, options={"fixed"=true})
      */
     private $toSpeak;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="to_read", type="string", length=3, nullable=false, options={"fixed"=true})
+     * @ORM\Column(name="to_read", type="string", length=7, nullable=true, options={"fixed"=true})
      */
     private $toRead;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="to_write", type="string", length=3, nullable=false, options={"fixed"=true})
+     * @ORM\Column(name="to_write", type="string", length=7, nullable=true, options={"fixed"=true})
      */
     private $toWrite;
+
+    /**
+     * @var bool|null
+     *
+     * @ORM\Column(name="is_certified", type="boolean", nullable=true)
+     */
+    private $isCertified;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="levelLanguage", type="string", length=2, nullable=true, options={"fixed"=true})
+     */
+    private $levellanguage;
 
     /**
      * @var string|null
@@ -89,7 +103,7 @@ class Language
         return $this->toSpeak;
     }
 
-    public function setToSpeak(string $toSpeak): self
+    public function setToSpeak(?string $toSpeak): self
     {
         $this->toSpeak = $toSpeak;
 
@@ -101,7 +115,7 @@ class Language
         return $this->toRead;
     }
 
-    public function setToRead(string $toRead): self
+    public function setToRead(?string $toRead): self
     {
         $this->toRead = $toRead;
 
@@ -113,9 +127,33 @@ class Language
         return $this->toWrite;
     }
 
-    public function setToWrite(string $toWrite): self
+    public function setToWrite(?string $toWrite): self
     {
         $this->toWrite = $toWrite;
+
+        return $this;
+    }
+
+    public function isIsCertified(): ?bool
+    {
+        return $this->isCertified;
+    }
+
+    public function setIsCertified(?bool $isCertified): self
+    {
+        $this->isCertified = $isCertified;
+
+        return $this;
+    }
+
+    public function getLevellanguage(): ?string
+    {
+        return $this->levellanguage;
+    }
+
+    public function setLevellanguage(?string $levellanguage): self
+    {
+        $this->levellanguage = $levellanguage;
 
         return $this;
     }
