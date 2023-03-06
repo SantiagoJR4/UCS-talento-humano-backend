@@ -60,9 +60,9 @@ class TeachingExperience
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="date_admission", type="date", nullable=false)
+     * @ORM\Column(name="admission_date", type="date", nullable=false)
      */
-    private $dateAdmission;
+    private $admissionDate;
 
     /**
      * @var bool|null
@@ -174,14 +174,14 @@ class TeachingExperience
         return $this;
     }
 
-    public function getDateAdmission(): ?\DateTimeInterface
+    public function getAdmissionDate(): ?\DateTimeInterface
     {
-        return $this->dateAdmission;
+        return $this->admissionDate;
     }
 
-    public function setDateAdmission(\DateTimeInterface $dateAdmission): self
+    public function setAdmissionDate(\DateTimeInterface $admissionDate): self
     {
-        $this->dateAdmission = $dateAdmission;
+        $this->admissionDate = $admissionDate;
 
         return $this;
     }
