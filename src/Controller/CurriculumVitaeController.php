@@ -416,6 +416,8 @@ class CurriculumVitaeController extends AbstractController
                     $fieldValue->move($this->getParameter('uploads_directory'), $fileName);
                     $fieldValue = $fileName;
                     $entityObj->{'set'.$fieldName}($fieldValue);
+                } elseif($fieldValue === 'false') {
+                    $entityObj->{'set'.$fieldName}(false);
                 } else {
                     $entityObj->{'set'.$fieldName}($fieldValue);
                 }
@@ -457,8 +459,10 @@ class CurriculumVitaeController extends AbstractController
                     $fieldValue->move($this->getParameter('uploads_directory'), $fileName);
                     $fieldValue = $fileName;
                     $test->{'set' . $fieldName}($fieldValue);
+                } elseif($fieldValue === 'false') {
+                    $test->{'set'.$fieldName}(false);
                 } else {
-                    $test->{'set' . $fieldName}($fieldValue);
+                    $test->{'set'.$fieldName}($fieldValue);
                 }
             }
         }
