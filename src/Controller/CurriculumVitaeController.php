@@ -503,8 +503,16 @@ class CurriculumVitaeController extends AbstractController
         $files = $request->files->all();
         $fieldsToUpdate = array_merge($fieldsToUpdate, $files);
         foreach ($fieldsToUpdate as $fieldName => $fieldValue) {
+            $dateTime = '';
             if (property_exists($entity, $fieldName)) {
-                if ($fieldValue instanceof UploadedFile) {
+                try {
+                    if($fieldName !== 'snies'){
+                        $dateTime = new DateTime($fieldValue);
+                    }
+                } catch (\Exception $e) {}
+                if ($dateTime instanceof DateTime) {
+                    $entityObj->{'set' . $fieldName}($dateTime);
+                } elseif ($fieldValue instanceof UploadedFile) {
                     $fileName = 
                         ucfirst($request->query->get('entity')).'-'
                         .$fieldName.'-'
@@ -514,8 +522,12 @@ class CurriculumVitaeController extends AbstractController
                         .$fieldValue->guessExtension();
                     $fieldValue->move($this->getParameter('uploads_directory'), $fileName);
                     $fieldValue = $fileName;
+                    $entityObj->{'set'.$fieldName}($fieldValue);
+                } elseif($fieldValue === 'false') {
+                    $entityObj->{'set'.$fieldName}(false);
+                } else {
+                    $entityObj->{'set'.$fieldName}($fieldValue);
                 }
-                $entityObj->{'set'.$fieldName}($fieldValue);
             }
         }
         $entityManager->persist($entityObj);
@@ -543,8 +555,7 @@ class CurriculumVitaeController extends AbstractController
                 } catch (\Exception $e) {}
                 if ($dateTime instanceof DateTime) {
                     $test->{'set' . $fieldName}($dateTime);
-                }
-                elseif ($fieldValue instanceof UploadedFile) {
+                } elseif ($fieldValue instanceof UploadedFile) {
                     $fileName =
                         ucfirst($request->query->get('entity')) . '-'
                         . $fieldName . '-'
@@ -555,9 +566,10 @@ class CurriculumVitaeController extends AbstractController
                     $fieldValue->move($this->getParameter('uploads_directory'), $fileName);
                     $fieldValue = $fileName;
                     $test->{'set' . $fieldName}($fieldValue);
-                }
-                else {
-                    $test->{'set' . $fieldName}($fieldValue);
+                } elseif($fieldValue === 'false') {
+                    $test->{'set'.$fieldName}(false);
+                } else {
+                    $test->{'set'.$fieldName}($fieldValue);
                 }
             }
         }
