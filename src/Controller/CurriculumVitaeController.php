@@ -366,6 +366,7 @@ class CurriculumVitaeController extends AbstractController
 
         foreach($data as $key => $value){
             $references = new ReferencesData();
+            $references -> setTypereferences($value['typeReferences']);
             $references -> setNames($value['names']);
             $references -> setRelationship($value['relationship']);
             $references -> setOccupation($value['occupation']);
@@ -549,7 +550,7 @@ class CurriculumVitaeController extends AbstractController
             $dateTime = '';
             if (property_exists($entity, $fieldName)) {
                 try {
-                    if($fieldName !== 'snies'){
+                    if($fieldName !== ('snies')){
                         $dateTime = new DateTime($fieldValue);
                     }
                 } catch (\Exception $e) {}

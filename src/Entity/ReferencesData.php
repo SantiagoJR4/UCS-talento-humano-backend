@@ -24,6 +24,13 @@ class ReferencesData
     /**
      * @var string
      *
+     * @ORM\Column(name="type_references", type="string", length=2, nullable=false, options={"fixed"=true})
+     */
+    private $typeReferences;
+
+    /**
+     * @var string
+     *
      * @ORM\Column(name="names", type="string", length=255, nullable=false)
      */
     private $names;
@@ -62,6 +69,18 @@ class ReferencesData
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getTypeReferences(): ?string
+    {
+        return $this->typeReferences;
+    }
+
+    public function setTypeReferences(string $typeReferences): self
+    {
+        $this->typeReferences = $typeReferences;
+
+        return $this;
     }
 
     public function getNames(): ?string
