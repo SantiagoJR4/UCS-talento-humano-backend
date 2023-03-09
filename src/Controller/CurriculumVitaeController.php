@@ -506,24 +506,21 @@ class CurriculumVitaeController extends AbstractController
         foreach ($fieldsToUpdate as $fieldName => $fieldValue) {
             $dateTime = '';
             if (property_exists($entity, $fieldName)) {
-                try {
-                    if($fieldName !== 'snies'){
-                        $dateTime = new DateTime($fieldValue);
-                    }
-                } catch (\Exception $e) {}
-                if ($dateTime instanceof DateTime) {
+                if(preg_match('/^\d{4}-\d{2}-\d{2}$/', $fieldValue)){
+                    $dateTime = new DateTime($fieldValue);
                     $entityObj->{'set' . $fieldName}($dateTime);
-                } elseif ($fieldValue instanceof UploadedFile) {
-                    $fileName = 
-                        ucfirst($request->query->get('entity')).'-'
-                        .$fieldName.'-'
-                        .$user->getTypeIdentification()
-                        .$user->getIdentification().'-'
-                        .time().'.'
-                        .$fieldValue->guessExtension();
+                }
+                elseif ($fieldValue instanceof UploadedFile) {
+                    $fileName =
+                        ucfirst($request->query->get('entity')) . '-'
+                        . $fieldName . '-'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification() . '-'
+                        . time() . '.'
+                        . $fieldValue->guessExtension();
                     $fieldValue->move($this->getParameter('uploads_directory'), $fileName);
                     $fieldValue = $fileName;
-                    $entityObj->{'set'.$fieldName}($fieldValue);
+                    $entityObj->{'set' . $fieldName}($fieldValue);
                 } elseif($fieldValue === 'false') {
                     $entityObj->{'set'.$fieldName}(false);
                 } else {
@@ -541,7 +538,7 @@ class CurriculumVitaeController extends AbstractController
     {
         $token = $request->query->get('token');
         $entity = 'App\\Entity\\'.ucFirst($request->query->get('entity'));
-        $test = new $entity;
+        $objEntity = new $entity;
         $user =  $vToken->getUserIdFromToken($token);
         $fieldsToUpdate = $request->request->all();
         $files = $request->files->all();
@@ -549,14 +546,11 @@ class CurriculumVitaeController extends AbstractController
         foreach ($fieldsToUpdate as $fieldName => $fieldValue) {
             $dateTime = '';
             if (property_exists($entity, $fieldName)) {
-                try {
-                    if($fieldName !== ('snies')){
-                        $dateTime = new DateTime($fieldValue);
-                    }
-                } catch (\Exception $e) {}
-                if ($dateTime instanceof DateTime) {
-                    $test->{'set' . $fieldName}($dateTime);
-                } elseif ($fieldValue instanceof UploadedFile) {
+                if(preg_match('/^\d{4}-\d{2}-\d{2}$/', $fieldValue)){
+                    $dateTime = new DateTime($fieldValue);
+                    $objEntity->{'set' . $fieldName}($dateTime);
+                }
+                elseif ($fieldValue instanceof UploadedFile) {
                     $fileName =
                         ucfirst($request->query->get('entity')) . '-'
                         . $fieldName . '-'
@@ -566,17 +560,17 @@ class CurriculumVitaeController extends AbstractController
                         . $fieldValue->guessExtension();
                     $fieldValue->move($this->getParameter('uploads_directory'), $fileName);
                     $fieldValue = $fileName;
-                    $test->{'set' . $fieldName}($fieldValue);
+                    $objEntity->{'set' . $fieldName}($fieldValue);
                 } elseif($fieldValue === 'false') {
-                    $test->{'set'.$fieldName}(false);
+                    $objEntity->{'set'.$fieldName}(false);
                 } else {
-                    $test->{'set'.$fieldName}($fieldValue);
+                    $objEntity->{'set'.$fieldName}($fieldValue);
                 }
             }
         }
-        $test->setUser($user);
+        $objEntity->setUser($user);
         $entityManager = $doctrine->getManager();
-        $entityManager->persist($test);
+        $entityManager->persist($objEntity);
         $entityManager->flush();
         return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Nuevo Objeto Creado']);
     }
