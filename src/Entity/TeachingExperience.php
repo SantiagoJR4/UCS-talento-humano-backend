@@ -30,9 +30,9 @@ class TeachingExperience
     private $isForeignUniversity;
 
     /**
-     * @var string|null
+     * @var string
      *
-     * @ORM\Column(name="snies", type="string", length=4, nullable=true, options={"fixed"=true})
+     * @ORM\Column(name="snies", type="string", length=4, nullable=false, options={"fixed"=true})
      */
     private $snies;
 
@@ -131,7 +131,7 @@ class TeachingExperience
         return $this->snies;
     }
 
-    public function setSnies(?string $snies): self
+    public function setSnies(string $snies): self
     {
         $this->snies = $snies;
 

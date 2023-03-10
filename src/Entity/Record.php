@@ -25,30 +25,30 @@ class Record
     /**
      * @var string
      *
-     * @ORM\Column(name="taxRecord_pdf", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="tax_record_pdf", type="text", length=65535, nullable=false)
      */
-    private $taxrecordPdf;
+    private $taxRecordPdf;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="judicialRecord_pdf", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="judicial_record_pdf", type="text", length=65535, nullable=false)
      */
-    private $judicialrecordPdf;
+    private $judicialRecordPdf;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="disciplinaryRecord_pdf", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="disciplinary_record_pdf", type="text", length=65535, nullable=false)
      */
-    private $disciplinaryrecordPdf;
+    private $disciplinaryRecordPdf;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="correctiveMeasures_pdf", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="corrective_measures_pdf", type="text", length=65535, nullable=false)
      */
-    private $correctivemeasuresPdf;
+    private $correctiveMeasuresPdf;
 
     /**
      * @var \User
@@ -65,50 +65,50 @@ class Record
         return $this->id;
     }
 
-    public function getTaxrecordPdf(): ?string
+    public function getTaxRecordPdf(): ?string
     {
-        return $this->taxrecordPdf;
+        return $this->taxRecordPdf;
     }
 
-    public function setTaxrecordPdf(string $taxrecordPdf): self
+    public function setTaxRecordPdf(string $taxRecordPdf): self
     {
-        $this->taxrecordPdf = $taxrecordPdf;
+        $this->taxRecordPdf = $taxRecordPdf;
 
         return $this;
     }
 
-    public function getJudicialrecordPdf(): ?string
+    public function getJudicialRecordPdf(): ?string
     {
-        return $this->judicialrecordPdf;
+        return $this->judicialRecordPdf;
     }
 
-    public function setJudicialrecordPdf(string $judicialrecordPdf): self
+    public function setJudicialRecordPdf(string $judicialRecordPdf): self
     {
-        $this->judicialrecordPdf = $judicialrecordPdf;
+        $this->judicialRecordPdf = $judicialRecordPdf;
 
         return $this;
     }
 
-    public function getDisciplinaryrecordPdf(): ?string
+    public function getDisciplinaryRecordPdf(): ?string
     {
-        return $this->disciplinaryrecordPdf;
+        return $this->disciplinaryRecordPdf;
     }
 
-    public function setDisciplinaryrecordPdf(string $disciplinaryrecordPdf): self
+    public function setDisciplinaryRecordPdf(string $disciplinaryRecordPdf): self
     {
-        $this->disciplinaryrecordPdf = $disciplinaryrecordPdf;
+        $this->disciplinaryRecordPdf = $disciplinaryRecordPdf;
 
         return $this;
     }
 
-    public function getCorrectivemeasuresPdf(): ?string
+    public function getCorrectiveMeasuresPdf(): ?string
     {
-        return $this->correctivemeasuresPdf;
+        return $this->correctiveMeasuresPdf;
     }
 
-    public function setCorrectivemeasuresPdf(string $correctivemeasuresPdf): self
+    public function setCorrectiveMeasuresPdf(string $correctiveMeasuresPdf): self
     {
-        $this->correctivemeasuresPdf = $correctivemeasuresPdf;
+        $this->correctiveMeasuresPdf = $correctiveMeasuresPdf;
 
         return $this;
     }
