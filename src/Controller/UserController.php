@@ -28,6 +28,7 @@ function createJwtResponse($user) {
     ];
     $payload = [
         'sub' => $user->getSub(),
+        'userType' => $user->getUserType(),
         'iat' => time(),
         'exp' => time() + 604800
     ];
@@ -141,7 +142,7 @@ class UserController extends AbstractController
         }
         $expirationTime = $decodedToken->exp;
         $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
-        return new JsonResponse($isTokenValid);
+        return new JsonResponse(['isValid' => $isTokenValid, 'userType' => $decodedToken->userType]);
     }
  
     //TODO : HACER VERIFICACIÓN DE CORREO

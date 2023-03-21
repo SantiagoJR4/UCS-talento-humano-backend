@@ -95,6 +95,13 @@ class User
     /**
      * @var int
      *
+     * @ORM\Column(name="user_type", type="smallint", nullable=false)
+     */
+    private $userType;
+
+    /**
+     * @var int
+     *
      * @ORM\Column(name="sub", type="integer", nullable=false, options={"unsigned"=true})
      */
     private $sub;
@@ -220,6 +227,18 @@ class User
     public function setUrlPhoto(?string $urlPhoto): self
     {
         $this->urlPhoto = $urlPhoto;
+
+        return $this;
+    }
+
+    public function getUserType(): ?int
+    {
+        return $this->userType;
+    }
+
+    public function setUserType(int $userType): self
+    {
+        $this->userType = $userType;
 
         return $this;
     }
