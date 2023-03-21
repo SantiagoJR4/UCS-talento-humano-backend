@@ -22,7 +22,7 @@ function createJwtResponse($user) {
     $resp = [
         'names' => $user->getNames(),
         'lastNames' => $user->getLastNames(),
-        'phone' => $user->getPhone(),
+        // 'phone' => $user->getPhone(),
         'email' => $user->getEmail(),
         'identification' => $user->getIdentification(),
         'typeIdentification' => $user->getTypeIdentification()
