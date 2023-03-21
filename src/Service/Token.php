@@ -19,7 +19,7 @@ class ValidateToken
     public function getUserIdFromToken(string $token): User
     {
         $jwtTime = new \Firebase\JWT\JWT;
-        $jwtTime::$leeway=5;
+        $jwtTime::$leeway=5; //TODO: what's this???
         $jwtKey = 'Un1c4t0l1c4';
         $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
         $sub= $decodedToken->sub;
