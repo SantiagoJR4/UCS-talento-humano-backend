@@ -14,6 +14,7 @@ use App\Entity\TeachingExperience;
 use App\Entity\User;
 use App\Entity\WorkExperience;
 use App\Service\ValidateToken;
+
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -460,6 +461,8 @@ class CurriculumVitaeController extends AbstractController
             return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
         };
         return new JsonResponse([
+            
+            'user' => [$user->getUrlPhoto(), $user -> getId()],  
             'personalData' => convertDateTimeToString($qb(PersonalData::class, $userId)),
             'academicTraining' => convertDateTimeToString($qb(AcademicTraining::class, $userId)),
             'furtherTraining' => convertDateTimeToString($qb(FurtherTraining::class, $userId)),
