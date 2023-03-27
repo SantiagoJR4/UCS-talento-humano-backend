@@ -460,6 +460,7 @@ class CurriculumVitaeController extends AbstractController
             return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
         };
         return new JsonResponse([
+            'user' => [$user->getUrlPhoto(), $userId],
             'personalData' => convertDateTimeToString($qb(PersonalData::class, $userId)),
             'academicTraining' => convertDateTimeToString($qb(AcademicTraining::class, $userId)),
             'furtherTraining' => convertDateTimeToString($qb(FurtherTraining::class, $userId)),

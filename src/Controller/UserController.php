@@ -6,6 +6,7 @@ use App\Entity\CurriculumVitae;
 use App\Service\Helpers;
 use App\Service\UserService;
 use App\Entity\User;
+use App\Service\ValidateToken;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
@@ -46,6 +47,25 @@ class UserController extends AbstractController
         $datosUser = $doctrine->getRepository(User::class)->find($id);
 
         $json = $helpers->serializador($datosUser);
+        return $json;
+    }
+    #[Route('/listUsers', name: 'app_user')]
+    public function userAll(ManagerRegistry $doctrine, Helpers $helpers, Request $request ,ValidateToken $vToken ): Response 
+    {
+        $token = $request->query->get('token');
+        $user = $vToken->getUserIdFromToken($token);
+        $users = $doctrine->getRepository(User::class)->findAll();
+
+        foreach($users as $user){
+            $userData[]=[
+                'names' => $user->getNames(),
+                'last_names' => $user->getLastNames(),
+                'type_identification' => $user->getTypeIdentification(),
+                'identification' => $user->getIdentification()
+            ];
+        }
+
+        $json = $helpers->serializador($userData);
         return $json;
     }
 
