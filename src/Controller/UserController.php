@@ -61,7 +61,11 @@ class UserController extends AbstractController
                 'names' => $user->getNames(),
                 'last_names' => $user->getLastNames(),
                 'type_identification' => $user->getTypeIdentification(),
-                'identification' => $user->getIdentification()
+                'identification' => $user->getIdentification(),
+                'email' => $user->getEmail(),
+                'phone' => $user->getPhone(),
+                'url_photo' => $user->getUrlPhoto()
+
             ];
         }
 
