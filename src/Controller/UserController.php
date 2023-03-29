@@ -58,6 +58,7 @@ class UserController extends AbstractController
 
         foreach($users as $user){
             $userData[]=[
+                'id' => $user->getId(),
                 'names' => $user->getNames(),
                 'last_names' => $user->getLastNames(),
                 'type_identification' => $user->getTypeIdentification(),
@@ -71,17 +72,7 @@ class UserController extends AbstractController
 
         $json = $helpers->serializador($userData);
         return $json;
-    }
-
-    #[Route('/listarCurriculmVitae/{id}', name:'app_listar_curriculumVitae')]
-    public function listCurriculumVitae(ManagerRegistry $doctrine, Helpers $helpers,int $id): Response
-    {
-        $curriculumVitaeData = $doctrine->getRepository(CurriculumVitae::class)->find($id);
-
-        $json = $helpers->serializador($curriculumVitaeData);
-        return $json;
-    }
-    
+    }    
     #[Route('/register', name:'user_register')]
     public function registerUser(ManagerRegistry $doctrine): Response
     {

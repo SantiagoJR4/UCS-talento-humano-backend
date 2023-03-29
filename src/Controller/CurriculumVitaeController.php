@@ -13,6 +13,7 @@ use App\Entity\ReferencesData;
 use App\Entity\TeachingExperience;
 use App\Entity\User;
 use App\Entity\WorkExperience;
+use App\Service\Helpers;
 use App\Service\ValidateToken;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
@@ -471,6 +472,28 @@ class CurriculumVitaeController extends AbstractController
             'references' => convertDateTimeToString($qb(ReferencesData::class, $userId)),
             'records' => convertDateTimeToString($qb(Record::class, $userId))
         ]);
+    }
+
+    #[Route('/curriculum-vitae/list-cv/{id}', name:'app_listar_curriculumVitae')]
+    public function listCv(ManagerRegistry $doctrine, Request $request ,int $id, ValidateToken $vToken): JsonResponse
+    {
+
+        $user = $doctrine->getRepository(User::class)->find($id);
+        $qb = function($class, $id) use ($doctrine) {
+            return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
+        };
+        return new JsonResponse([
+            'personalData' => convertDateTimeToString($qb(PersonalData::class, $user)),
+            'academicTraining' => convertDateTimeToString($qb(AcademicTraining::class, $user)),
+            'furtherTraining' => convertDateTimeToString($qb(FurtherTraining::class, $user)),
+            'language' => convertDateTimeToString($qb(Language::class, $user)),
+            'workExperience' => convertDateTimeToString($qb(WorkExperience::class, $user)),
+            'teachingExperience' => convertDateTimeToString($qb(TeachingExperience::class, $user)),
+            'intellectualproduction' => convertDateTimeToString($qb(IntellectualProduction::class, $user)),
+            'references' => convertDateTimeToString($qb(ReferencesData::class, $user)),
+            'records' => convertDateTimeToString($qb(Record::class, $user))
+        ]);
+
     }
 
     #[Route('/curriculum-vitae/delete-cv', name: 'app_curriculum_vitae_delete')]
