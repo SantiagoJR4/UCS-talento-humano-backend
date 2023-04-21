@@ -570,6 +570,7 @@ class CurriculumVitaeController extends AbstractController
         $fieldsToUpdate = $request->request->all();
         $files = $request->files->all();
         $fieldsToUpdate = array_merge($fieldsToUpdate, $files);
+
         foreach ($fieldsToUpdate as $fieldName => $fieldValue) {
             $dateTime = '';
             if (property_exists($entity, $fieldName)) {
@@ -595,6 +596,10 @@ class CurriculumVitaeController extends AbstractController
                 }
             }
         }
+
+        $jsonHistory = json_encode(['state'=>'2','date'=>date('d-m-Y H:i:s')]);
+        
+        $objEntity->setHistory($jsonHistory);
         $objEntity->setUser($user);
         $entityManager = $doctrine->getManager();
         $entityManager->persist($objEntity);
