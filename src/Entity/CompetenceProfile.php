@@ -22,13 +22,6 @@ class CompetenceProfile
     private $id;
 
     /**
-     * @var int
-     *
-     * @ORM\Column(name="percentage", type="integer", nullable=false)
-     */
-    private $percentage;
-
-    /**
      * @var \Profile
      *
      * @ORM\ManyToOne(targetEntity="Profile")
@@ -51,18 +44,6 @@ class CompetenceProfile
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getPercentage(): ?int
-    {
-        return $this->percentage;
-    }
-
-    public function setPercentage(int $percentage): self
-    {
-        $this->percentage = $percentage;
-
-        return $this;
     }
 
     public function getProfile(): ?Profile

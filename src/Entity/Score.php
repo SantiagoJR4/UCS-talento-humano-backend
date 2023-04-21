@@ -22,9 +22,9 @@ class Score
     private $id;
 
     /**
-     * @var \CompetenceProfile
+     * @var \CompetencePercentage
      *
-     * @ORM\ManyToOne(targetEntity="CompetenceProfile")
+     * @ORM\ManyToOne(targetEntity="CompetencePercentage")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="competence_profile_id", referencedColumnName="id")
      * })
@@ -46,12 +46,12 @@ class Score
         return $this->id;
     }
 
-    public function getCompetenceProfile(): ?CompetenceProfile
+    public function getCompetenceProfile(): ?CompetencePercentage
     {
         return $this->competenceProfile;
     }
 
-    public function setCompetenceProfile(?CompetenceProfile $competenceProfile): self
+    public function setCompetenceProfile(?CompetencePercentage $competenceProfile): self
     {
         $this->competenceProfile = $competenceProfile;
 

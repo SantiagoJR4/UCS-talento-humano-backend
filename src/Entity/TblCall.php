@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -22,9 +23,9 @@ class TblCall
     private $id;
 
     /**
-     * @var string
+     * @var int
      *
-     * @ORM\Column(name="name", type="string", length=50, nullable=false)
+     * @ORM\Column(name="name", type="integer", nullable=false)
      */
     private $name;
 
@@ -34,6 +35,76 @@ class TblCall
      * @ORM\Column(name="description", type="string", length=100, nullable=false)
      */
     private $description;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="salary", type="text", length=0, nullable=false)
+     */
+    private $salary;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="opening_date", type="date", nullable=false)
+     */
+    private $openingDate;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="reception_deadline_date", type="date", nullable=false)
+     */
+    private $receptionDeadlineDate;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="selection_date", type="date", nullable=false)
+     */
+    private $selectionDate;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="publication_date", type="date", nullable=false)
+     */
+    private $publicationDate;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="knowledge_test_date", type="datetime", nullable=false)
+     */
+    private $knowledgeTestDate;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="knowledge_results_date", type="date", nullable=false)
+     */
+    private $knowledgeResultsDate;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="psycho_and_interview_date", type="datetime", nullable=false)
+     */
+    private $psychoAndInterviewDate;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="final_results_date", type="date", nullable=false)
+     */
+    private $finalResultsDate;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="start_of_contract_date", type="date", nullable=false)
+     */
+    private $startOfContractDate;
 
     /**
      * @var \Profile
@@ -50,12 +121,12 @@ class TblCall
         return $this->id;
     }
 
-    public function getName(): ?string
+    public function getName(): ?int
     {
         return $this->name;
     }
 
-    public function setName(string $name): self
+    public function setName(int $name): self
     {
         $this->name = $name;
 
@@ -70,6 +141,126 @@ class TblCall
     public function setDescription(string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getSalary(): ?string
+    {
+        return $this->salary;
+    }
+
+    public function setSalary(string $salary): self
+    {
+        $this->salary = $salary;
+
+        return $this;
+    }
+
+    public function getOpeningDate(): ?\DateTimeInterface
+    {
+        return $this->openingDate;
+    }
+
+    public function setOpeningDate(\DateTimeInterface $openingDate): self
+    {
+        $this->openingDate = $openingDate;
+
+        return $this;
+    }
+
+    public function getReceptionDeadlineDate(): ?\DateTimeInterface
+    {
+        return $this->receptionDeadlineDate;
+    }
+
+    public function setReceptionDeadlineDate(\DateTimeInterface $receptionDeadlineDate): self
+    {
+        $this->receptionDeadlineDate = $receptionDeadlineDate;
+
+        return $this;
+    }
+
+    public function getSelectionDate(): ?\DateTimeInterface
+    {
+        return $this->selectionDate;
+    }
+
+    public function setSelectionDate(\DateTimeInterface $selectionDate): self
+    {
+        $this->selectionDate = $selectionDate;
+
+        return $this;
+    }
+
+    public function getPublicationDate(): ?\DateTimeInterface
+    {
+        return $this->publicationDate;
+    }
+
+    public function setPublicationDate(\DateTimeInterface $publicationDate): self
+    {
+        $this->publicationDate = $publicationDate;
+
+        return $this;
+    }
+
+    public function getKnowledgeTestDate(): ?\DateTimeInterface
+    {
+        return $this->knowledgeTestDate;
+    }
+
+    public function setKnowledgeTestDate(\DateTimeInterface $knowledgeTestDate): self
+    {
+        $this->knowledgeTestDate = $knowledgeTestDate;
+
+        return $this;
+    }
+
+    public function getKnowledgeResultsDate(): ?\DateTimeInterface
+    {
+        return $this->knowledgeResultsDate;
+    }
+
+    public function setKnowledgeResultsDate(\DateTimeInterface $knowledgeResultsDate): self
+    {
+        $this->knowledgeResultsDate = $knowledgeResultsDate;
+
+        return $this;
+    }
+
+    public function getPsychoAndInterviewDate(): ?\DateTimeInterface
+    {
+        return $this->psychoAndInterviewDate;
+    }
+
+    public function setPsychoAndInterviewDate(\DateTimeInterface $psychoAndInterviewDate): self
+    {
+        $this->psychoAndInterviewDate = $psychoAndInterviewDate;
+
+        return $this;
+    }
+
+    public function getFinalResultsDate(): ?\DateTimeInterface
+    {
+        return $this->finalResultsDate;
+    }
+
+    public function setFinalResultsDate(\DateTimeInterface $finalResultsDate): self
+    {
+        $this->finalResultsDate = $finalResultsDate;
+
+        return $this;
+    }
+
+    public function getStartOfContractDate(): ?\DateTimeInterface
+    {
+        return $this->startOfContractDate;
+    }
+
+    public function setStartOfContractDate(\DateTimeInterface $startOfContractDate): self
+    {
+        $this->startOfContractDate = $startOfContractDate;
 
         return $this;
     }
