@@ -65,6 +65,13 @@ class FurtherTraining
     private $certifiedPdf;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="history", type="text", length=0, nullable=true)
+     */
+    private $history;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -147,6 +154,18 @@ class FurtherTraining
     public function setCertifiedPdf(?string $certifiedPdf): self
     {
         $this->certifiedPdf = $certifiedPdf;
+
+        return $this;
+    }
+
+    public function getHistory(): ?string
+    {
+        return $this->history;
+    }
+
+    public function setHistory(?string $history): self
+    {
+        $this->history = $history;
 
         return $this;
     }

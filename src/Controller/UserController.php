@@ -6,6 +6,7 @@ use App\Entity\CurriculumVitae;
 use App\Service\Helpers;
 use App\Service\UserService;
 use App\Entity\User;
+use App\Service\ValidateToken;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
@@ -48,16 +49,30 @@ class UserController extends AbstractController
         $json = $helpers->serializador($datosUser);
         return $json;
     }
-
-    #[Route('/listarCurriculmVitae/{id}', name:'app_listar_curriculumVitae')]
-    public function listCurriculumVitae(ManagerRegistry $doctrine, Helpers $helpers,int $id): Response
+    #[Route('/listUsers', name: 'app_user')]
+    public function userAll(ManagerRegistry $doctrine, Helpers $helpers, Request $request ,ValidateToken $vToken ): Response 
     {
-        $curriculumVitaeData = $doctrine->getRepository(CurriculumVitae::class)->find($id);
+        $token = $request->query->get('token');
+        $user = $vToken->getUserIdFromToken($token);
+        $users = $doctrine->getRepository(User::class)->findAll();
 
-        $json = $helpers->serializador($curriculumVitaeData);
+        foreach($users as $user){
+            $userData[]=[
+                'id' => $user->getId(),
+                'names' => $user->getNames(),
+                'last_names' => $user->getLastNames(),
+                'type_identification' => $user->getTypeIdentification(),
+                'identification' => $user->getIdentification(),
+                'email' => $user->getEmail(),
+                'phone' => $user->getPhone(),
+                'url_photo' => $user->getUrlPhoto()
+
+            ];
+        }
+
+        $json = $helpers->serializador($userData);
         return $json;
-    }
-    
+    }    
     #[Route('/register', name:'user_register')]
     public function registerUser(ManagerRegistry $doctrine): Response
     {
