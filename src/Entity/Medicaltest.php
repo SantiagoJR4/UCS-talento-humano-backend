@@ -79,6 +79,16 @@ class Medicaltest
     private $ocupationalmedicaltest;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="state", type="string", length=1, nullable=false, options={"fixed"=true,"comment"="0-asignada
+1-asitio
+2-no asistio
+3-re-agendada"})
+     */
+    private $state;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -185,6 +195,18 @@ class Medicaltest
     public function setOcupationalmedicaltest(string $ocupationalmedicaltest): self
     {
         $this->ocupationalmedicaltest = $ocupationalmedicaltest;
+
+        return $this;
+    }
+
+    public function getState(): ?string
+    {
+        return $this->state;
+    }
+
+    public function setState(string $state): self
+    {
+        $this->state = $state;
 
         return $this;
     }

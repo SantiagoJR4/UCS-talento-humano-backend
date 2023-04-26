@@ -16,6 +16,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class ContractController extends AbstractController
 {
+    //TODO: HACER TOKEN PARA SUPERUSUARIOS
     public function validateTokenSuper(Request $request): JsonResponse
     {
         $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
@@ -65,8 +66,9 @@ class ContractController extends AbstractController
             $medicalTest -> setPhone($data['phone']);
             $medicalTest -> setTypetest($data['typeTest']);
             $medicalTest -> setOcupationalmedicaltest($data['ocupationMedicalTest']);
+            $medicalTest -> setState('0');
             $medicalTest -> setUser($user);
-    
+            
             $entiyManager->persist($medicalTest);
             $entiyManager->flush();
             
@@ -96,6 +98,7 @@ class ContractController extends AbstractController
         $medicalTest -> setHour($data['hour']);
         $medicalTest -> setTypetest($data['typeTest']);
         $medicalTest -> setOcupationalmedicaltest($data['ocupationMedicalTest']);
+        $medicalTest -> setState($data['state']);
         $medicalTest -> setUser($user);
 
         $entiyManager = $doctrine->getManager();
@@ -127,6 +130,7 @@ class ContractController extends AbstractController
                 'phone' => $medicalTest->getPhone(),
                 'typeTest' =>$medicalTest->getTypetest(),
                 'ocupationMedicalTest' => $medicalTest->getOcupationalmedicaltest(),
+                'state' => $medicalTest->getState(),
                 'userId'=>$medicalTest->getUser()->getId()
 
             ];
