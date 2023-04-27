@@ -36,6 +36,13 @@ class Competence
      */
     private $description;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="icon", type="string", length=30, nullable=false)
+     */
+    private $icon;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -61,6 +68,18 @@ class Competence
     public function setDescription(string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getIcon(): ?string
+    {
+        return $this->icon;
+    }
+
+    public function setIcon(string $icon): self
+    {
+        $this->icon = $icon;
 
         return $this;
     }

@@ -22,16 +22,6 @@ class Score
     private $id;
 
     /**
-     * @var \FactorProfile
-     *
-     * @ORM\ManyToOne(targetEntity="FactorProfile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="factor_profile_id", referencedColumnName="id")
-     * })
-     */
-    private $factorProfile;
-
-    /**
      * @var \CompetenceProfile
      *
      * @ORM\ManyToOne(targetEntity="CompetenceProfile")
@@ -41,21 +31,19 @@ class Score
      */
     private $competenceProfile;
 
+    /**
+     * @var \FactorProfile
+     *
+     * @ORM\ManyToOne(targetEntity="FactorProfile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="factor_profile_id", referencedColumnName="id")
+     * })
+     */
+    private $factorProfile;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getFactorProfile(): ?FactorProfile
-    {
-        return $this->factorProfile;
-    }
-
-    public function setFactorProfile(?FactorProfile $factorProfile): self
-    {
-        $this->factorProfile = $factorProfile;
-
-        return $this;
     }
 
     public function getCompetenceProfile(): ?CompetenceProfile
@@ -66,6 +54,18 @@ class Score
     public function setCompetenceProfile(?CompetenceProfile $competenceProfile): self
     {
         $this->competenceProfile = $competenceProfile;
+
+        return $this;
+    }
+
+    public function getFactorProfile(): ?FactorProfile
+    {
+        return $this->factorProfile;
+    }
+
+    public function setFactorProfile(?FactorProfile $factorProfile): self
+    {
+        $this->factorProfile = $factorProfile;
 
         return $this;
     }
