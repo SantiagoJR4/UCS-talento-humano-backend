@@ -50,7 +50,7 @@ class ContractController extends AbstractController
         }
         else{
             //Trabajador seleccionado
-            $user = $entiyManager->getRepository(User::class)->find($data['id']);
+            $user = $entiyManager->getRepository(User::class)->find($data['user']);
             if (!$user) {
                 throw $this->createNotFoundException(
                     'No user found for id '.$data['id']
@@ -62,7 +62,7 @@ class ContractController extends AbstractController
             $medicalTest -> setDate(new DateTime($data['date']));
             $medicalTest -> setAddress($data['address']);
             $medicalTest -> setMedicalcenter($data['medicalCenter']);
-            $medicalTest -> setHour($data['hour']);
+            //$medicalTest -> setHour($data['hour']);
             $medicalTest -> setPhone($data['phone']);
             $medicalTest -> setTypetest($data['typeTest']);
             $medicalTest -> setOcupationalmedicaltest($data['ocupationMedicalTest']);
@@ -95,7 +95,6 @@ class ContractController extends AbstractController
         $medicalTest -> setDate(new DateTime($data['date']));
         $medicalTest -> setAddress($data['address']);
         $medicalTest -> setMedicalcenter($data['medicalCenter']);
-        $medicalTest -> setHour($data['hour']);
         $medicalTest -> setTypetest($data['typeTest']);
         $medicalTest -> setOcupationalmedicaltest($data['ocupationMedicalTest']);
         $medicalTest -> setState($data['state']);
@@ -126,7 +125,6 @@ class ContractController extends AbstractController
                 'date' => $medicalTest->getDate()->format('Y-m-d'),
                 'address' => $medicalTest->getAddress(),
                 'medicalCenter' => $medicalTest->getMedicalCenter(),
-                'hour' => $medicalTest->getHour(),
                 'phone' => $medicalTest->getPhone(),
                 'typeTest' =>$medicalTest->getTypetest(),
                 'ocupationMedicalTest' => $medicalTest->getOcupationalmedicaltest(),
@@ -136,6 +134,17 @@ class ContractController extends AbstractController
             ];
         }
         return new JsonResponse($response);
+    }
+
+    #[Route('/contract/list-medicalTest/{id}', name:'app_contract_medicaltTest_list_user')]
+    public function listMedicalTestUser(ManagerRegistry $doctrine, Request $request, int $id) : JsonResponse
+    {
+        $user = $doctrine->getRepository(User::class)->find($id);
+        $medicalTest = $doctrine->getRepository(Medicaltest::class)->findBy(['user' => $user]);
+
+        foreach($medicalTest as $medicalTest){
+            
+        }
     }
 
     #[Route('/contract/delete-medicalTest/{id}',name:'app_contract_medicalTest_delete')]
