@@ -122,7 +122,7 @@ class ContractController extends AbstractController
             $response[] = [
                 'id' => $medicalTest->getId(),
                 'city' => $medicalTest->getCity(),
-                'date' => $medicalTest->getDate()->format('Y-m-d'),
+                'date' => $medicalTest->getDate()->format('Y-m-d H:i'),
                 'address' => $medicalTest->getAddress(),
                 'medicalCenter' => $medicalTest->getMedicalCenter(),
                 'phone' => $medicalTest->getPhone(),
@@ -136,15 +136,32 @@ class ContractController extends AbstractController
         return new JsonResponse($response);
     }
 
-    #[Route('/contract/list-medicalTest/{id}', name:'app_contract_medicaltTest_list_user')]
-    public function listMedicalTestUser(ManagerRegistry $doctrine, Request $request, int $id) : JsonResponse
+    #[Route('/contract/list-medicalTestUser/{id}', name:'app_contract_medicaltTest_list_user')]
+    public function listMedicalTestUser(ManagerRegistry $doctrine, int $id) : JsonResponse
     {
         $user = $doctrine->getRepository(User::class)->find($id);
         $medicalTest = $doctrine->getRepository(Medicaltest::class)->findBy(['user' => $user]);
 
-        foreach($medicalTest as $medicalTest){
-            
+        if(empty($medicalTest)){
+            return new JsonResponse(['status'=>false,'message' => 'No se encontraron citas medicas']);
         }
+
+        foreach($medicalTest as $medicalTest){
+            $response[] = [
+                'id' => $medicalTest->getId(),
+                'city' => $medicalTest->getCity(),
+                'date' => $medicalTest->getDate()->format('Y-m-d H:i'),
+                'address' => $medicalTest->getAddress(),
+                'medicalCenter' => $medicalTest->getMedicalCenter(),
+                'phone' => $medicalTest->getPhone(),
+                'typeTest' =>$medicalTest->getTypetest(),
+                'ocupationMedicalTest' => $medicalTest->getOcupationalmedicaltest(),
+                'state' => $medicalTest->getState(),
+                'userId'=>$medicalTest->getUser()->getId()
+
+            ];
+        }
+        return new JsonResponse($response);
     }
 
     #[Route('/contract/delete-medicalTest/{id}',name:'app_contract_medicalTest_delete')]
