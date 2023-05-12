@@ -9,9 +9,14 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use PhpParser\Node\Stmt\TryCatch;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ContractController extends AbstractController
@@ -39,7 +44,7 @@ class ContractController extends AbstractController
     }
     
     #[Route('/contract/create-medicalTest', name: 'app_contract_medicalTest')]
-    public function create(ManagerRegistry $doctrine, Request $request): JsonResponse
+    public function create(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
     {
         $isValidToken = $this->validateTokenSuper($request)->getContent();
         $entiyManager = $doctrine->getManager();
@@ -72,7 +77,26 @@ class ContractController extends AbstractController
             $entiyManager->persist($medicalTest);
             $entiyManager->flush();
             
-            return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Test Medico Creado']);
+            $email = (new TemplatedEmail())
+                ->from('santipo12@gmail.com')
+                ->to($user->getEmail())
+                ->subject('Asignación de cita médica')
+                ->htmlTemplate('emails/medicalTest.html.twig')
+                ->context([
+                    'datos' => $data,
+                    'user' => $user
+                ]);           
+
+            try{
+                $mailer->send($email);
+                $messaje = 'El examén médico fue programado con éxito, se envío un correo con la información a ' . $user->getEmail();
+            } catch (\Throwable $th) {
+                $messaje = $th->getMessage();
+            }
+
+            
+
+            return new JsonResponse(['status'=>'Success','code'=>'200','message'=>$messaje]);
         }
     }
 
@@ -80,8 +104,10 @@ class ContractController extends AbstractController
     public function update(ManagerRegistry $doctrine,Request $request, ValidateToken $vToken): JsonResponse
     {
         $token = $request->query->get('token');
-        $user = $vToken->getUserIdFromToken($token);
+        $userLogueado = $vToken->getUserIdFromToken($token);
         $data = json_decode($request->getContent(),true);
+
+        $userId = $data['userId'];
         $entiyManager = $doctrine->getManager();
         $medicalTest = $entiyManager->getRepository(Medicaltest::class)->find($data['id']);
 
@@ -95,9 +121,18 @@ class ContractController extends AbstractController
         $medicalTest -> setDate(new DateTime($data['date']));
         $medicalTest -> setAddress($data['address']);
         $medicalTest -> setMedicalcenter($data['medicalCenter']);
+        $medicalTest -> setPhone($data['phone']);
         $medicalTest -> setTypetest($data['typeTest']);
         $medicalTest -> setOcupationalmedicaltest($data['ocupationMedicalTest']);
         $medicalTest -> setState($data['state']);
+
+        $user = $entiyManager->getRepository(User::class)->find($userId);
+        if(!$user){
+            throw $this->createNotFoundException(
+                'No user found for id'. $userId
+            );
+        }
+
         $medicalTest -> setUser($user);
 
         $entiyManager = $doctrine->getManager();
@@ -107,7 +142,6 @@ class ContractController extends AbstractController
         return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Test Medico Actualizado']);
     }
 
-    
     #[Route('/contract/list-medicalTest',name:'app_contract_medicalTest_list')]
     public function listMedicalTest(ManagerRegistry $doctrine,Request $request, ValidateToken $vToken): JsonResponse
     {
@@ -184,5 +218,4 @@ class ContractController extends AbstractController
 
         return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Test Medico Eliminado']);
     }
-
 }
