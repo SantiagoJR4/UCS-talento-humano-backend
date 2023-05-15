@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * UsersInCall
  *
- * @ORM\Table(name="users_in_call", indexes={@ORM\Index(name="fk_users_in_call_call", columns={"call_id"}), @ORM\Index(name="fk_users_in_call_user", columns={"user_id"})})
+ * @ORM\Table(name="users_in_call", indexes={@ORM\Index(name="fk_users_in_call_user", columns={"user_id"}), @ORM\Index(name="fk_users_in_call_call", columns={"call_id"})})
  * @ORM\Entity
  */
 class UsersInCall
@@ -25,19 +25,13 @@ class UsersInCall
     /**
      * @var int
      *
-     * @ORM\Column(name="user_status", type="smallint", nullable=false, options={"comment"="0->hv 1->knowledge 2->psycho_and_interview 3->final 4->selected"})
+     * @ORM\Column(name="user_status", type="smallint", nullable=false, options={"comment"="0->hv
+1->knowledge
+2->psycho_and_interview
+3->final
+4->selected"})
      */
     private $userStatus = '0';
-
-    /**
-     * @var \TblCall
-     *
-     * @ORM\ManyToOne(targetEntity="TblCall")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
-     * })
-     */
-    private $call;
 
     /**
      * @var \User
@@ -48,6 +42,16 @@ class UsersInCall
      * })
      */
     private $user;
+
+    /**
+     * @var \TblCall
+     *
+     * @ORM\ManyToOne(targetEntity="TblCall")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
+     * })
+     */
+    private $call;
 
     public function getId(): ?int
     {
@@ -66,18 +70,6 @@ class UsersInCall
         return $this;
     }
 
-    public function getCall(): ?TblCall
-    {
-        return $this->call;
-    }
-
-    public function setCall(?TblCall $call): self
-    {
-        $this->call = $call;
-
-        return $this;
-    }
-
     public function getUser(): ?User
     {
         return $this->user;
@@ -86,6 +78,18 @@ class UsersInCall
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getCall(): ?TblCall
+    {
+        return $this->call;
+    }
+
+    public function setCall(?TblCall $call): self
+    {
+        $this->call = $call;
 
         return $this;
     }
