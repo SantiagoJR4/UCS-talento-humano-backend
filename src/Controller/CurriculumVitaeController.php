@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\AcademicTraining;
 use App\Entity\CurriculumVitae;
+use App\Entity\EvaluationCv;
 use App\Entity\FurtherTraining;
 use App\Entity\IntellectualProduction;
 use App\Entity\Language;
@@ -13,6 +14,7 @@ use App\Entity\ReferencesData;
 use App\Entity\TeachingExperience;
 use App\Entity\User;
 use App\Entity\WorkExperience;
+use App\Service\Helpers;
 use App\Service\ValidateToken;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
@@ -23,6 +25,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+//TODO: Hacer global
 function convertDateTimeToString($data) {
     foreach ($data as $key => $value) {
         if (is_array($value)) {
@@ -460,6 +463,7 @@ class CurriculumVitaeController extends AbstractController
             return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
         };
         return new JsonResponse([
+            'user' => [$user->getUrlPhoto(), $userId],
             'personalData' => convertDateTimeToString($qb(PersonalData::class, $userId)),
             'academicTraining' => convertDateTimeToString($qb(AcademicTraining::class, $userId)),
             'furtherTraining' => convertDateTimeToString($qb(FurtherTraining::class, $userId)),
@@ -470,6 +474,30 @@ class CurriculumVitaeController extends AbstractController
             'references' => convertDateTimeToString($qb(ReferencesData::class, $userId)),
             'records' => convertDateTimeToString($qb(Record::class, $userId))
         ]);
+    }
+
+    #[Route('/curriculum-vitae/list-cv/{id}', name:'app_listar_curriculumVitae')]
+    public function listCv(ManagerRegistry $doctrine, Request $request ,int $id, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        $user = $doctrine->getRepository(User::class)->find($id);
+        $qb = function($class, $id) use ($doctrine) {
+            return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
+        };
+        return new JsonResponse([
+            'personalData' => convertDateTimeToString($qb(PersonalData::class, $user)),
+            'academicTraining' => convertDateTimeToString($qb(AcademicTraining::class, $user)),
+            'furtherTraining' => convertDateTimeToString($qb(FurtherTraining::class, $user)),
+            'language' => convertDateTimeToString($qb(Language::class, $user)),
+            'workExperience' => convertDateTimeToString($qb(WorkExperience::class, $user)),
+            'teachingExperience' => convertDateTimeToString($qb(TeachingExperience::class, $user)),
+            'intellectualproduction' => convertDateTimeToString($qb(IntellectualProduction::class, $user)),
+            'references' => convertDateTimeToString($qb(ReferencesData::class, $user)),
+            'records' => convertDateTimeToString($qb(Record::class, $user)),
+            'evaluationCV' => convertDateTimeToString($qb(EvaluationCv::class, $user))
+        ]);
+
     }
 
     #[Route('/curriculum-vitae/delete-cv', name: 'app_curriculum_vitae_delete')]
@@ -543,6 +571,7 @@ class CurriculumVitaeController extends AbstractController
         $fieldsToUpdate = $request->request->all();
         $files = $request->files->all();
         $fieldsToUpdate = array_merge($fieldsToUpdate, $files);
+
         foreach ($fieldsToUpdate as $fieldName => $fieldValue) {
             $dateTime = '';
             if (property_exists($entity, $fieldName)) {
@@ -568,6 +597,10 @@ class CurriculumVitaeController extends AbstractController
                 }
             }
         }
+
+        $jsonHistory = json_encode(['state'=>'2','date'=>date('d-m-Y H:i:s')]);
+        
+        $objEntity->setHistory($jsonHistory);
         $objEntity->setUser($user);
         $entityManager = $doctrine->getManager();
         $entityManager->persist($objEntity);

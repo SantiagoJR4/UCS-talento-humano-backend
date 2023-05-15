@@ -86,6 +86,13 @@ class AcademicTraining
     private $certifiedTitlePdf;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="history", type="text", length=0, nullable=true)
+     */
+    private $history;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -204,6 +211,18 @@ class AcademicTraining
     public function setCertifiedTitlePdf(?string $certifiedTitlePdf): self
     {
         $this->certifiedTitlePdf = $certifiedTitlePdf;
+
+        return $this;
+    }
+
+    public function getHistory(): ?string
+    {
+        return $this->history;
+    }
+
+    public function setHistory(?string $history): self
+    {
+        $this->history = $history;
 
         return $this;
     }
