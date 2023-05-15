@@ -32,7 +32,7 @@ class Medicaltest
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="date", type="date", nullable=false)
+     * @ORM\Column(name="date", type="datetime", nullable=false)
      */
     private $date;
 
@@ -49,13 +49,6 @@ class Medicaltest
      * @ORM\Column(name="medicalCenter", type="string", length=255, nullable=false)
      */
     private $medicalcenter;
-
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="hour", type="integer", nullable=false)
-     */
-    private $hour;
 
     /**
      * @var string
@@ -147,18 +140,6 @@ class Medicaltest
     public function setMedicalcenter(string $medicalcenter): self
     {
         $this->medicalcenter = $medicalcenter;
-
-        return $this;
-    }
-
-    public function getHour(): ?int
-    {
-        return $this->hour;
-    }
-
-    public function setHour(int $hour): self
-    {
-        $this->hour = $hour;
 
         return $this;
     }
