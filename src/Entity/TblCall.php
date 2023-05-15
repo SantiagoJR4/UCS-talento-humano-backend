@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TblCall
  *
- * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"})})
+ * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"})})
  * @ORM\Entity
  */
 class TblCall
@@ -35,6 +35,17 @@ class TblCall
      * @ORM\Column(name="description", type="string", length=100, nullable=false)
      */
     private $description;
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="state", type="smallint", nullable=false, options={"comment"="0 -> created,
+1 -> rejected,
+2 -> open,
+3 -> deserted,
+4 -> success"})
+     */
+    private $state;
 
     /**
      * @var string
@@ -116,6 +127,16 @@ class TblCall
      */
     private $profile;
 
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="selected_user_id", referencedColumnName="id")
+     * })
+     */
+    private $selectedUser;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -141,6 +162,18 @@ class TblCall
     public function setDescription(string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getState(): ?int
+    {
+        return $this->state;
+    }
+
+    public function setState(int $state): self
+    {
+        $this->state = $state;
 
         return $this;
     }
@@ -273,6 +306,18 @@ class TblCall
     public function setProfile(?Profile $profile): self
     {
         $this->profile = $profile;
+
+        return $this;
+    }
+
+    public function getSelectedUser(): ?User
+    {
+        return $this->selectedUser;
+    }
+
+    public function setSelectedUser(?User $selectedUser): self
+    {
+        $this->selectedUser = $selectedUser;
 
         return $this;
     }

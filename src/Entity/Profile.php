@@ -53,16 +53,16 @@ class Profile
     /**
      * @var string
      *
-     * @ORM\Column(name="further_training", type="string", length=255, nullable=false)
+     * @ORM\Column(name="previous_experience", type="string", length=255, nullable=false)
      */
-    private $furtherTraining;
+    private $previousExperience;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="previous_experience", type="string", length=255, nullable=false)
+     * @ORM\Column(name="further_training", type="string", length=255, nullable=false)
      */
-    private $previousExperience;
+    private $furtherTraining;
 
     /**
      * @var string
@@ -124,18 +124,6 @@ class Profile
         return $this;
     }
 
-    public function getFurtherTraining(): ?string
-    {
-        return $this->furtherTraining;
-    }
-
-    public function setFurtherTraining(string $furtherTraining): self
-    {
-        $this->furtherTraining = $furtherTraining;
-
-        return $this;
-    }
-
     public function getPreviousExperience(): ?string
     {
         return $this->previousExperience;
@@ -144,6 +132,18 @@ class Profile
     public function setPreviousExperience(string $previousExperience): self
     {
         $this->previousExperience = $previousExperience;
+
+        return $this;
+    }
+
+    public function getFurtherTraining(): ?string
+    {
+        return $this->furtherTraining;
+    }
+
+    public function setFurtherTraining(string $furtherTraining): self
+    {
+        $this->furtherTraining = $furtherTraining;
 
         return $this;
     }
