@@ -337,4 +337,20 @@ class CallController extends AbstractController
         return new JsonResponse($competenciesPercentage, 200, []);
     }
 
+    #[Route('/get-users-from-call', name: 'app_get_users_from_call')]
+    public function getUsersFromCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        $callId = $request->query->get('callId');
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select(
+            'uc.id', 'uc.userStatus', 'u.id as userId', 'u.names', 'u.lastNames',
+            'u.typeIdentification', 'u.email', 'u.urlPhoto')
+            ->from('App\Entity\UsersInCall', 'uc')
+            ->join('uc.user', 'u')
+            ->where('uc.call = :callId')
+            ->setParameter('callId', $callId);
+        $usersInCall = $query->getQuery()->getArrayResult();
+        return new JsonResponse($usersInCall, 200, []);
+    }
+
 }

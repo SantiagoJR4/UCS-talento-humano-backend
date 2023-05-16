@@ -480,7 +480,7 @@ class CurriculumVitaeController extends AbstractController
     public function listCv(ManagerRegistry $doctrine, Request $request ,int $id, ValidateToken $vToken): JsonResponse
     {
         $token = $request->query->get('token');
-        $user =  $vToken->getUserIdFromToken($token);
+        $user =  $vToken->getUserIdFromToken($token); // TODO: use this for validate (maybe)
         $user = $doctrine->getRepository(User::class)->find($id);
         $qb = function($class, $id) use ($doctrine) {
             return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
@@ -494,8 +494,8 @@ class CurriculumVitaeController extends AbstractController
             'teachingExperience' => convertDateTimeToString($qb(TeachingExperience::class, $user)),
             'intellectualproduction' => convertDateTimeToString($qb(IntellectualProduction::class, $user)),
             'references' => convertDateTimeToString($qb(ReferencesData::class, $user)),
-            'records' => convertDateTimeToString($qb(Record::class, $user)),
-            'evaluationCV' => convertDateTimeToString($qb(EvaluationCv::class, $user))
+            'records' => convertDateTimeToString($qb(Record::class, $user))
+            // 'evaluationCV' => convertDateTimeToString($qb(EvaluationCv::class, $user))
         ]);
 
     }
