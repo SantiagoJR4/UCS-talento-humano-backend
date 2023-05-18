@@ -41,12 +41,23 @@ function createJwtResponse($user) {
 
 class UserController extends AbstractController
 {
-    #[Route('/listarUser/{id}', name: 'app_user')]
-    public function user(ManagerRegistry $doctrine, Helpers $helpers, int $id): Response 
+    #[Route('/listUserData/{id}', name: 'app_list_user')]
+    public function user(ManagerRegistry $doctrine, Helpers $helpers, int $id, Request $request): Response 
     {
-        $datosUser = $doctrine->getRepository(User::class)->find($id);
+        $token = $request->query->get('token');
+        $dataUser = $doctrine->getRepository(User::class)->find($id);
 
-        $json = $helpers->serializador($datosUser);
+        $data[] = [
+            'id' => $dataUser->getId(),
+            'names' => $dataUser->getNames(),
+            'lastNames' => $dataUser->getLastNames(),
+            'type_identification' => $dataUser->getTypeIdentification(),
+            'identification' => $dataUser->getIdentification(),
+            'email' => $dataUser->getEmail(),
+            'phone' => $dataUser->getPhone()
+        ];
+
+        $json = $helpers->serializador($data);
         return $json;
     }
     #[Route('/listUsers', name: 'app_user')]

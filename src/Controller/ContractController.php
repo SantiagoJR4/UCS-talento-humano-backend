@@ -9,9 +9,13 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ContractController extends AbstractController
@@ -39,7 +43,7 @@ class ContractController extends AbstractController
     }
     
     #[Route('/contract/create-medicalTest', name: 'app_contract_medicalTest')]
-    public function create(ManagerRegistry $doctrine, Request $request): JsonResponse
+    public function create(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
     {
         $isValidToken = $this->validateTokenSuper($request)->getContent();
         $entiyManager = $doctrine->getManager();
@@ -50,7 +54,7 @@ class ContractController extends AbstractController
         }
         else{
             //Trabajador seleccionado
-            $user = $entiyManager->getRepository(User::class)->find($data['id']);
+            $user = $entiyManager->getRepository(User::class)->find($data['user']);
             if (!$user) {
                 throw $this->createNotFoundException(
                     'No user found for id '.$data['id']
@@ -62,7 +66,7 @@ class ContractController extends AbstractController
             $medicalTest -> setDate(new DateTime($data['date']));
             $medicalTest -> setAddress($data['address']);
             $medicalTest -> setMedicalcenter($data['medicalCenter']);
-            $medicalTest -> setHour($data['hour']);
+            //$medicalTest -> setHour($data['hour']);
             $medicalTest -> setPhone($data['phone']);
             $medicalTest -> setTypetest($data['typeTest']);
             $medicalTest -> setOcupationalmedicaltest($data['ocupationMedicalTest']);
@@ -71,17 +75,36 @@ class ContractController extends AbstractController
             
             $entiyManager->persist($medicalTest);
             $entiyManager->flush();
-            
-            return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Test Medico Creado']);
+    
+            try{
+                $email = (new TemplatedEmail())
+                    ->from('santipo12@gmail.com')
+                    ->to($user->getEmail())
+                    ->subject('Asignación de cita médica')
+                    ->htmlTemplate('email/medicalTestEmail.html.twig')
+                    ->context([
+                        'user' => $user,
+                        'medicalTest' => $medicalTest
+                    ]);         
+                $mailer->send($email);
+                $message = 'El examén médico fue programado con éxito, se envío un correo con la información a ' . $user->getEmail();
+            } catch (\Throwable $th) {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error','message'=>$message]);
+            }
+
+            return new JsonResponse(['status'=>'Success','code'=>'200','message'=>$message]);
         }
     }
 
     #[Route('/contract/update-medicalTest',name:'app_contract_medicalTest_update')]
-    public function update(ManagerRegistry $doctrine,Request $request, ValidateToken $vToken): JsonResponse
+    public function update(ManagerRegistry $doctrine,Request $request, ValidateToken $vToken, MailerInterface $mailer): JsonResponse
     {
         $token = $request->query->get('token');
-        $user = $vToken->getUserIdFromToken($token);
+        $userLogueado = $vToken->getUserIdFromToken($token);
         $data = json_decode($request->getContent(),true);
+
+        $userId = $data['userId'];
         $entiyManager = $doctrine->getManager();
         $medicalTest = $entiyManager->getRepository(Medicaltest::class)->find($data['id']);
 
@@ -95,20 +118,45 @@ class ContractController extends AbstractController
         $medicalTest -> setDate(new DateTime($data['date']));
         $medicalTest -> setAddress($data['address']);
         $medicalTest -> setMedicalcenter($data['medicalCenter']);
-        $medicalTest -> setHour($data['hour']);
+        $medicalTest -> setPhone($data['phone']);
         $medicalTest -> setTypetest($data['typeTest']);
         $medicalTest -> setOcupationalmedicaltest($data['ocupationMedicalTest']);
         $medicalTest -> setState($data['state']);
+
+        $user = $entiyManager->getRepository(User::class)->find($userId);
+        if(!$user){
+            throw $this->createNotFoundException(
+                'No user found for id'. $userId
+            );
+        }
+
         $medicalTest -> setUser($user);
 
         $entiyManager = $doctrine->getManager();
         $entiyManager->persist($medicalTest);
         $entiyManager->flush();
 
-        return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Test Medico Actualizado']);
+        try{
+            $email = (new TemplatedEmail())
+                ->from('santipo12@gmail.com')
+                ->to($user->getEmail())
+                ->subject('Actualización Cita Médica')
+                ->htmlTemplate('email/medicalTestEmail.html.twig')
+                ->context([
+                    'user' => $user,
+                    'medicalTest' => $medicalTest
+                ]);         
+            $mailer->send($email);
+            $message = 'El examén médico fue actualizado con éxito, se envío un correo con la información a ' . $user->getEmail();
+        } catch (\Throwable $th) {
+            $message = 'Error al enviar el correo:'.$th->getMessage();
+            return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
+
+        return new JsonResponse(['status'=>'Success','code'=>'200','message'=>$message]);
+    
     }
 
-    
     #[Route('/contract/list-medicalTest',name:'app_contract_medicalTest_list')]
     public function listMedicalTest(ManagerRegistry $doctrine,Request $request, ValidateToken $vToken): JsonResponse
     {
@@ -123,10 +171,37 @@ class ContractController extends AbstractController
             $response[] = [
                 'id' => $medicalTest->getId(),
                 'city' => $medicalTest->getCity(),
-                'date' => $medicalTest->getDate()->format('Y-m-d'),
+                'date' => $medicalTest->getDate()->format('Y-m-d H:i'),
                 'address' => $medicalTest->getAddress(),
                 'medicalCenter' => $medicalTest->getMedicalCenter(),
-                'hour' => $medicalTest->getHour(),
+                'phone' => $medicalTest->getPhone(),
+                'typeTest' =>$medicalTest->getTypetest(),
+                'ocupationMedicalTest' => $medicalTest->getOcupationalmedicaltest(),
+                'state' => $medicalTest->getState(),
+                'userId'=>$medicalTest->getUser()->getId()
+
+            ];
+        }
+        return new JsonResponse($response);
+    }
+
+    #[Route('/contract/list-medicalTestUser/{id}', name:'app_contract_medicaltTest_list_user')]
+    public function listMedicalTestUser(ManagerRegistry $doctrine, int $id) : JsonResponse
+    {
+        $user = $doctrine->getRepository(User::class)->find($id);
+        $medicalTest = $doctrine->getRepository(Medicaltest::class)->findBy(['user' => $user]);
+
+        if(empty($medicalTest)){
+            return new JsonResponse(['status'=>false,'message' => 'No se encontraron citas medicas']);
+        }
+
+        foreach($medicalTest as $medicalTest){
+            $response[] = [
+                'id' => $medicalTest->getId(),
+                'city' => $medicalTest->getCity(),
+                'date' => $medicalTest->getDate()->format('Y-m-d H:i'),
+                'address' => $medicalTest->getAddress(),
+                'medicalCenter' => $medicalTest->getMedicalCenter(),
                 'phone' => $medicalTest->getPhone(),
                 'typeTest' =>$medicalTest->getTypetest(),
                 'ocupationMedicalTest' => $medicalTest->getOcupationalmedicaltest(),
@@ -158,5 +233,4 @@ class ContractController extends AbstractController
 
         return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Test Medico Eliminado']);
     }
-
 }

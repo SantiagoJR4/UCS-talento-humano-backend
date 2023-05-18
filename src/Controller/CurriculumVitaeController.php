@@ -496,7 +496,7 @@ class CurriculumVitaeController extends AbstractController
             'intellectualproduction' => convertDateTimeToString($qb(IntellectualProduction::class, $user)),
             'references' => convertDateTimeToString($qb(ReferencesData::class, $user)),
             'records' => convertDateTimeToString($qb(Record::class, $user)),
-            'evaluationCV' => convertDateTimeToString($qb(EvaluationCv::class, $user))
+            // 'evaluationCV' => convertDateTimeToString($qb(EvaluationCv::class, $user))
         ]);
 
     }
