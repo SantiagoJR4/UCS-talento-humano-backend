@@ -48,6 +48,16 @@ class FactorProfile
      */
     private $factor;
 
+    /**
+     * @var \TblCall
+     *
+     * @ORM\ManyToOne(targetEntity="TblCall")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
+     * })
+     */
+    private $call;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -72,7 +82,7 @@ class FactorProfile
 
     public function setCall(?TblCall $call): self
     {
-        $this->call = $call;
+        $this->profile = $profile;
 
         return $this;
     }
