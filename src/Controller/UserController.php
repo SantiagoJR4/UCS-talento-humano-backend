@@ -171,6 +171,13 @@ class UserController extends AbstractController
         $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
         return new JsonResponse(['isValid' => $isTokenValid, 'userType' => $decodedToken->userType]);
     }
+
+    #[Route('/saludo', name: 'saludo')]
+    public function saludo(Request $request): JsonResponse
+    {
+        return new JsonResponse(['Hola que dice']);
+    }
+    
  
     //TODO : HACER VERIFICACIÓN DE CORREO
 
@@ -182,5 +189,6 @@ class UserController extends AbstractController
 
     //     $message = (new Swift_Message)
     // }
+
 
 }
