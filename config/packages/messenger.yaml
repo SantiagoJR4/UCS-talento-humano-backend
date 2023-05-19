@@ -16,9 +16,13 @@ framework:
             # sync: 'sync://'
 
         routing:
-            Symfony\Component\Mailer\Messenger\SendEmailMessage: async
-            Symfony\Component\Notifier\Message\ChatMessage: async
-            Symfony\Component\Notifier\Message\SmsMessage: async
+        
+            #TODO: Se comento las siguientes lineas para no enviar los datos del correo
+            #a una tabla en la base de datos.
+
+            #Symfony\Component\Mailer\Messenger\SendEmailMessage: async
+            #Symfony\Component\Notifier\Message\ChatMessage: async
+            #Symfony\Component\Notifier\Message\SmsMessage: async
 
             # Route your messages to the transports
             # 'App\Message\YourMessage': async

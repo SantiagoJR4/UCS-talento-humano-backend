@@ -9,13 +9,13 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use PhpParser\Node\Stmt\TryCatch;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use PhpParser\Node\Stmt\TryCatch;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -76,32 +76,30 @@ class ContractController extends AbstractController
             
             $entiyManager->persist($medicalTest);
             $entiyManager->flush();
-            
-            $email = (new TemplatedEmail())
-                ->from('santipo12@gmail.com')
-                ->to($user->getEmail())
-                ->subject('Asignación de cita médica')
-                ->htmlTemplate('emails/medicalTest.html.twig')
-                ->context([
-                    'datos' => $data,
-                    'user' => $user
-                ]);           
-
+    
             try{
+                $email = (new TemplatedEmail())
+                    ->from('santipo12@gmail.com')
+                    ->to($user->getEmail())
+                    ->subject('Asignación de cita médica')
+                    ->htmlTemplate('email/medicalTestEmail.html.twig')
+                    ->context([
+                        'user' => $user,
+                        'medicalTest' => $medicalTest
+                    ]);         
                 $mailer->send($email);
-                $messaje = 'El examén médico fue programado con éxito, se envío un correo con la información a ' . $user->getEmail();
+                $message = 'El examén médico fue programado con éxito, se envío un correo con la información a ' . $user->getEmail();
             } catch (\Throwable $th) {
-                $messaje = $th->getMessage();
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error','message'=>$message]);
             }
 
-            
-
-            return new JsonResponse(['status'=>'Success','code'=>'200','message'=>$messaje]);
+            return new JsonResponse(['status'=>'Success','code'=>'200','message'=>$message]);
         }
     }
 
     #[Route('/contract/update-medicalTest',name:'app_contract_medicalTest_update')]
-    public function update(ManagerRegistry $doctrine,Request $request, ValidateToken $vToken): JsonResponse
+    public function update(ManagerRegistry $doctrine,Request $request, ValidateToken $vToken, MailerInterface $mailer): JsonResponse
     {
         $token = $request->query->get('token');
         $userLogueado = $vToken->getUserIdFromToken($token);
@@ -139,7 +137,25 @@ class ContractController extends AbstractController
         $entiyManager->persist($medicalTest);
         $entiyManager->flush();
 
-        return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Test Medico Actualizado']);
+        try{
+            $email = (new TemplatedEmail())
+                ->from('santipo12@gmail.com')
+                ->to($user->getEmail())
+                ->subject('Actualización Cita Médica')
+                ->htmlTemplate('email/medicalTestEmail.html.twig')
+                ->context([
+                    'user' => $user,
+                    'medicalTest' => $medicalTest
+                ]);         
+            $mailer->send($email);
+            $message = 'El examén médico fue actualizado con éxito, se envío un correo con la información a ' . $user->getEmail();
+        } catch (\Throwable $th) {
+            $message = 'Error al enviar el correo:'.$th->getMessage();
+            return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
+
+        return new JsonResponse(['status'=>'Success','code'=>'200','message'=>$message]);
+    
     }
 
     #[Route('/contract/list-medicalTest',name:'app_contract_medicalTest_list')]
