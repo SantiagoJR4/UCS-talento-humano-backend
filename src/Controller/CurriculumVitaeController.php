@@ -504,6 +504,7 @@ class CurriculumVitaeController extends AbstractController
     #[Route('/curriculum-vitae/delete-cv', name: 'app_curriculum_vitae_delete')]
     public function delete(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
     {
+        // TODO: delete also files
         $token = $request->query->get('token');
         $table = ucfirst($request->query->get('table'));
         $id = $request->query->get('id');
@@ -540,6 +541,13 @@ class CurriculumVitaeController extends AbstractController
                     $entityObj->{'set' . $fieldName}($dateTime);
                 }
                 elseif ($fieldValue instanceof UploadedFile) {
+                    $directory = $this->getParameter('hv')
+                        . '/'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification();
+                    if (!is_dir($directory)) {
+                        mkdir($directory, 0777, true);
+                    }
                     $fileName =
                         ucfirst($request->query->get('entity')) . '-'
                         . $fieldName . '-'
@@ -547,8 +555,8 @@ class CurriculumVitaeController extends AbstractController
                         . $user->getIdentification() . '-'
                         . time() . '.'
                         . $fieldValue->guessExtension();
-                    $fieldValue->move($this->getParameter('uploads_directory'), $fileName);
-                    $fieldValue = $fileName;
+                        $fieldValue->move( $directory, $fileName);
+                        $fieldValue = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
                     $entityObj->{'set' . $fieldName}($fieldValue);
                 } elseif($fieldValue === 'false') {
                     $entityObj->{'set'.$fieldName}(false);
@@ -581,6 +589,13 @@ class CurriculumVitaeController extends AbstractController
                     $objEntity->{'set' . $fieldName}($dateTime);
                 }
                 elseif ($fieldValue instanceof UploadedFile) {
+                    $directory = $this->getParameter('hv')
+                        . '/'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification();
+                    if (!is_dir($directory)) {
+                        mkdir($directory, 0777, true);
+                    }
                     $fileName =
                         ucfirst($request->query->get('entity')) . '-'
                         . $fieldName . '-'
@@ -588,8 +603,8 @@ class CurriculumVitaeController extends AbstractController
                         . $user->getIdentification() . '-'
                         . time() . '.'
                         . $fieldValue->guessExtension();
-                    $fieldValue->move($this->getParameter('uploads_directory'), $fileName);
-                    $fieldValue = $fileName;
+                    $fieldValue->move( $directory, $fileName);
+                    $fieldValue = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
                     $objEntity->{'set' . $fieldName}($fieldValue);
                 } elseif($fieldValue === 'false') {
                     $objEntity->{'set'.$fieldName}(false);
@@ -606,7 +621,7 @@ class CurriculumVitaeController extends AbstractController
         $entityManager = $doctrine->getManager();
         $entityManager->persist($objEntity);
         $entityManager->flush();
-        return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Nuevo Objeto Creado']);
+        return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Nuevo Objeto Creado', 'fileName' => $fileName]);
     }
     
 }
