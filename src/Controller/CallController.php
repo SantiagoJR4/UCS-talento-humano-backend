@@ -344,7 +344,7 @@ class CallController extends AbstractController
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select(
             'uc.id', 'uc.userStatus', 'u.id as userId', 'u.names', 'u.lastNames',
-            'u.typeIdentification', 'u.email', 'u.urlPhoto')
+            'u.identification', 'u.email', 'u.urlPhoto')
             ->from('App\Entity\UsersInCall', 'uc')
             ->join('uc.user', 'u')
             ->where('uc.call = :callId')
