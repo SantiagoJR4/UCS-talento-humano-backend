@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Contract;
+use App\Entity\ContractCharges;
 use App\Entity\Medicaltest;
 use App\Entity\User;
 use App\Service\ValidateToken;
@@ -18,6 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class ContractController extends AbstractController
 {
@@ -66,7 +68,7 @@ class ContractController extends AbstractController
             $medicalTest -> setCity($data['city']);
             $medicalTest -> setDate(new DateTime($data['date']));
             $medicalTest -> setAddress($data['address']);
-            $medicalTest -> setMedicalcenter($data['medicalCenter']);
+            $medicalTest -> setMedicalcenter($data['medicalCenter']); //AMPM SAS
             //$medicalTest -> setHour($data['hour']);
             $medicalTest -> setPhone($data['phone']);
             $medicalTest -> setTypetest($data['typeTest']);
@@ -244,6 +246,8 @@ class ContractController extends AbstractController
         $entiyManager = $doctrine->getManager();
         $data = json_decode($request->getContent(),true);
 
+        $contractCharges = $entiyManager->getRepository(ContractCharges::class)->find($data['contractCharges']);
+
         if($isValidToken === false){
             return new JsonResponse(['error' => 'Token no válido']);
         }
@@ -257,14 +261,12 @@ class ContractController extends AbstractController
 
             $contract = new Contract();
             $contract -> setTypeContract($data['type_contract']);
-            $contract -> setCharge($data['charge']);
-            $contract -> setSalary($data['salary']);
             $contract -> setWorkStart(new DateTime($data['work_start']));
             $contract -> setInitialContract($data['initial_contract']);
             $contract -> setExpirationContract(new DateTime($data['expiration_contract']));
-            $contract -> setWorkDay($data['work_day']);
             $contract -> setFunctions($data['functions']);
             $contract -> setUser($user);
+            $contract -> setContractCharges($contractCharges);
 
             $entiyManager->persist($contract);
             $entiyManager->flush();
@@ -273,4 +275,12 @@ class ContractController extends AbstractController
         }
     }
 
+    #[Route('/contract/list-charges', name:'app_contract_list_charges')]
+    public function listCharges(ManagerRegistry $doctrine, SerializerInterface $serializer) : JsonResponse
+    {
+        $charges = $doctrine->getRepository(ContractCharges::class)->findAll();
+        $serializerAllCharges = $serializer->serialize($charges,'json');
+        if(empty($charges)){ return new JsonResponse(['status'=>false,'message'=>'No se encontró lista de cargos']);}
+        return new JsonResponse($serializerAllCharges,200,[],true);
+    }
 }

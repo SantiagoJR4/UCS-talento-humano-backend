@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * CallPercentage
  *
- * @ORM\Table(name="call_percentage")
+ * @ORM\Table(name="call_percentage", indexes={@ORM\Index(name="fk_call_percentage_tbl_call", columns={"call_id"})})
  * @ORM\Entity
  */
 class CallPercentage
@@ -22,9 +22,9 @@ class CallPercentage
     private $id;
 
     /**
-     * @var int
+     * @var int|null
      *
-     * @ORM\Column(name="curriculum_vitae", type="integer", nullable=false)
+     * @ORM\Column(name="curriculum_vitae", type="integer", nullable=true)
      */
     private $curriculumVitae;
 
@@ -50,102 +50,49 @@ class CallPercentage
     private $interview;
 
     /**
-     * @var int
+     * @var int|null
      *
-     * @ORM\Column(name="class", type="integer", nullable=false)
+     * @ORM\Column(name="class", type="integer", nullable=true)
      */
     private $class;
 
     /**
-     * @var int
+     * @var int|null
      *
-     * @ORM\Column(name="undergraduate", type="integer", nullable=false)
+     * @ORM\Column(name="under_graduate_training", type="integer", nullable=true)
      */
-    private $undergraduate;
+    private $underGraduateTraining;
 
     /**
-     * @var int
+     * @var int|null
      *
-     * @ORM\Column(name="postgraduate", type="integer", nullable=false)
+     * @ORM\Column(name="post_graduate_training", type="integer", nullable=true)
      */
-    private $postgraduate;
+    private $postGraduateTraining;
 
     /**
-     * @var int
+     * @var int|null
      *
-     * @ORM\Column(name="work_experience", type="integer", nullable=false)
+     * @ORM\Column(name="previous_experience", type="integer", nullable=true)
      */
-    private $workExperience;
+    private $previousExperience;
 
     /**
-     * @var int
+     * @var int|null
      *
-     * @ORM\Column(name="teacher_experience", type="integer", nullable=false)
-     */
-    private $teacherExperience;
-
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="further_training", type="integer", nullable=false)
+     * @ORM\Column(name="further_training", type="integer", nullable=true)
      */
     private $furtherTraining;
 
     /**
-     * @var int
+     * @var \TblCall
      *
-     * @ORM\Column(name="intellectual_production", type="integer", nullable=false)
+     * @ORM\ManyToOne(targetEntity="TblCall")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
+     * })
      */
-    private $intellectualProduction;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="is_class_necessary", type="boolean", nullable=false)
-     */
-    private $isClassNecessary;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="is_undergraduate_necessary", type="boolean", nullable=false)
-     */
-    private $isUndergraduateNecessary;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="is_postgraduate_necessary", type="boolean", nullable=false)
-     */
-    private $isPostgraduateNecessary;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="is_work_experience_necessary", type="boolean", nullable=false)
-     */
-    private $isWorkExperienceNecessary;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="is_teacher_experience_necessary", type="boolean", nullable=false)
-     */
-    private $isTeacherExperienceNecessary;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="is_further_training_necessary", type="boolean", nullable=false)
-     */
-    private $isFurtherTrainingNecessary;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="is_intellectual_production_necessary", type="boolean", nullable=false)
-     */
-    private $isIntellectualProductionNecessary;
+    private $call;
 
     public function getId(): ?int
     {
@@ -157,7 +104,7 @@ class CallPercentage
         return $this->curriculumVitae;
     }
 
-    public function setCurriculumVitae(int $curriculumVitae): self
+    public function setCurriculumVitae(?int $curriculumVitae): self
     {
         $this->curriculumVitae = $curriculumVitae;
 
@@ -205,57 +152,45 @@ class CallPercentage
         return $this->class;
     }
 
-    public function setClass(int $class): self
+    public function setClass(?int $class): self
     {
         $this->class = $class;
 
         return $this;
     }
 
-    public function getUndergraduate(): ?int
+    public function getUnderGraduateTraining(): ?int
     {
-        return $this->undergraduate;
+        return $this->underGraduateTraining;
     }
 
-    public function setUndergraduate(int $undergraduate): self
+    public function setUnderGraduateTraining(?int $underGraduateTraining): self
     {
-        $this->undergraduate = $undergraduate;
+        $this->underGraduateTraining = $underGraduateTraining;
 
         return $this;
     }
 
-    public function getPostgraduate(): ?int
+    public function getPostGraduateTraining(): ?int
     {
-        return $this->postgraduate;
+        return $this->postGraduateTraining;
     }
 
-    public function setPostgraduate(int $postgraduate): self
+    public function setPostGraduateTraining(?int $postGraduateTraining): self
     {
-        $this->postgraduate = $postgraduate;
+        $this->postGraduateTraining = $postGraduateTraining;
 
         return $this;
     }
 
-    public function getWorkExperience(): ?int
+    public function getPreviousExperience(): ?int
     {
-        return $this->workExperience;
+        return $this->previousExperience;
     }
 
-    public function setWorkExperience(int $workExperience): self
+    public function setPreviousExperience(?int $previousExperience): self
     {
-        $this->workExperience = $workExperience;
-
-        return $this;
-    }
-
-    public function getTeacherExperience(): ?int
-    {
-        return $this->teacherExperience;
-    }
-
-    public function setTeacherExperience(int $teacherExperience): self
-    {
-        $this->teacherExperience = $teacherExperience;
+        $this->previousExperience = $previousExperience;
 
         return $this;
     }
@@ -265,105 +200,21 @@ class CallPercentage
         return $this->furtherTraining;
     }
 
-    public function setFurtherTraining(int $furtherTraining): self
+    public function setFurtherTraining(?int $furtherTraining): self
     {
         $this->furtherTraining = $furtherTraining;
 
         return $this;
     }
 
-    public function getIntellectualProduction(): ?int
+    public function getCall(): ?TblCall
     {
-        return $this->intellectualProduction;
+        return $this->call;
     }
 
-    public function setIntellectualProduction(int $intellectualProduction): self
+    public function setCall(?TblCall $call): self
     {
-        $this->intellectualProduction = $intellectualProduction;
-
-        return $this;
-    }
-
-    public function isIsClassNecessary(): ?bool
-    {
-        return $this->isClassNecessary;
-    }
-
-    public function setIsClassNecessary(bool $isClassNecessary): self
-    {
-        $this->isClassNecessary = $isClassNecessary;
-
-        return $this;
-    }
-
-    public function isIsUndergraduateNecessary(): ?bool
-    {
-        return $this->isUndergraduateNecessary;
-    }
-
-    public function setIsUndergraduateNecessary(bool $isUndergraduateNecessary): self
-    {
-        $this->isUndergraduateNecessary = $isUndergraduateNecessary;
-
-        return $this;
-    }
-
-    public function isIsPostgraduateNecessary(): ?bool
-    {
-        return $this->isPostgraduateNecessary;
-    }
-
-    public function setIsPostgraduateNecessary(bool $isPostgraduateNecessary): self
-    {
-        $this->isPostgraduateNecessary = $isPostgraduateNecessary;
-
-        return $this;
-    }
-
-    public function isIsWorkExperienceNecessary(): ?bool
-    {
-        return $this->isWorkExperienceNecessary;
-    }
-
-    public function setIsWorkExperienceNecessary(bool $isWorkExperienceNecessary): self
-    {
-        $this->isWorkExperienceNecessary = $isWorkExperienceNecessary;
-
-        return $this;
-    }
-
-    public function isIsTeacherExperienceNecessary(): ?bool
-    {
-        return $this->isTeacherExperienceNecessary;
-    }
-
-    public function setIsTeacherExperienceNecessary(bool $isTeacherExperienceNecessary): self
-    {
-        $this->isTeacherExperienceNecessary = $isTeacherExperienceNecessary;
-
-        return $this;
-    }
-
-    public function isIsFurtherTrainingNecessary(): ?bool
-    {
-        return $this->isFurtherTrainingNecessary;
-    }
-
-    public function setIsFurtherTrainingNecessary(bool $isFurtherTrainingNecessary): self
-    {
-        $this->isFurtherTrainingNecessary = $isFurtherTrainingNecessary;
-
-        return $this;
-    }
-
-    public function isIsIntellectualProductionNecessary(): ?bool
-    {
-        return $this->isIntellectualProductionNecessary;
-    }
-
-    public function setIsIntellectualProductionNecessary(bool $isIntellectualProductionNecessary): self
-    {
-        $this->isIntellectualProductionNecessary = $isIntellectualProductionNecessary;
+        $this->call = $call;
 
         return $this;
     }

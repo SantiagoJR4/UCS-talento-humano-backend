@@ -51,6 +51,13 @@ class Record
     private $correctiveMeasuresPdf;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="history", type="text", length=0, nullable=true)
+     */
+    private $history;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -109,6 +116,18 @@ class Record
     public function setCorrectiveMeasuresPdf(string $correctiveMeasuresPdf): self
     {
         $this->correctiveMeasuresPdf = $correctiveMeasuresPdf;
+
+        return $this;
+    }
+
+    public function getHistory(): ?string
+    {
+        return $this->history;
+    }
+
+    public function setHistory(?string $history): self
+    {
+        $this->history = $history;
 
         return $this;
     }

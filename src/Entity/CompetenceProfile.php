@@ -22,11 +22,14 @@ class CompetenceProfile
     private $id;
 
     /**
-     * @var int
+     * @var \Profile
      *
-     * @ORM\Column(name="percentage", type="integer", nullable=false)
+     * @ORM\ManyToOne(targetEntity="Profile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
+     * })
      */
-    private $percentage;
+    private $profile;
 
     /**
      * @var \Competence
@@ -38,29 +41,19 @@ class CompetenceProfile
      */
     private $competence;
 
-    /**
-     * @var \Profile
-     *
-     * @ORM\ManyToOne(targetEntity="Profile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
-     * })
-     */
-    private $profile;
-
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getPercentage(): ?int
+    public function getProfile(): ?Profile
     {
-        return $this->percentage;
+        return $this->profile;
     }
 
-    public function setPercentage(int $percentage): self
+    public function setProfile(?Profile $profile): self
     {
-        $this->percentage = $percentage;
+        $this->profile = $profile;
 
         return $this;
     }
@@ -73,18 +66,6 @@ class CompetenceProfile
     public function setCompetence(?Competence $competence): self
     {
         $this->competence = $competence;
-
-        return $this;
-    }
-
-    public function getProfile(): ?Profile
-    {
-        return $this->profile;
-    }
-
-    public function setProfile(?Profile $profile): self
-    {
-        $this->profile = $profile;
 
         return $this;
     }

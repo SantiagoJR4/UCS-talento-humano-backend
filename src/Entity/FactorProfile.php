@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * FactorProfile
  *
- * @ORM\Table(name="factor_profile", indexes={@ORM\Index(name="fk_factor_profile", columns={"profile_id"}), @ORM\Index(name="fk_factor", columns={"factor_id"})})
+ * @ORM\Table(name="factor_profile", indexes={@ORM\Index(name="fk_factor", columns={"factor_id"}), @ORM\Index(name="fk_factor_profile", columns={"call_id"})})
  * @ORM\Entity
  */
 class FactorProfile
@@ -39,14 +39,14 @@ class FactorProfile
     private $factor;
 
     /**
-     * @var \Profile
+     * @var \TblCall
      *
-     * @ORM\ManyToOne(targetEntity="Profile")
+     * @ORM\ManyToOne(targetEntity="TblCall")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
+     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
      * })
      */
-    private $profile;
+    private $call;
 
     public function getId(): ?int
     {
@@ -77,14 +77,14 @@ class FactorProfile
         return $this;
     }
 
-    public function getProfile(): ?Profile
+    public function getCall(): ?TblCall
     {
-        return $this->profile;
+        return $this->call;
     }
 
-    public function setProfile(?Profile $profile): self
+    public function setCall(?TblCall $call): self
     {
-        $this->profile = $profile;
+        $this->call = $call;
 
         return $this;
     }

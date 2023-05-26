@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Score
  *
- * @ORM\Table(name="score", indexes={@ORM\Index(name="fk_score_competence_profile", columns={"competence_profile_id"}), @ORM\Index(name="fk_score_factor_profile", columns={"factor_profile_id"})})
+ * @ORM\Table(name="score", indexes={@ORM\Index(name="fk_score_factor_profile", columns={"factor_profile_id"}), @ORM\Index(name="fk_score_competence_profile", columns={"competence_percentage_id"})})
  * @ORM\Entity
  */
 class Score
@@ -22,14 +22,14 @@ class Score
     private $id;
 
     /**
-     * @var \CompetenceProfile
+     * @var \CompetencePercentage
      *
-     * @ORM\ManyToOne(targetEntity="CompetenceProfile")
+     * @ORM\ManyToOne(targetEntity="CompetencePercentage")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="competence_profile_id", referencedColumnName="id")
+     *   @ORM\JoinColumn(name="competence_percentage_id", referencedColumnName="id")
      * })
      */
-    private $competenceProfile;
+    private $competencePercentage;
 
     /**
      * @var \FactorProfile
@@ -46,14 +46,14 @@ class Score
         return $this->id;
     }
 
-    public function getCompetenceProfile(): ?CompetenceProfile
+    public function getCompetencePercentage(): ?CompetencePercentage
     {
-        return $this->competenceProfile;
+        return $this->competencePercentage;
     }
 
-    public function setCompetenceProfile(?CompetenceProfile $competenceProfile): self
+    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): self
     {
-        $this->competenceProfile = $competenceProfile;
+        $this->competencePercentage = $competencePercentage;
 
         return $this;
     }
