@@ -100,6 +100,13 @@ class WorkExperience
     private $retirementDate;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="time_worked", type="text", length=0, nullable=false)
+     */
+    private $timeWorked;
+
+    /**
      * @var string|null
      *
      * @ORM\Column(name="certified_pdf", type="text", length=65535, nullable=true)
@@ -256,6 +263,18 @@ class WorkExperience
     public function setRetirementDate(?\DateTimeInterface $retirementDate): self
     {
         $this->retirementDate = $retirementDate;
+
+        return $this;
+    }
+
+    public function getTimeWorked(): ?string
+    {
+        return $this->timeWorked;
+    }
+
+    public function setTimeWorked(string $timeWorked): self
+    {
+        $this->timeWorked = $timeWorked;
 
         return $this;
     }

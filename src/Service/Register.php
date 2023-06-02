@@ -24,7 +24,7 @@ class UserService
         $user->setLastNames($data['apellidos']);
         $user->setEmail(($data['correo'] !== NULL) ? $data['correo'] : 'No email' );
         $user->setPassword($data['password']);
-        $user->setPhone('noTelefono');
+        $user->setPhone($data['phone']);
         $user->setUserType(4);
 
         $this->entityManager->persist($user);

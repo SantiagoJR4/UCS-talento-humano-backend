@@ -23,8 +23,9 @@ function createJwtResponse($user) {
     $resp = [
         'names' => $user->getNames(),
         'lastNames' => $user->getLastNames(),
-        // 'phone' => $user->getPhone(),
+        'phone' => $user->getPhone(),
         'email' => $user->getEmail(),
+        'alternate_email' => $user->getAlternateEmail(),
         'identification' => $user->getIdentification(),
         'typeIdentification' => $user->getTypeIdentification()
     ];
@@ -83,7 +84,37 @@ class UserController extends AbstractController
 
         $json = $helpers->serializador($userData);
         return $json;
-    }    
+    }
+    
+    #[Route('/updateUser',name:'app_update_user')]
+    public function update(ManagerRegistry $doctrine, Request $request, validateToken $vToken) : JsonResponse
+    {
+        $token = $request->query->get('token');
+        $userToken = $vToken->getUserIdFromToken($token);
+        $data = json_decode($request->getContent(),true);
+        $userId = $data['userId'];
+        $entityManager = $doctrine->getManager();
+        $user = $entityManager->getRepository(User::class)->find($userId);
+
+        if (!$user) {
+            throw $this->createNotFoundException('El usuario no fue encontrado.');
+        }
+
+        // Actualizar los datos del usuario según los parámetros recibidos
+        // $user->setNames($request->request->get('names'));
+        // $user->setLastNames($request->request->get('lastNames'));
+        // $user->setTypeIdentification($request->request->get('type_identification'));
+        // $user->setIdentification($request->request->get('identification'));
+        $user->setEmail($data['email']);
+        $user->setPhone($data['phone']);
+
+        $entityManager = $doctrine->getManager();
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Actualización de datos Correctamente']);
+    }
+    
     #[Route('/register', name:'user_register')]
     public function registerUser(ManagerRegistry $doctrine): Response
     {

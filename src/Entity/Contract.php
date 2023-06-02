@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Contract
  *
- * @ORM\Table(name="contract", indexes={@ORM\Index(name="fk_contract_user", columns={"user_id"}), @ORM\Index(name="fk_contract_contract_charges", columns={"contract_charges_id"})})
+ * @ORM\Table(name="contract", indexes={@ORM\Index(name="fk_contract_user", columns={"user_id"})})
  * @ORM\Entity
  */
 class Contract
@@ -57,21 +57,18 @@ Contrato ocasional de trabajo.
     private $expirationContract;
 
     /**
-     * @var string
+     * @var int
      *
-     * @ORM\Column(name="functions", type="text", length=0, nullable=false)
+     * @ORM\Column(name="salary", type="integer", nullable=false)
      */
-    private $functions;
+    private $salary;
 
     /**
-     * @var \ContractCharges
+     * @var int
      *
-     * @ORM\ManyToOne(targetEntity="ContractCharges")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="contract_charges_id", referencedColumnName="id")
-     * })
+     * @ORM\Column(name="weekly_hours", type="integer", nullable=false)
      */
-    private $contractCharges;
+    private $weeklyHours;
 
     /**
      * @var \User
@@ -136,26 +133,26 @@ Contrato ocasional de trabajo.
         return $this;
     }
 
-    public function getFunctions(): ?string
+    public function getSalary(): ?int
     {
-        return $this->functions;
+        return $this->salary;
     }
 
-    public function setFunctions(string $functions): self
+    public function setSalary(int $salary): self
     {
-        $this->functions = $functions;
+        $this->salary = $salary;
 
         return $this;
     }
 
-    public function getContractCharges(): ?ContractCharges
+    public function getWeeklyHours(): ?int
     {
-        return $this->contractCharges;
+        return $this->weeklyHours;
     }
 
-    public function setContractCharges(?ContractCharges $contractCharges): self
+    public function setWeeklyHours(int $weeklyHours): self
     {
-        $this->contractCharges = $contractCharges;
+        $this->weeklyHours = $weeklyHours;
 
         return $this;
     }

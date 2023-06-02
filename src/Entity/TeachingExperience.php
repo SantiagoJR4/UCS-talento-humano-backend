@@ -81,6 +81,13 @@ class TeachingExperience
     /**
      * @var string
      *
+     * @ORM\Column(name="time_worked", type="text", length=0, nullable=false)
+     */
+    private $timeWorked;
+
+    /**
+     * @var string
+     *
      * @ORM\Column(name="contract_modality", type="string", length=2, nullable=false)
      */
     private $contractModality;
@@ -213,6 +220,18 @@ class TeachingExperience
     public function setRetirementDate(?\DateTimeInterface $retirementDate): self
     {
         $this->retirementDate = $retirementDate;
+
+        return $this;
+    }
+
+    public function getTimeWorked(): ?string
+    {
+        return $this->timeWorked;
+    }
+
+    public function setTimeWorked(string $timeWorked): self
+    {
+        $this->timeWorked = $timeWorked;
 
         return $this;
     }

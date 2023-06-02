@@ -5,12 +5,12 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * ContractCharges
+ * ContractChargesDoc
  *
- * @ORM\Table(name="contract_charges")
+ * @ORM\Table(name="contract_charges_doc", indexes={@ORM\Index(name="fk_contract_charges_doc_profile", columns={"profile_id"})})
  * @ORM\Entity
  */
-class ContractCharges
+class ContractChargesDoc
 {
     /**
      * @var int
@@ -24,13 +24,6 @@ class ContractCharges
     /**
      * @var string
      *
-     * @ORM\Column(name="type_employee", type="string", length=3, nullable=false)
-     */
-    private $typeEmployee;
-
-    /**
-     * @var string
-     *
      * @ORM\Column(name="name", type="string", length=255, nullable=false)
      */
     private $name;
@@ -38,7 +31,7 @@ class ContractCharges
     /**
      * @var string
      *
-     * @ORM\Column(name="work_dedication", type="string", length=2, nullable=false, options={"fixed"=true})
+     * @ORM\Column(name="work_dedication", type="string", length=255, nullable=false)
      */
     private $workDedication;
 
@@ -49,21 +42,19 @@ class ContractCharges
      */
     private $salary;
 
+    /**
+     * @var \Profile
+     *
+     * @ORM\ManyToOne(targetEntity="Profile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
+     * })
+     */
+    private $profile;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getTypeEmployee(): ?string
-    {
-        return $this->typeEmployee;
-    }
-
-    public function setTypeEmployee(string $typeEmployee): self
-    {
-        $this->typeEmployee = $typeEmployee;
-
-        return $this;
     }
 
     public function getName(): ?string
@@ -98,6 +89,18 @@ class ContractCharges
     public function setSalary(int $salary): self
     {
         $this->salary = $salary;
+
+        return $this;
+    }
+
+    public function getProfile(): ?Profile
+    {
+        return $this->profile;
+    }
+
+    public function setProfile(?Profile $profile): self
+    {
+        $this->profile = $profile;
 
         return $this;
     }

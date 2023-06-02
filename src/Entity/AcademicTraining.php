@@ -79,6 +79,13 @@ class AcademicTraining
     private $degreePdf;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="diploma_pdf", type="text", length=0, nullable=false)
+     */
+    private $diplomaPdf;
+
+    /**
      * @var string|null
      *
      * @ORM\Column(name="certified_title_pdf", type="text", length=0, nullable=true)
@@ -199,6 +206,18 @@ class AcademicTraining
     public function setDegreePdf(?string $degreePdf): self
     {
         $this->degreePdf = $degreePdf;
+
+        return $this;
+    }
+
+    public function getDiplomaPdf(): ?string
+    {
+        return $this->diplomaPdf;
+    }
+
+    public function setDiplomaPdf(string $diplomaPdf): self
+    {
+        $this->diplomaPdf = $diplomaPdf;
 
         return $this;
     }

@@ -5,12 +5,12 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * ContractCharges
+ * ContractChargesAdm
  *
- * @ORM\Table(name="contract_charges")
+ * @ORM\Table(name="contract_charges_adm")
  * @ORM\Entity
  */
-class ContractCharges
+class ContractChargesAdm
 {
     /**
      * @var int
@@ -24,21 +24,7 @@ class ContractCharges
     /**
      * @var string
      *
-     * @ORM\Column(name="type_employee", type="string", length=3, nullable=false)
-     */
-    private $typeEmployee;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="name", type="string", length=255, nullable=false)
-     */
-    private $name;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="work_dedication", type="string", length=2, nullable=false, options={"fixed"=true})
+     * @ORM\Column(name="work_dedication", type="string", length=255, nullable=false)
      */
     private $workDedication;
 
@@ -52,30 +38,6 @@ class ContractCharges
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getTypeEmployee(): ?string
-    {
-        return $this->typeEmployee;
-    }
-
-    public function setTypeEmployee(string $typeEmployee): self
-    {
-        $this->typeEmployee = $typeEmployee;
-
-        return $this;
-    }
-
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
-
-    public function setName(string $name): self
-    {
-        $this->name = $name;
-
-        return $this;
     }
 
     public function getWorkDedication(): ?string

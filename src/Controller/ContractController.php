@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Contract;
+use App\Entity\ContractAssignment;
 use App\Entity\ContractCharges;
 use App\Entity\Medicaltest;
+use App\Entity\Profile;
 use App\Entity\User;
 use App\Service\ValidateToken;
 use DateTime;
@@ -246,8 +248,6 @@ class ContractController extends AbstractController
         $entiyManager = $doctrine->getManager();
         $data = json_decode($request->getContent(),true);
 
-        $contractCharges = $entiyManager->getRepository(ContractCharges::class)->find($data['contractCharges']);
-
         if($isValidToken === false){
             return new JsonResponse(['error' => 'Token no válido']);
         }
@@ -264,15 +264,42 @@ class ContractController extends AbstractController
             $contract -> setWorkStart(new DateTime($data['work_start']));
             $contract -> setInitialContract($data['initial_contract']);
             $contract -> setExpirationContract(new DateTime($data['expiration_contract']));
-            $contract -> setFunctions($data['functions']);
+            $contract -> setSalary($data['salary']);
+            $contract -> setWeeklyHours($data['weekly_hours']);
             $contract -> setUser($user);
-            $contract -> setContractCharges($contractCharges);
 
             $entiyManager->persist($contract);
             $entiyManager->flush();
 
             return new JsonResponse(['status'=>'Success','Code' => '200', 'message' => 'Contrato generado con exito']);
         }
+    }
+
+    #[Route('/contract/assignment', name:'app_contract_assignment')]
+    public function assignment(ManagerRegistry $doctrine,Request $request):JsonResponse
+    {
+        $isValidToken = $this->validateTokenSuper($request)->getContent();
+        $entiyManager = $doctrine->getManager();
+        $data = json_decode($request->getContent(),true);
+
+        if($isValidToken === false){
+            return new JsonResponse(['error' => 'Token no válido']);
+        }
+
+        $contract = $entiyManager->getRepository(Contract::class)->find($data['contract']);
+        $contractCharges = $entiyManager->getRepository(ContractCharges::class)->find($data['contractCharges']);
+        $profile = $entiyManager->getRepository(Profile::class)->find($data['profile']);
+
+        $assignment = new ContractAssignment();
+        $assignment -> setContract($contract);
+        $assignment -> setProfile($profile);
+        $assignment -> setCharge($contractCharges);
+
+        $entiyManager -> persist($assignment);
+        $entiyManager -> flush();
+
+        return new JsonResponse(['status' => 'Success','Code'=>'200','message'=>'Asignación Correcta']);
+
     }
 
     #[Route('/contract/list-charges', name:'app_contract_list_charges')]

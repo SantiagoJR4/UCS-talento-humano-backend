@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -55,6 +56,13 @@ class ReferencesData
      * @ORM\Column(name="phone", type="string", length=12, nullable=false)
      */
     private $phone;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="history", type="text", length=0, nullable=false)
+     */
+    private $history;
 
     /**
      * @var \User
@@ -127,6 +135,18 @@ class ReferencesData
     public function setPhone(string $phone): self
     {
         $this->phone = $phone;
+
+        return $this;
+    }
+
+    public function getHistory(): ?string
+    {
+        return $this->history;
+    }
+
+    public function setHistory(string $history): self
+    {
+        $this->history = $history;
 
         return $this;
     }

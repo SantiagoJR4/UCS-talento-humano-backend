@@ -3,8 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\AcademicTraining;
-use App\Entity\CurriculumVitae;
-use App\Entity\EvaluationCv;
 use App\Entity\FurtherTraining;
 use App\Entity\IntellectualProduction;
 use App\Entity\Language;
@@ -14,7 +12,6 @@ use App\Entity\ReferencesData;
 use App\Entity\TeachingExperience;
 use App\Entity\User;
 use App\Entity\WorkExperience;
-use App\Service\Helpers;
 use App\Service\ValidateToken;
 
 use DateTime;
@@ -33,9 +30,28 @@ function convertDateTimeToString($data) {
             $data[$key] = convertDateTimeToString($value);
         } elseif ($value instanceof \DateTime) {
             $data[$key] = $value->format('Y-m-d H:i:s');
+        } elseif($key === 'timeWorked'){
+            $decodedValue = json_decode($value, true);
+            $data[$key] = formatTimeWorked($decodedValue);
         }
     }
     return $data;
+}
+
+function formatTimeWorked($timeWorked): string {
+    $years = $timeWorked['years'] ?? 0;
+    $months = $timeWorked['months'] ?? 0;
+    $days = $timeWorked['days'] ?? 0;
+
+    $timeParts = [];
+
+    if($years>0){$timeParts[]="{$years} años";}
+    if($months>0){$timeParts[]="{$months} meses";}
+    if($days>0){$timeParts[]="{$days} días";}
+
+    $formattedTime = implode(" ", $timeParts);
+
+    return $formattedTime;
 }
 
 class CurriculumVitaeController extends AbstractController
@@ -609,4 +625,62 @@ class CurriculumVitaeController extends AbstractController
         return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Nuevo Objeto Creado']);
     }
     
+    #[Route('/curriculum-vitae/readDatesWorkExperience', name:'app_curriculum_readDatesWorkExperience')]
+    public function readDatesTimeWorkExperience(ManagerRegistry $doctrine) : JsonResponse
+    {
+        $workExperience = $doctrine->getRepository(workExperience::class);
+        $data = $workExperience->createQueryBuilder('e')
+            ->select('e.admissionDate','e.retirementDate')
+            ->orderBy('e.retirementDate','ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        $admissionDate = array_column($data,'admissionDate');
+        $retirementDate = array_column($data,'retirementDate');
+
+        $admissionDatesFormatted = array_map(function ($date) {
+            return $date->format('Y-m-d');
+        }, $admissionDate);
+        
+        $retirementDatesFormatted = array_map(function ($date) {
+            return $date->format('Y-m-d');
+        },$retirementDate);
+
+        $result = [
+            'admissionDates' => $admissionDatesFormatted,
+            'retirementDates' => $retirementDatesFormatted
+        ];
+
+        return new JsonResponse($result);
+    }
+
+    #[Route('/curriculum-vitae/readDatesTeachingExperience', name:'app_curriculum_readDatesTeachingExperience')]
+    public function readDatesTimeTeachingExperience(ManagerRegistry $doctrine) : JsonResponse
+    {
+        $teachingExperience = $doctrine->getRepository(TeachingExperience::class);
+        $data = $teachingExperience->createQueryBuilder('e')
+            ->select('e.admissionDate','e.retirementDate')
+            ->orderBy('e.retirementDate','ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        $admissionDate = array_column($data,'admissionDate');
+        $retirementDate = array_column($data,'retirementDate');
+
+        $admissionDatesFormatted = array_map(function ($date) {
+            return $date->format('Y-m-d');
+        }, $admissionDate);
+        
+        $retirementDatesFormatted = array_map(function ($date) {
+            return $date->format('Y-m-d');
+        },$retirementDate);
+
+        $result = [
+            'admissionDates' => $admissionDatesFormatted,
+            'retirementDates' => $retirementDatesFormatted
+        ];
+
+        return new JsonResponse($result);
+    }
+
 }

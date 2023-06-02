@@ -51,18 +51,18 @@ class Language
     private $toWrite;
 
     /**
-     * @var bool|null
-     *
-     * @ORM\Column(name="is_certified", type="boolean", nullable=true)
-     */
-    private $isCertified;
-
-    /**
      * @var string|null
      *
      * @ORM\Column(name="levelLanguage", type="string", length=2, nullable=true, options={"fixed"=true})
      */
     private $levellanguage;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="date_certified", type="date", nullable=false)
+     */
+    private $dateCertified;
 
     /**
      * @var string|null
@@ -141,18 +141,6 @@ class Language
         return $this;
     }
 
-    public function isIsCertified(): ?bool
-    {
-        return $this->isCertified;
-    }
-
-    public function setIsCertified(?bool $isCertified): self
-    {
-        $this->isCertified = $isCertified;
-
-        return $this;
-    }
-
     public function getLevellanguage(): ?string
     {
         return $this->levellanguage;
@@ -161,6 +149,18 @@ class Language
     public function setLevellanguage(?string $levellanguage): self
     {
         $this->levellanguage = $levellanguage;
+
+        return $this;
+    }
+
+    public function getDateCertified(): ?\DateTimeInterface
+    {
+        return $this->dateCertified;
+    }
+
+    public function setDateCertified(\DateTimeInterface $dateCertified): self
+    {
+        $this->dateCertified = $dateCertified;
 
         return $this;
     }
