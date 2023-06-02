@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * CompetencePercentage
  *
- * @ORM\Table(name="competence_percentage", indexes={@ORM\Index(name="fk_competence_percentage_call", columns={"call_id"}), @ORM\Index(name="fk_competence_percentage_competence_profile", columns={"competence_profile_id"})})
+ * @ORM\Table(name="competence_percentage", indexes={@ORM\Index(name="fk_competence_percentage_competence_profile", columns={"competence_profile_id"}), @ORM\Index(name="fk_competence_percentage_call", columns={"call_id"})})
  * @ORM\Entity
  */
 class CompetencePercentage
@@ -22,21 +22,18 @@ class CompetencePercentage
     private $id;
 
     /**
-     * @var int
+     * @var int|null
      *
-     * @ORM\Column(name="percentage", type="integer", nullable=false, options={"unsigned"=true})
+     * @ORM\Column(name="psycho_percentage", type="integer", nullable=true, options={"unsigned"=true})
      */
-    private $percentage;
+    private $psychoPercentage;
 
     /**
-     * @var \TblCall
+     * @var int|null
      *
-     * @ORM\ManyToOne(targetEntity="TblCall")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
-     * })
+     * @ORM\Column(name="interview_percentage", type="integer", nullable=true, options={"unsigned"=true})
      */
-    private $call;
+    private $interviewPercentage;
 
     /**
      * @var \CompetenceProfile
@@ -48,31 +45,41 @@ class CompetencePercentage
      */
     private $competenceProfile;
 
+    /**
+     * @var \TblCall
+     *
+     * @ORM\ManyToOne(targetEntity="TblCall")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
+     * })
+     */
+    private $call;
+
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getPercentage(): ?int
+    public function getPsychoPercentage(): ?int
     {
-        return $this->percentage;
+        return $this->psychoPercentage;
     }
 
-    public function setPercentage(int $percentage): self
+    public function setPsychoPercentage(?int $psychoPercentage): self
     {
-        $this->percentage = $percentage;
+        $this->psychoPercentage = $psychoPercentage;
 
         return $this;
     }
 
-    public function getCall(): ?TblCall
+    public function getInterviewPercentage(): ?int
     {
-        return $this->call;
+        return $this->interviewPercentage;
     }
 
-    public function setCall(?TblCall $call): self
+    public function setInterviewPercentage(?int $interviewPercentage): self
     {
-        $this->call = $call;
+        $this->interviewPercentage = $interviewPercentage;
 
         return $this;
     }
@@ -85,6 +92,18 @@ class CompetencePercentage
     public function setCompetenceProfile(?CompetenceProfile $competenceProfile): self
     {
         $this->competenceProfile = $competenceProfile;
+
+        return $this;
+    }
+
+    public function getCall(): ?TblCall
+    {
+        return $this->call;
+    }
+
+    public function setCall(?TblCall $call): self
+    {
+        $this->call = $call;
 
         return $this;
     }

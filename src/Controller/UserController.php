@@ -31,6 +31,7 @@ function createJwtResponse($user) {
     $payload = [
         'sub' => $user->getSub(),
         'userType' => $user->getUserType(),
+        'specialUser' => $user->getSpecialUser(),
         'iat' => time(),
         'exp' => time() + 604800
     ];
@@ -169,7 +170,10 @@ class UserController extends AbstractController
         }
         $expirationTime = $decodedToken->exp;
         $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
-        return new JsonResponse(['isValid' => $isTokenValid, 'userType' => $decodedToken->userType]);
+        return new JsonResponse([
+            'isValid' => $isTokenValid,
+            'userType' => $decodedToken->userType,
+            'specialUser' => $decodedToken->specialUser]);
     }
 
     #[Route('/saludo', name: 'saludo')]

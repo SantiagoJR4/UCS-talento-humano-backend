@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * FactorProfile
  *
- * @ORM\Table(name="factor_profile", indexes={@ORM\Index(name="fk_factor_profile", columns={"call_id"}), @ORM\Index(name="fk_factor", columns={"factor_id"})})
+ * @ORM\Table(name="factor_profile", indexes={@ORM\Index(name="fk_factor", columns={"factor_id"}), @ORM\Index(name="fk_factor_profile", columns={"call_id"})})
  * @ORM\Entity
  */
 class FactorProfile
@@ -27,16 +27,6 @@ class FactorProfile
      * @ORM\Column(name="crest", type="integer", nullable=false)
      */
     private $crest;
-
-    /**
-     * @var \TblCall
-     *
-     * @ORM\ManyToOne(targetEntity="TblCall")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
-     * })
-     */
-    private $call;
 
     /**
      * @var \Factor
@@ -75,18 +65,6 @@ class FactorProfile
         return $this;
     }
 
-    public function getCall(): ?TblCall
-    {
-        return $this->call;
-    }
-
-    public function setCall(?TblCall $call): self
-    {
-        $this->profile = $profile;
-
-        return $this;
-    }
-
     public function getFactor(): ?Factor
     {
         return $this->factor;
@@ -95,6 +73,18 @@ class FactorProfile
     public function setFactor(?Factor $factor): self
     {
         $this->factor = $factor;
+
+        return $this;
+    }
+
+    public function getCall(): ?TblCall
+    {
+        return $this->call;
+    }
+
+    public function setCall(?TblCall $call): self
+    {
+        $this->call = $call;
 
         return $this;
     }

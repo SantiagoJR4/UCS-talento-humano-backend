@@ -100,6 +100,13 @@ class User
     private $userType;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="special_user", type="string", length=10, nullable=true)
+     */
+    private $specialUser;
+
+    /**
      * @var int
      *
      * @ORM\Column(name="sub", type="integer", nullable=false, options={"unsigned"=true})
@@ -239,6 +246,18 @@ class User
     public function setUserType(int $userType): self
     {
         $this->userType = $userType;
+
+        return $this;
+    }
+
+    public function getSpecialUser(): ?string
+    {
+        return $this->specialUser;
+    }
+
+    public function setSpecialUser(?string $specialUser): self
+    {
+        $this->specialUser = $specialUser;
 
         return $this;
     }

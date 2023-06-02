@@ -565,6 +565,10 @@ class CurriculumVitaeController extends AbstractController
                 }
             }
         }
+        $initialHistory = $entityObj->getHistory();
+        $addHistory = json_encode(['state'=>1,'date'=>date('Y-m-d H:i:s'), 'call'=> NULL]);
+        $newHistory = rtrim($initialHistory, ']').','.$addHistory.']';
+        $entityObj->setHistory($newHistory);
         $entityManager->persist($entityObj);
         $entityManager->flush();
         return new JsonResponse(['token' => $token, 'entity' => $entity, 'id'=> $id, 'ftU' =>$user->getIdentification()]);
@@ -614,14 +618,25 @@ class CurriculumVitaeController extends AbstractController
             }
         }
 
-        $jsonHistory = json_encode(['state'=>'2','date'=>date('d-m-Y H:i:s')]);
-        
+        $jsonHistory = json_encode([['state'=>0,'date'=>date('Y-m-d H:i:s'), 'call'=> NULL]]);
         $objEntity->setHistory($jsonHistory);
         $objEntity->setUser($user);
         $entityManager = $doctrine->getManager();
         $entityManager->persist($objEntity);
         $entityManager->flush();
         return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Nuevo Objeto Creado', 'fileName' => $fileName]);
+    }
+
+    #[Route('/test-controller', name: 'app_test_controller')]
+    public function test(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $initial = "[{\"state\":0,\"date\":\"17-07-2014 17:13:58\",\"call\":null},{\"state\":1,\"date\":\"30-05-2023 17:13:58\",\"call\":3}]";
+        $add = json_encode(['state'=>4,'date'=>date('d-m-Y H:i:s'), 'call'=> 7]);
+        $result = rtrim($initial, ']').','.$add.']';
+        $result = json_decode($result);
+        // $result[] = $add;
+        var_dump($result);
+        return new JsonResponse($result);
     }
     
 }

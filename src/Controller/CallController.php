@@ -316,7 +316,8 @@ class CallController extends AbstractController
             $newCompetencePercentage = new CompetencePercentage();
             $newCompetencePercentage->setCall($call);
             $newCompetencePercentage->setCompetenceProfile($competenceProfile);
-            $newCompetencePercentage->setPercentage($fieldValue['value']);
+            $newCompetencePercentage->setPsychoPercentage($fieldValue['valuePsycho'] !== 0 ? $fieldValue['valuePsycho'] : NULL);
+            $newCompetencePercentage->setInterviewPercentage($fieldValue['valueInterview'] !== 0 ? $fieldValue['valueInterview'] : NULL);
             $entityManager->persist($newCompetencePercentage);
             $entityManager->flush();
             foreach($fieldValue['factorsInCompetence'] as $index => $factorId)

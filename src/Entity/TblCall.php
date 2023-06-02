@@ -39,11 +39,15 @@ class TblCall
     /**
      * @var int
      *
-     * @ORM\Column(name="state", type="smallint", nullable=false, options={"comment"="0 -> created,
-1 -> rejected,
-2 -> open,
-3 -> deserted,
-4 -> success"})
+     * @ORM\Column(name="state", type="smallint", nullable=false, options={"comment"="0->created,
+1->approvedTH,
+2->approvedVF,
+3->approvedRectory(wait-percentages),
+4->open,
+5->rejected,
+6->success,
+7->deserted
+"})
      */
     private $state;
 
