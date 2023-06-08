@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TblCall
  *
- * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"})})
+ * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"})})
  * @ORM\Entity
  */
 class TblCall

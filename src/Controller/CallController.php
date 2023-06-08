@@ -8,8 +8,11 @@ use App\Entity\CompetencePercentage;
 use App\Entity\CompetenceProfile;
 use App\Entity\Factor;
 use App\Entity\FactorProfile;
+use App\Entity\Materias;
 use App\Entity\Profile;
 use App\Entity\Score;
+use App\Entity\Subjects;
+use App\Entity\Subprofile;
 use App\Entity\TblCall;
 use App\Entity\User;
 use App\Entity\UsersInCall;
@@ -84,10 +87,51 @@ class CallController extends AbstractController
     #[Route('/get-all-profiles', name: 'app_get_all_profiles')]
     public function getAllProfiles(ManagerRegistry $doctrine, SerializerInterface $serializer): JsonResponse
     {
-        $allProfiles = $doctrine->getRepository(Profile::class)->findAll();
-        $serializerAllProfiles = $serializer->serialize($allProfiles, 'json');
-        return new JsonResponse($serializerAllProfiles, 200, [], true);
+        // $allProfiles = $doctrine->getRepository(Profile::class)->findAll();
+        // $serializerAllProfiles = $serializer->serialize($allProfiles, 'json');
+        // return new JsonResponse($serializerAllProfiles, 200, [], true);
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select(
+            'p.id', 'p.name', 'p.underGraduateTraining', 'p.postGraduateTraining',
+            'p.previousExperience', 'p.furtherTraining', 'p.specialRequirements')
+            ->from('App\Entity\Profile', 'p');
+        $allProfiles = $query->getQuery()->getArrayResult();
+        return new JsonResponse($allProfiles, 200, []);
     }
+
+    #[Route('/get-all-subprofiles', name: 'app_get_all_subprofiles')]
+    public function getAllSubprofiles(ManagerRegistry $doctrine, SerializerInterface $serializer): JsonResponse
+    {
+        $allSubprofiles = $doctrine->getRepository(Subprofile::class)->findAll();
+        $serializerAllSubprofiles = $serializer->serialize($allSubprofiles, 'json');
+        return new JsonResponse($serializerAllSubprofiles, 200, [], true);
+    }
+
+    #[Route('/get-all-materias', name: 'app_get_all_materias')]
+    public function getMaterias(ManagerRegistry $doctrine, SerializerInterface $serializer): JsonResponse
+    {
+        $allMaterias = $doctrine->getRepository(Materias::class)->findAll();
+        $allMaterias = $serializer->serialize($allMaterias, 'json');
+        return new JsonResponse($allMaterias, 200, [], true);
+    }
+
+    #[Route('/get-all-subjects', name: 'app_get_all_subjects')]
+    public function getSubjects(ManagerRegistry $doctrine, SerializerInterface $serializer): JsonResponse
+    {
+        // $allSubjects = $doctrine->getRepository(Subjects::class)->findAll();
+        // $allSubjects = $serializer->serialize($allSubjects, 'json');
+        // return new JsonResponse($allSubjects, 200, [], true);
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select('s.id', 'sb.id as subprofileId', 'm.id as materiaId', 'm.nombre as name', 'p.id as programaId')
+            ->from('App\Entity\Subjects', 's')
+            ->join('s.subprofile', 'sb')
+            ->join('s.materia', 'm')
+            ->join('m.programa', 'p')
+            ->orderBy('s.id', 'ASC');
+        $allProfiles = $query->getQuery()->getArrayResult();
+        return new JsonResponse($allProfiles, 200, []);
+    }
+
     #[Route('/create-new-profile', name: 'app_create_new_profile')]
     public function createNewProfile(ManagerRegistry $doctrine, SerializerInterface $serializer, Request $request): JsonResponse
     {

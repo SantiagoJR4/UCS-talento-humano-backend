@@ -71,6 +71,13 @@ class Profile
      */
     private $specialRequirements;
 
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="functions", type="text", length=0, nullable=false)
+     */
+    private $functions;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -156,6 +163,18 @@ class Profile
     public function setSpecialRequirements(string $specialRequirements): self
     {
         $this->specialRequirements = $specialRequirements;
+
+        return $this;
+    }
+
+    public function getFunctions(): ?string
+    {
+        return $this->functions;
+    }
+
+    public function setFunctions(string $functions): self
+    {
+        $this->functions = $functions;
 
         return $this;
     }
