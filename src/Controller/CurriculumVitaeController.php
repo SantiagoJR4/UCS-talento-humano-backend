@@ -13,7 +13,7 @@ use App\Entity\TeachingExperience;
 use App\Entity\User;
 use App\Entity\WorkExperience;
 use App\Service\ValidateToken;
-
+use DateInterval;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -624,63 +624,196 @@ class CurriculumVitaeController extends AbstractController
         $entityManager->flush();
         return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Nuevo Objeto Creado']);
     }
+    //---------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------
+
+    #[Route('/curriculum-vitae/totalWorkedTimeWorkExperience', name:'app_curriculum_totalWorkedTime')]
+    public function totalTimeWorkExperience(ManagerRegistry $doctrine): JsonResponse
+    {
+        $workExperienceRepository = $doctrine->getRepository(WorkExperience::class);
+        $workExperiences = $workExperienceRepository->findAll();
     
-    #[Route('/curriculum-vitae/readDatesWorkExperience', name:'app_curriculum_readDatesWorkExperience')]
-    public function readDatesTimeWorkExperience(ManagerRegistry $doctrine) : JsonResponse
-    {
-        $workExperience = $doctrine->getRepository(workExperience::class);
-        $data = $workExperience->createQueryBuilder('e')
-            ->select('e.admissionDate','e.retirementDate')
-            ->orderBy('e.retirementDate','ASC')
-            ->getQuery()
-            ->getArrayResult();
+        if (empty($workExperiences)) {
+            $response = new JsonResponse('No hay tiempo de trabajo');
+            return $response;
+        }
+    
+        $fechas = [];
+    
+        foreach ($workExperiences as $workExperience) {
+            $fechas[] = [
+                'admission_date' => $workExperience->getAdmissionDate()->format('d/m/Y'),
+                'retirement_date' => $workExperience->getRetirementDate()->format('d/m/Y')
+            ];
+        }
+    
+        usort($fechas, function ($a, $b) {
+            $inicioA = DateTime::createFromFormat('d/m/Y', $a['admission_date']);
+            $inicioB = DateTime::createFromFormat('d/m/Y', $b['admission_date']);
+    
+            return $inicioA <=> $inicioB;
+        });
+    
+        $fechaInicio = DateTime::createFromFormat('d/m/Y', $fechas[0]['admission_date']);
+        $fechaFin = DateTime::createFromFormat('d/m/Y', $fechas[count($fechas) - 1]['retirement_date']);
+    
+        // Calcular el número total de días trabajados
+        $totalDiasTrabajados = (($fechaFin->format('Y') - $fechaInicio->format('Y')) * 360) +
+                              (($fechaFin->format('n') - $fechaInicio->format('n')) * 30) +
+                              ($fechaFin->format('j') - $fechaInicio->format('j'));
+    
+        // Calcular los espacios donde no se ha trabajado
+        $diasSinTrabajar = 0;
+        $fechaAnterior = $fechaInicio;
+        foreach ($fechas as $fecha) {
+            $inicio = DateTime::createFromFormat('d/m/Y', $fecha['admission_date']);
+            $fin = DateTime::createFromFormat('d/m/Y', $fecha['retirement_date']);
+    
+            if ($inicio > $fechaAnterior) {
+                $diasSinTrabajar += $fechaAnterior->diff($inicio)->days - 1;
+            }
+    
+            $fechaAnterior = max($fechaAnterior, $fin);
+        }
+    
+        if ($fechaAnterior < $fechaFin) {
+            $diasSinTrabajar += $fechaAnterior->diff($fechaFin)->days;
+        }
+    
+        // Restar los espacios sin trabajar al total de días trabajados
+        $totalDiasTrabajados -= $diasSinTrabajar;
+    
+        if ($totalDiasTrabajados < 0) {
+            $totalDiasTrabajados = 0;
+        }
+                // Obtener los valores de años, meses y días
+        $años = floor($totalDiasTrabajados / 360);
+        $meses = floor(($totalDiasTrabajados % 360) / 30);
+        $dias = $totalDiasTrabajados % 30;
 
-        $admissionDate = array_column($data,'admissionDate');
-        $retirementDate = array_column($data,'retirementDate');
+        // Formatear la salida en años, meses y días
+        $formato = "";
+        if ($años > 0) {
+            $formato .= "$años " . ($años == 1 ? "año" : "años") . ", ";
+        }
+        if ($meses > 0) {
+            $formato .= "$meses " . ($meses == 1 ? "mes" : "meses") . ", ";
+        }
+        if ($dias > 0) {
+            $formato .= "$dias " . ($dias == 1 ? "día" : "días");
+        }
 
-        $admissionDatesFormatted = array_map(function ($date) {
-            return $date->format('Y-m-d');
-        }, $admissionDate);
-        
-        $retirementDatesFormatted = array_map(function ($date) {
-            return $date->format('Y-m-d');
-        },$retirementDate);
-
-        $result = [
-            'admissionDates' => $admissionDatesFormatted,
-            'retirementDates' => $retirementDatesFormatted
+        $data = [
+            'totalTiempoTrabajado' => $formato
         ];
-
-        return new JsonResponse($result);
+        
+        return new JsonResponse($data);
     }
+    
+    
+    //------------------------------------------------------------------------------
+    //-- TEACHING EXPERIENCE
 
-    #[Route('/curriculum-vitae/readDatesTeachingExperience', name:'app_curriculum_readDatesTeachingExperience')]
-    public function readDatesTimeTeachingExperience(ManagerRegistry $doctrine) : JsonResponse
+    #[Route('/curriculum-vitae/totalWorkedTimeTeachingExperience', name:'app_curriculum_totalWorkedTimeTeaching')]
+    public function totalTimeTeachingExperience(ManagerRegistry $doctrine): JsonResponse
     {
-        $teachingExperience = $doctrine->getRepository(TeachingExperience::class);
-        $data = $teachingExperience->createQueryBuilder('e')
-            ->select('e.admissionDate','e.retirementDate')
-            ->orderBy('e.retirementDate','ASC')
-            ->getQuery()
-            ->getArrayResult();
-
-        $admissionDate = array_column($data,'admissionDate');
-        $retirementDate = array_column($data,'retirementDate');
-
-        $admissionDatesFormatted = array_map(function ($date) {
-            return $date->format('Y-m-d');
-        }, $admissionDate);
-        
-        $retirementDatesFormatted = array_map(function ($date) {
-            return $date->format('Y-m-d');
-        },$retirementDate);
-
-        $result = [
-            'admissionDates' => $admissionDatesFormatted,
-            'retirementDates' => $retirementDatesFormatted
+        $teachingExperienceRepository = $doctrine->getRepository(TeachingExperience::class);
+        $teachingExperiences = $teachingExperienceRepository->findAll();
+    
+        if (empty($teachingExperiences)) {
+            $response = new JsonResponse('No hay tiempo de trabajo');
+            return $response;
+        }
+    
+        $fechas = [];
+    
+        foreach ($teachingExperiences as $teachingExperience) {
+            $fechas[] = [
+                'admission_date' => $teachingExperience->getAdmissionDate()->format('d/m/Y'),
+                'retirement_date' => $teachingExperience->getRetirementDate() !== null ? $teachingExperience->getRetirementDate()->format('d/m/Y') : null
+            ];
+        }
+    
+        // Ordenar los rangos de fechas por fecha de admisión
+        usort($fechas, function ($a, $b) {
+            $inicioA = DateTime::createFromFormat('d/m/Y', $a['admission_date']);
+            $inicioB = DateTime::createFromFormat('d/m/Y', $b['admission_date']);
+    
+            return $inicioA <=> $inicioB;
+        });
+    
+        $fechaInicio = DateTime::createFromFormat('d/m/Y', $fechas[0]['admission_date']);
+        $fechaFin = null;
+    
+        // Buscar la fecha de retiro más reciente
+        foreach ($fechas as $fecha) {
+            $retirementDate = $fecha['retirement_date'];
+            if ($retirementDate !== null) {
+                $fin = DateTime::createFromFormat('d/m/Y', $retirementDate);
+                if ($fechaFin === null || $fin > $fechaFin) {
+                    $fechaFin = $fin;
+                }
+            }
+        }
+    
+        // Verificar si la fecha de retiro es null
+        if ($fechaFin === null) {
+            // La persona sigue trabajando actualmente
+            $fechaFin = new DateTime(); // Utiliza la fecha actual como fecha de retiro
+        }
+    
+        // Calcular el número total de días trabajados
+        $totalDiasTrabajados = (($fechaFin->format('Y') - $fechaInicio->format('Y')) * 360) +
+                              (($fechaFin->format('n') - $fechaInicio->format('n')) * 30) +
+                              ($fechaFin->format('j') - $fechaInicio->format('j'));
+    
+        // Calcular los espacios donde no se ha trabajado
+        $diasSinTrabajar = 0;
+        $fechaAnterior = $fechaInicio;
+        foreach ($fechas as $fecha) {
+            $inicio = DateTime::createFromFormat('d/m/Y', $fecha['admission_date']);
+            $fin = DateTime::createFromFormat('d/m/Y', $fecha['retirement_date']);
+    
+            if ($inicio > $fechaAnterior) {
+                $diasSinTrabajar += $fechaAnterior->diff($inicio)->days - 1;
+            }
+    
+            $fechaAnterior = max($fechaAnterior, $fin);
+        }
+    
+        if ($fechaAnterior < $fechaFin) {
+            $diasSinTrabajar += $fechaAnterior->diff($fechaFin)->days;
+        }
+    
+        // Restar los espacios sin trabajar al total de días trabajados
+        $totalDiasTrabajados -= $diasSinTrabajar;
+    
+        if ($totalDiasTrabajados < 0) {
+            $totalDiasTrabajados = 0;
+        }
+    
+        // Obtener los valores de años, meses y días
+        $años = floor($totalDiasTrabajados / 360);
+        $meses = floor(($totalDiasTrabajados % 360) / 30);
+        $dias = $totalDiasTrabajados % 30;
+    
+        // Formatear la salida en años, meses y días
+        $formato = "";
+        if ($años > 0) {
+            $formato .= "$años " . ($años == 1 ? "año" : "años") . ", ";
+        }
+        if ($meses > 0) {
+            $formato .= "$meses " . ($meses == 1 ? "mes" : "meses") . ", ";
+        }
+        if ($dias > 0) {
+            $formato .= "$dias " . ($dias == 1 ? "día" : "días");
+        }
+    
+        $data = [
+            'totalTiempoTrabajado' => $formato
         ];
-
-        return new JsonResponse($result);
+    
+        return new JsonResponse($data);
     }
 
 }

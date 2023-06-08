@@ -100,9 +100,9 @@ class WorkExperience
     private $retirementDate;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="time_worked", type="text", length=0, nullable=false)
+     * @ORM\Column(name="time_worked", type="text", length=0, nullable=true)
      */
     private $timeWorked;
 
@@ -272,7 +272,7 @@ class WorkExperience
         return $this->timeWorked;
     }
 
-    public function setTimeWorked(string $timeWorked): self
+    public function setTimeWorked(?string $timeWorked): self
     {
         $this->timeWorked = $timeWorked;
 
