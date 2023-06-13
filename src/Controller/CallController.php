@@ -183,6 +183,7 @@ class CallController extends AbstractController
     public function createNewCall(ManagerRegistry $doctrine, SerializerInterface $serializer, Request $request): JsonResponse
     {
         $data = $request->request->all();
+        $area = $request->request->get('area');
         $newCall = new TblCall();
         // var_dump($data);
         foreach($data as $fieldName => $fieldValue) {
@@ -198,8 +199,13 @@ class CallController extends AbstractController
             }
         }
         $newCall->setState(0);
-        $profile = $doctrine->getRepository(Profile::class)->find($data['profileId']);
-        $newCall->setProfile($profile);
+        if($area === 'TH') {
+            $profile = $doctrine->getRepository(Profile::class)->find($data['profileId']);
+            $newCall->setProfile($profile);
+        } else {
+            $subprofile = $doctrine->getRepository(Subprofile::class)->find($data['profileId']);
+            $newCall->setSubprofile($subprofile);
+        }
         $entityManager = $doctrine->getManager();
         $entityManager->persist($newCall);
         $entityManager->flush();
@@ -215,7 +221,15 @@ class CallController extends AbstractController
             ->where('c.state = :state')
             ->join('c.profile', 'p')
             ->setParameter('state', 0); // TODO: Change this, when needed
-        $allActiveCalls = $query->getQuery()->getArrayResult();
+        $querysp = $doctrine->getManager()->createQueryBuilder();
+        $querysp->select('c', 'sp')
+            ->from('App\Entity\TblCall', 'c')
+            ->where('c.state = :state')
+            ->join('c.subprofile', 'sp')
+            ->setParameter('state', 0); // TODO: Change this, when needed
+        $profileActiveCalls = $query->getQuery()->getArrayResult();
+        $subprofileActiveCalls = $querysp->getQuery()->getArrayResult();
+        $allActiveCalls = array_merge($profileActiveCalls, $subprofileActiveCalls);
         $response = convertDateTimeToString2($allActiveCalls);
         return new JsonResponse( $response, 200, [] );
     }
