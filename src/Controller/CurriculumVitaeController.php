@@ -657,11 +657,26 @@ class CurriculumVitaeController extends AbstractController
     //---------------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------
 
-    #[Route('/curriculum-vitae/totalWorkedTimeWorkExperience', name:'app_curriculum_totalWorkedTime')]
-    public function totalTimeWorkExperience(ManagerRegistry $doctrine): JsonResponse
+     #[Route('/curriculum-vitae/totalWorkedTimeWorkExperience', name:'app_curriculum_totalWorkedTime')]
+    public function totalTimeWorkExperience(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
     {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+
+        if($token === false){
+            return new JsonResponse(['error' => 'Token no válido']);
+        }
+        else{
+            //Trabajador seleccionado
+            if (!$user) {
+                throw $this->createNotFoundException(
+                    'No user found for id '
+                );
+            }
+        }
+
         $workExperienceRepository = $doctrine->getRepository(WorkExperience::class);
-        $workExperiences = $workExperienceRepository->findAll();
+        $workExperiences = $workExperienceRepository->findBy(['user'=>$user]);
     
         if (empty($workExperiences)) {
             $response = new JsonResponse('No hay tiempo de trabajo');
@@ -745,10 +760,25 @@ class CurriculumVitaeController extends AbstractController
     //-- TEACHING EXPERIENCE
 
     #[Route('/curriculum-vitae/totalWorkedTimeTeachingExperience', name:'app_curriculum_totalWorkedTimeTeaching')]
-    public function totalTimeTeachingExperience(ManagerRegistry $doctrine): JsonResponse
+    public function totalTimeTeachingExperience(ManagerRegistry $doctrine,Request $request,ValidateToken $vToken): JsonResponse
     {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+
+        if($token === false){
+            return new JsonResponse(['error' => 'Token no válido']);
+        }
+        else{
+            //Trabajador seleccionado
+            if (!$user) {
+                throw $this->createNotFoundException(
+                    'No user found for id '
+                );
+            }
+        }
+
         $teachingExperienceRepository = $doctrine->getRepository(TeachingExperience::class);
-        $teachingExperiences = $teachingExperienceRepository->findAll();
+        $teachingExperiences = $teachingExperienceRepository->findBy(['user'=>$user]);
     
         if (empty($teachingExperiences)) {
             $response = new JsonResponse('No hay tiempo de trabajo');
@@ -845,5 +875,4 @@ class CurriculumVitaeController extends AbstractController
     
         return new JsonResponse($data);
     }
-
 }
