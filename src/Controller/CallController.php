@@ -11,6 +11,7 @@ use App\Entity\FactorProfile;
 use App\Entity\Materias;
 use App\Entity\Profile;
 use App\Entity\Score;
+use App\Entity\SpecialProfile;
 use App\Entity\Subjects;
 use App\Entity\Subprofile;
 use App\Entity\TblCall;
@@ -184,6 +185,11 @@ class CallController extends AbstractController
     {
         $data = $request->request->all();
         $area = $request->request->get('area');
+        $isEdited = $request->request->get('editedProfile');
+        $sUnder = $request->request->get('specialUnderGraduate');
+        $sPost = $request->request->get('specialpostGraduate');
+        $sExp = $request->request->get('specialPreviousExperience');
+        $sFurt = $request->request->get('specialfurtherTraining');
         $newCall = new TblCall();
         // var_dump($data);
         foreach($data as $fieldName => $fieldValue) {
@@ -199,14 +205,24 @@ class CallController extends AbstractController
             }
         }
         $newCall->setState(0);
+        $entityManager = $doctrine->getManager();
         if($area === 'TH') {
+            if($isEdited) {
+                $newSpecialProfile = new SpecialProfile();
+                $newSpecialProfile->setUnderGraduateTraining($sUnder);
+                $newSpecialProfile->setPostGraduateTraining($sPost);
+                $newSpecialProfile->setPreviousExperience($sExp);
+                $newSpecialProfile->setFurtherTraining($sFurt);
+                $entityManager->persist($newSpecialProfile);
+                $entityManager->flush();
+                $newCall->setSpecialProfile($newSpecialProfile);
+            }
             $profile = $doctrine->getRepository(Profile::class)->find($data['profileId']);
             $newCall->setProfile($profile);
         } else {
             $subprofile = $doctrine->getRepository(Subprofile::class)->find($data['profileId']);
             $newCall->setSubprofile($subprofile);
         }
-        $entityManager = $doctrine->getManager();
         $entityManager->persist($newCall);
         $entityManager->flush();
         return new JsonResponse($data,200,[]);
@@ -216,20 +232,29 @@ class CallController extends AbstractController
     public function getActiveCalls(ManagerRegistry $doctrine): JsonResponse
     {
         $query = $doctrine->getManager()->createQueryBuilder();
-        $query->select('c', 'p')
+        $query->select('c', 'p', 'subp', 'spec')
             ->from('App\Entity\TblCall', 'c')
             ->where('c.state = :state')
-            ->join('c.profile', 'p')
+            ->leftJoin('c.profile', 'p')
+            ->leftJoin('c.subprofile', 'subp')
+            ->leftJoin('c.specialProfile', 'spec')
             ->setParameter('state', 0); // TODO: Change this, when needed
-        $querysp = $doctrine->getManager()->createQueryBuilder();
-        $querysp->select('c', 'sp')
-            ->from('App\Entity\TblCall', 'c')
-            ->where('c.state = :state')
-            ->join('c.subprofile', 'sp')
-            ->setParameter('state', 0); // TODO: Change this, when needed
+            // $querysp = $doctrine->getManager()->createQueryBuilder();
+            // $querysp->select('c', 'sp')
+            // ->from('App\Entity\TblCall', 'c')
+            // ->where('c.state = :state')
+            // ->leftJoin('c.subprofile', 'sp')
+            // ->setParameter('state', 0); // TODO: Change this, when needed
+            // $queryspec = $doctrine->getManager()->createQueryBuilder();
+            // $queryspec->select('c', 'spe')
+            //     ->from('App\Entity\TblCall', 'c')
+            //     ->where('c.state = :state')
+            //     ->join('c.specialProfile', 'spe')
+            //     ->setParameter('state', 0); // TODO: Change this, when needed
         $profileActiveCalls = $query->getQuery()->getArrayResult();
-        $subprofileActiveCalls = $querysp->getQuery()->getArrayResult();
-        $allActiveCalls = array_merge($profileActiveCalls, $subprofileActiveCalls);
+        // $subprofileActiveCalls = $querysp->getQuery()->getArrayResult();
+        // $specialProfileActiveCalls = $queryspec->getQuery()->getArrayResult();
+        $allActiveCalls = array_merge($profileActiveCalls);
         $response = convertDateTimeToString2($allActiveCalls);
         return new JsonResponse( $response, 200, [] );
     }
