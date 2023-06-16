@@ -256,6 +256,7 @@ class CallController extends AbstractController
         $newUsersInCall = new UsersInCall();
         $newUsersInCall -> setUser($user);
         $newUsersInCall -> setCall($call);
+        $newUsersInCall -> setStateUserCall(1);
         $entityManager = $doctrine->getManager();
         $entityManager->persist($newUsersInCall);
         $entityManager->flush();
@@ -397,7 +398,7 @@ class CallController extends AbstractController
     }
 
     #[Route('/get-users-from-call', name: 'app_get_users_from_call')]
-    public function getUsersFromCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer): JsonResponse
+    public function getUsersFromCall(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $callId = $request->query->get('callId');
         $query = $doctrine->getManager()->createQueryBuilder();
@@ -410,6 +411,40 @@ class CallController extends AbstractController
             ->setParameter('callId', $callId);
         $usersInCall = $query->getQuery()->getArrayResult();
         return new JsonResponse($usersInCall, 200, []);
+    }
+
+    #[Route('/get-state-user-call', name:'app_get_state_user_call')]
+    public function getStateUserCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken) : JsonResponse 
+    {
+        $token= $request->query->get('token');
+        $user = $vToken->getUserIdFromToken($token);
+
+        if($token === false){
+            return new JsonResponse(['error' => 'Token no válido']);
+        }
+        else{
+            //Trabajador seleccionado
+            if (!$user) {
+                throw $this->createNotFoundException(
+                    'No user found for id '
+                );
+            }
+        }
+        $usersInCall = $doctrine->getRepository(UsersInCall::class)->findBy(['user'=>$user]);
+
+        if(empty($usersInCall)){
+            return new JsonResponse(['status'=>false,'message' => 'El usuario no está inscrito a ninguna convocatoria']);
+        }
+
+        foreach($usersInCall as $usersInCall){
+            $response[] = [
+                'id' => $usersInCall->getId(),
+                'call' => $usersInCall->getCall(),
+                'stateUserCall' => $usersInCall -> isStateUserCall()
+
+            ];
+        }
+        return new JsonResponse($response);
     }
 
 }

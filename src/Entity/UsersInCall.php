@@ -34,14 +34,11 @@ class UsersInCall
     private $userStatus = '0';
 
     /**
-     * @var \User
+     * @var bool
      *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     * })
+     * @ORM\Column(name="state_user_call", type="boolean", nullable=false)
      */
-    private $user;
+    private $stateUserCall;
 
     /**
      * @var \TblCall
@@ -52,6 +49,16 @@ class UsersInCall
      * })
      */
     private $call;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * })
+     */
+    private $user;
 
     public function getId(): ?int
     {
@@ -70,14 +77,14 @@ class UsersInCall
         return $this;
     }
 
-    public function getUser(): ?User
+    public function isStateUserCall(): ?bool
     {
-        return $this->user;
+        return $this->stateUserCall;
     }
 
-    public function setUser(?User $user): self
+    public function setStateUserCall(bool $stateUserCall): self
     {
-        $this->user = $user;
+        $this->stateUserCall = $stateUserCall;
 
         return $this;
     }
@@ -90,6 +97,18 @@ class UsersInCall
     public function setCall(?TblCall $call): self
     {
         $this->call = $call;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

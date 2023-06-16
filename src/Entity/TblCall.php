@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TblCall
  *
- * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"})})
+ * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"})})
  * @ORM\Entity
  */
 class TblCall
@@ -122,16 +122,6 @@ class TblCall
     private $startOfContractDate;
 
     /**
-     * @var \Profile
-     *
-     * @ORM\ManyToOne(targetEntity="Profile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
-     * })
-     */
-    private $profile;
-
-    /**
      * @var \Subprofile
      *
      * @ORM\ManyToOne(targetEntity="Subprofile")
@@ -142,6 +132,16 @@ class TblCall
     private $subprofile;
 
     /**
+     * @var \Profile
+     *
+     * @ORM\ManyToOne(targetEntity="Profile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
+     * })
+     */
+    private $profile;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -150,6 +150,16 @@ class TblCall
      * })
      */
     private $selectedUser;
+
+    /**
+     * @var \SpecialProfile
+     *
+     * @ORM\ManyToOne(targetEntity="SpecialProfile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="special_profile_id", referencedColumnName="id")
+     * })
+     */
+    private $specialProfile;
 
     public function getId(): ?int
     {
@@ -312,18 +322,6 @@ class TblCall
         return $this;
     }
 
-    public function getProfile(): ?Profile
-    {
-        return $this->profile;
-    }
-
-    public function setProfile(?Profile $profile): self
-    {
-        $this->profile = $profile;
-
-        return $this;
-    }
-
     public function getSubprofile(): ?Subprofile
     {
         return $this->subprofile;
@@ -336,6 +334,18 @@ class TblCall
         return $this;
     }
 
+    public function getProfile(): ?Profile
+    {
+        return $this->profile;
+    }
+
+    public function setProfile(?Profile $profile): self
+    {
+        $this->profile = $profile;
+
+        return $this;
+    }
+
     public function getSelectedUser(): ?User
     {
         return $this->selectedUser;
@@ -344,6 +354,18 @@ class TblCall
     public function setSelectedUser(?User $selectedUser): self
     {
         $this->selectedUser = $selectedUser;
+
+        return $this;
+    }
+
+    public function getSpecialProfile(): ?SpecialProfile
+    {
+        return $this->specialProfile;
+    }
+
+    public function setSpecialProfile(?SpecialProfile $specialProfile): self
+    {
+        $this->specialProfile = $specialProfile;
 
         return $this;
     }
