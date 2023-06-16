@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Asignación de cita médica</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+
+        h1 {
+            color: #166838;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f8f8;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+        }
+
+        p {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{asset('http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/uploads/imagenes/logo_institucional_UniCat%c3%b3lica-02.png')}}"
+            alt="logo Institucional" style="display: block; margin: 0 auto; max-width: 100%;">
+        <h1>Revisión de Hoja de Vida</h1>
+        <p>
+        <span>Estimado/a {{ user.names }},</span>
+        <span>Te informamos que se han encontrado irregularidades en tu hoja de vida, te pedimos que las corrijas para poder continuar con tu proceso.</span>
+        <span>A continuación las encontrarás:</span>
+        {% if dataForEmail.personalData %}
+            <h3><strong>Datos Personales</strong></h3>
+            <p>Notas del Revisor: <i>{{dataForEmail.personalData[0].textReview}}</i></p>
+        {% endif %}
+        {% if dataForEmail.academicTraining %}
+            <h3><strong>Formación Academica</strong></h3>
+            {% for element in dataForEmail.academicTraining %}
+                <p>{{loop.index}}. {{element.titleName}} - {{element.nameUniversity}}</p>
+                <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
+            {% endfor %}
+        {% endif %}
+        {% if dataForEmail.furtherTraining %}
+            <h4><strong>Formación Complementaria</strong></h4>
+            {% for element in dataForEmail.furtherTraining %}
+                <p>{{loop.index}}. {{element.titleName}} - {{element.institution}}</p>
+                <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
+            {% endfor %}
+        {% endif %}
+        {% if dataForEmail.language %}
+            <h4><strong>Segunda Lengua</strong></h4>
+            {% for element in dataForEmail.language %}
+                <p>{{loop.index}}. {{element.nameLanguage}}</p>
+                <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
+            {% endfor %}
+        {% endif %}
+        {% if dataForEmail.workExperience %}
+            <h4><strong>Experiencia Laboral</strong></h4>
+            {% for element in dataForEmail.workExperience %}
+                <p>{{loop.index}}. {{element.companyName}} - {{element.admissionDate|date('d/m/Y')}} a 
+                {% if element.isWorking %}
+                    actualmente
+                {% else %}
+                {{element.retirementDate|date('d/m/Y')}}
+                {% endif %}
+                </p>
+                <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
+            {% endfor %}
+        {% endif %}
+        {% if dataForEmail.teachingExperience %}
+            <h4><strong>Experiencia Docente</strong></h4>
+            {% for element in dataForEmail.teachingExperience %}
+                <p>{{loop.index}}. {{element.nameUniversity}} - {{element.admissionDate|date('d/m/Y')}} a 
+                {% if element.isActive %}
+                    actualmente
+                {% else %}
+                {{element.retirementDate|date('d/m/Y')}}
+                {% endif %}
+                 </p>
+                <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
+            {% endfor %}
+        {% endif %}
+        {% if dataForEmail.intellectualproduction %}
+            <h3><strong>Producción Intelectual</strong></h3>
+            {% for element in dataForEmail.intellectualproduction %}
+                <p>{{loop.index + 1}}. {{element.titleProd}} - {{element.urlVerification}}</p>
+                <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
+            {% endfor %}
+        {% endif %}
+        {% if dataForEmail.references %}
+            <h3><strong>Referencias</strong></h3>
+            {% for element in dataForEmail.references %}
+                <p>{{loop.index}}. {{element.names}}</p>
+                <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
+            {% endfor %}
+        {% endif %}
+        </p>
+        <p>Atentamente,</p>
+        <p>Universidad Católica del Sur.</p>
+
+    </div>
+</body>
+</html>

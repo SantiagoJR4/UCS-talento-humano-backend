@@ -640,7 +640,7 @@ class CurriculumVitaeController extends AbstractController
         $entityManager = $doctrine->getManager();
         $entityManager->persist($objEntity);
         $entityManager->flush();
-        return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Nuevo Objeto Creado', 'fileName' => $fileName]);
+        return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Nuevo Objeto Creado']);
     }
 
     #[Route('/test-controller', name: 'app_test_controller')]

@@ -2,29 +2,40 @@
 
 namespace App\Controller;
 
+use App\Entity\AcademicTraining;
 use App\Entity\CallPercentage;
 use App\Entity\Competence;
 use App\Entity\CompetencePercentage;
 use App\Entity\CompetenceProfile;
 use App\Entity\Factor;
 use App\Entity\FactorProfile;
+use App\Entity\FurtherTraining;
+use App\Entity\IntellectualProduction;
+use App\Entity\Language;
 use App\Entity\Materias;
+use App\Entity\PersonalData;
 use App\Entity\Profile;
+use App\Entity\Record;
+use App\Entity\ReferencesData;
 use App\Entity\Score;
 use App\Entity\SpecialProfile;
 use App\Entity\Subjects;
 use App\Entity\Subprofile;
 use App\Entity\TblCall;
+use App\Entity\TeachingExperience;
 use App\Entity\User;
 use App\Entity\UsersInCall;
+use App\Entity\WorkExperience;
 use App\Service\ValidateToken;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -435,6 +446,60 @@ class CallController extends AbstractController
             ->setParameter('callId', $callId);
         $usersInCall = $query->getQuery()->getArrayResult();
         return new JsonResponse($usersInCall, 200, []);
+    }
+
+    #[Route('/test-email-call', name: 'app_test_email_call')]
+    public function testEmailCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
+    {
+        //Inicio Token
+        //Final Token
+        $askAgain = json_decode($request->request->get('askAgain'), true);
+        $user = json_decode($request->request->get('user'), true);
+
+        $qb = function($class, $ids) use ($doctrine) {
+            return $doctrine->getRepository($class)
+                ->createQueryBuilder('e')
+                ->andWhere('e.id IN (:ids)')
+                ->setParameter('ids', $ids)
+                ->getQuery()
+                ->getArrayResult();
+        };
+        
+        $dataForEmail = [
+            'personalData' => $qb(PersonalData::class, array_column($askAgain['personalData'], 'id')),
+            'academicTraining' => $qb(AcademicTraining::class, array_column($askAgain['academicTraining'], 'id')),
+            'furtherTraining' => $qb(FurtherTraining::class, array_column($askAgain['furtherTraining'], 'id')),
+            'language' => $qb(Language::class, array_column($askAgain['language'], 'id')),
+            'workExperience' => $qb(WorkExperience::class, array_column($askAgain['workExperience'], 'id')),
+            'teachingExperience' => $qb(TeachingExperience::class, array_column($askAgain['teachingExperience'], 'id')),
+            'intellectualproduction' => $qb(IntellectualProduction::class, array_column($askAgain['intellectualproduction'], 'id')),
+            'references' => $qb(ReferencesData::class, array_column($askAgain['references'], 'id')),
+            'records' => $qb(Record::class, array_column($askAgain['records'], 'id')),
+        ];
+        foreach ($askAgain as $key => $value) {
+            foreach ($dataForEmail[$key] as $index => $element) {
+                $dataForEmail[$key][$index]['textReview'] = $value[$index]['textReview'];
+            }
+        }
+
+        try{
+            $email = (new TemplatedEmail())
+                ->from('santipo12@gmail.com')
+                ->to('luisportilla009@gmail.com')
+                ->subject('Revisión')
+                ->htmlTemplate('email/askAgainCallEmail.html.twig')
+                ->context([
+                    'user' => $user,
+                    'dataForEmail' => $dataForEmail
+                ]);         
+            $mailer->send($email);
+            $message = 'La revisión fue enviada con éxito';
+        } catch (\Throwable $th) {
+            $message = 'Error al enviar el correo:'.$th->getMessage();
+            return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
+
+        return new JsonResponse($dataForEmail, 200, []);
     }
 
 }
