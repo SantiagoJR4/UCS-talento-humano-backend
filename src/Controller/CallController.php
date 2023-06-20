@@ -439,7 +439,7 @@ class CallController extends AbstractController
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select(
             'uc.id', 'uc.userStatus', 'u.id as userId', 'u.names', 'u.lastNames',
-            'u.identification', 'u.email', 'u.urlPhoto')
+            'u.identification', 'u.email', 'u.urlPhoto', 'uc.qualifyCv')
             ->from('App\Entity\UsersInCall', 'uc')
             ->join('uc.user', 'u')
             ->where('uc.call = :callId')
@@ -452,54 +452,76 @@ class CallController extends AbstractController
     public function testEmailCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
     {
         //Inicio Token
+        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $token = $request->query->get('token');
+        try {
+            $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
+        } catch (\Exception $e) {
+            return new JsonResponse(false);
+        }
+        $expirationTime = $decodedToken->exp;
+        $userType = $decodedToken->userType;
+        $specialUser = $decodedToken->specialUser;
+        $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
+        if( $userType !== 1 || !$isTokenValid || $specialUser !== 'CTH')
+        {
+            return new JsonResponse(['isValid' => $isTokenValid], 403, []);
+        }
         //Final Token
+        $qualifyCV = $request->request->get('qualifyCV');
         $askAgain = json_decode($request->request->get('askAgain'), true);
         $user = json_decode($request->request->get('user'), true);
+        $entityManager = $doctrine->getManager();
+        $userInCall = $entityManager->getRepository(UsersInCall::class)->find($user['id']);
+        $userInCall->setQualifyCv($qualifyCV);
+        $entityManager->flush();
 
-        $qb = function($class, $ids) use ($doctrine) {
-            return $doctrine->getRepository($class)
-                ->createQueryBuilder('e')
-                ->andWhere('e.id IN (:ids)')
-                ->setParameter('ids', $ids)
-                ->getQuery()
-                ->getArrayResult();
-        };
-        
-        $dataForEmail = [
-            'personalData' => $qb(PersonalData::class, array_column($askAgain['personalData'], 'id')),
-            'academicTraining' => $qb(AcademicTraining::class, array_column($askAgain['academicTraining'], 'id')),
-            'furtherTraining' => $qb(FurtherTraining::class, array_column($askAgain['furtherTraining'], 'id')),
-            'language' => $qb(Language::class, array_column($askAgain['language'], 'id')),
-            'workExperience' => $qb(WorkExperience::class, array_column($askAgain['workExperience'], 'id')),
-            'teachingExperience' => $qb(TeachingExperience::class, array_column($askAgain['teachingExperience'], 'id')),
-            'intellectualproduction' => $qb(IntellectualProduction::class, array_column($askAgain['intellectualproduction'], 'id')),
-            'references' => $qb(ReferencesData::class, array_column($askAgain['references'], 'id')),
-            'records' => $qb(Record::class, array_column($askAgain['records'], 'id')),
-        ];
-        foreach ($askAgain as $key => $value) {
-            foreach ($dataForEmail[$key] as $index => $element) {
-                $dataForEmail[$key][$index]['textReview'] = $value[$index]['textReview'];
+        if( $askAgain !== NULL ){
+            $qb = function($class, $ids) use ($doctrine) {
+                return $doctrine->getRepository($class)
+                    ->createQueryBuilder('e')
+                    ->andWhere('e.id IN (:ids)')
+                    ->setParameter('ids', $ids)
+                    ->getQuery()
+                    ->getArrayResult();
+            };
+            
+            $dataForEmail = [
+                'personalData' => $qb(PersonalData::class, array_column($askAgain['personalData'], 'id')),
+                'academicTraining' => $qb(AcademicTraining::class, array_column($askAgain['academicTraining'], 'id')),
+                'furtherTraining' => $qb(FurtherTraining::class, array_column($askAgain['furtherTraining'], 'id')),
+                'language' => $qb(Language::class, array_column($askAgain['language'], 'id')),
+                'workExperience' => $qb(WorkExperience::class, array_column($askAgain['workExperience'], 'id')),
+                'teachingExperience' => $qb(TeachingExperience::class, array_column($askAgain['teachingExperience'], 'id')),
+                'intellectualproduction' => $qb(IntellectualProduction::class, array_column($askAgain['intellectualproduction'], 'id')),
+                'references' => $qb(ReferencesData::class, array_column($askAgain['references'], 'id')),
+                'records' => $qb(Record::class, array_column($askAgain['records'], 'id')),
+            ];
+            foreach ($askAgain as $key => $value) {
+                foreach ($dataForEmail[$key] as $index => $element) {
+                    $dataForEmail[$key][$index]['textReview'] = $value[$index]['textReview'];
+                }
+            }
+    
+            try{
+                $email = (new TemplatedEmail())
+                    ->from('santipo12@gmail.com')
+                    ->to($user['email'])
+                    ->subject('Revisión')
+                    ->htmlTemplate('email/askAgainCallEmail.html.twig')
+                    ->context([
+                        'user' => $user,
+                        'dataForEmail' => $dataForEmail
+                    ]);         
+                $mailer->send($email);
+                $message = 'La revisión fue enviada con éxito';
+            } catch (\Throwable $th) {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error','message'=>$message]);
             }
         }
 
-        try{
-            $email = (new TemplatedEmail())
-                ->from('santipo12@gmail.com')
-                ->to('luisportilla009@gmail.com')
-                ->subject('Revisión')
-                ->htmlTemplate('email/askAgainCallEmail.html.twig')
-                ->context([
-                    'user' => $user,
-                    'dataForEmail' => $dataForEmail
-                ]);         
-            $mailer->send($email);
-            $message = 'La revisión fue enviada con éxito';
-        } catch (\Throwable $th) {
-            $message = 'Error al enviar el correo:'.$th->getMessage();
-            return new JsonResponse(['status'=>'Error','message'=>$message]);
-        }
-
-        return new JsonResponse($dataForEmail, 200, []);
+        return new JsonResponse(['data'=>'hecho'], 200, []);
     }
 
 }

@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * UsersInCall
  *
- * @ORM\Table(name="users_in_call", indexes={@ORM\Index(name="fk_users_in_call_call", columns={"call_id"}), @ORM\Index(name="fk_users_in_call_user", columns={"user_id"})})
+ * @ORM\Table(name="users_in_call", indexes={@ORM\Index(name="fk_users_in_call_user", columns={"user_id"}), @ORM\Index(name="fk_users_in_call_call", columns={"call_id"})})
  * @ORM\Entity
  */
 class UsersInCall
@@ -32,6 +32,13 @@ class UsersInCall
 4->selected"})
      */
     private $userStatus = '0';
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="qualify_cv", type="text", length=0, nullable=true)
+     */
+    private $qualifyCv;
 
     /**
      * @var \User
@@ -66,6 +73,18 @@ class UsersInCall
     public function setUserStatus(int $userStatus): self
     {
         $this->userStatus = $userStatus;
+
+        return $this;
+    }
+
+    public function getQualifyCv(): ?string
+    {
+        return $this->qualifyCv;
+    }
+
+    public function setQualifyCv(?string $qualifyCv): self
+    {
+        $this->qualifyCv = $qualifyCv;
 
         return $this;
     }
