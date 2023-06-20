@@ -439,7 +439,7 @@ class CallController extends AbstractController
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select(
             'uc.id', 'uc.userStatus', 'u.id as userId', 'u.names', 'u.lastNames',
-            'u.identification', 'u.email', 'u.urlPhoto', 'uc.qualifyCv')
+            'u.identification', 'u.email', 'u.urlPhoto', 'uc.qualifyCv', 'uc.cvStatus')
             ->from('App\Entity\UsersInCall', 'uc')
             ->join('uc.user', 'u')
             ->where('uc.call = :callId')
@@ -474,6 +474,7 @@ class CallController extends AbstractController
         $entityManager = $doctrine->getManager();
         $userInCall = $entityManager->getRepository(UsersInCall::class)->find($user['id']);
         $userInCall->setQualifyCv($qualifyCV);
+        $userInCall->setCvStatus(1);
         $entityManager->flush();
 
         if( $askAgain !== NULL ){

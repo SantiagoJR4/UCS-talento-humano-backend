@@ -41,6 +41,13 @@ class UsersInCall
     private $qualifyCv;
 
     /**
+     * @var int
+     *
+     * @ORM\Column(name="cv_status", type="smallint", nullable=false)
+     */
+    private $cvStatus = '0';
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -85,6 +92,18 @@ class UsersInCall
     public function setQualifyCv(?string $qualifyCv): self
     {
         $this->qualifyCv = $qualifyCv;
+
+        return $this;
+    }
+
+    public function getCvStatus(): ?int
+    {
+        return $this->cvStatus;
+    }
+
+    public function setCvStatus(int $cvStatus): self
+    {
+        $this->cvStatus = $cvStatus;
 
         return $this;
     }
