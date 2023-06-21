@@ -266,7 +266,7 @@ class CallController extends AbstractController
         try{
             $email = (new TemplatedEmail())
                 ->from('santipo12@gmail.com') //correo oficina oasic
-                ->to('talento.humano@unicatolicadelsur.edu.co') //correo talento humano
+                ->to('santipo12@gmail.com') //correo talento humano
                 ->subject('Usuario en proceso de inscripción')
                 ->htmlTemplate('email/callUserEmail.html.twig')
                 ->context([

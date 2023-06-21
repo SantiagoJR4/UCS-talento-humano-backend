@@ -72,6 +72,13 @@ class Language
     private $certifiedPdf;
 
     /**
+     * @var \DateTime|null
+     *
+     * @ORM\Column(name="certified_date", type="date", nullable=true)
+     */
+    private $certifiedDate;
+
+    /**
      * @var string|null
      *
      * @ORM\Column(name="history", type="text", length=0, nullable=true)
@@ -173,6 +180,18 @@ class Language
     public function setCertifiedPdf(?string $certifiedPdf): self
     {
         $this->certifiedPdf = $certifiedPdf;
+
+        return $this;
+    }
+
+    public function getCertifiedDate(): ?\DateTimeInterface
+    {
+        return $this->certifiedDate;
+    }
+
+    public function setCertifiedDate(?\DateTimeInterface $certifiedDate): self
+    {
+        $this->certifiedDate = $certifiedDate;
 
         return $this;
     }
