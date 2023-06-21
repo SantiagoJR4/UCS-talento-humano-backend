@@ -102,6 +102,10 @@
                 <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
             {% endfor %}
         {% endif %}
+        {% if dataForEmail.records %}
+            <h3><strong>Revisar Antecedentes</strong></h3>
+            <p>Notas del Revisor: <i>{{dataForEmail.records[0].textReview}}</i></p>
+        {% endif %}
         </p>
         <p>Atentamente,</p>
         <p>Universidad Católica del Sur.</p>
