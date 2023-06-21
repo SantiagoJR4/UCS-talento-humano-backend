@@ -21,9 +21,11 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -247,7 +249,7 @@ class CallController extends AbstractController
     }
 
     #[Route('/sign-up-to-call', name: 'app_sign_up_to_call')]
-    public function signUpToCall(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request): JsonResponse
+    public function signUpToCall(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, MailerInterface $mailer): JsonResponse
     {
         $token = $request->query->get('token');
         $user =  $vToken->getUserIdFromToken($token);
@@ -260,6 +262,25 @@ class CallController extends AbstractController
         $entityManager = $doctrine->getManager();
         $entityManager->persist($newUsersInCall);
         $entityManager->flush();
+
+        try{
+            $email = (new TemplatedEmail())
+                ->from('santipo12@gmail.com') //correo oficina oasic
+                ->to('talento.humano@unicatolicadelsur.edu.co') //correo talento humano
+                ->subject('Usuario en proceso de inscripción')
+                ->htmlTemplate('email/callUserEmail.html.twig')
+                ->context([
+                    'call' => $call,
+                    'userInCall' => $newUsersInCall,
+                    'user' => $user
+                ]);
+            $mailer->send($email);
+            $message = 'Correo exitoso!!';
+        } catch (\Throwable $th){
+            $message = 'Error al enviar el correo:'.$th->getMessage();
+            return new JsonResponse(['status'=>'Error', 'message'=>$message]);
+        }
+
         return new JsonResponse(['message' => 'Usuario se ha inscrito'], 200, []);
     }
 
@@ -426,20 +447,23 @@ class CallController extends AbstractController
             //Trabajador seleccionado
             if (!$user) {
                 throw $this->createNotFoundException(
-                    'No user found for id '
+                    'No user found for id '     
                 );
             }
         }
         $usersInCall = $doctrine->getRepository(UsersInCall::class)->findBy(['user'=>$user]);
+        $call = $doctrine->getRepository(TblCall::class);
 
         if(empty($usersInCall)){
             return new JsonResponse(['status'=>false,'message' => 'El usuario no está inscrito a ninguna convocatoria']);
         }
 
         foreach($usersInCall as $usersInCall){
+            $callId = $usersInCall ->getCall()->getId();
+            $call = $doctrine ->getRepository(TblCall::class)->find($callId);
             $response[] = [
                 'id' => $usersInCall->getId(),
-                'call' => $usersInCall->getCall(),
+                'call' => $call->getName(),
                 'stateUserCall' => $usersInCall -> isStateUserCall()
 
             ];

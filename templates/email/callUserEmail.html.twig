@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Información Proceso Inscripción a Convocatoria</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+
+        h1 {
+            color: #166838;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f8f8;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+        }
+
+        p {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{asset('http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/uploads/imagenes/logo_institucional_UniCat%c3%b3lica-02.png')}}"
+            alt="logo Institucional" style="display: block; margin: 0 auto; max-width: 100%;">
+        <h1>Información de usuario en proceso de inscripción a convocatoria</h1>
+        <p>Estimado/a Talento Humano,</p>
+        <p>Te informamos que el siguiente usuario se registró y empezó el proceso de inscripción a la siguiente convocatoria:</p>
+        <p><strong>Convocatoria:</strong>{{call.name}}</p>
+        <p><strong>Descripción:</strong>{{call.description}}</p>
+        <h2>Usuario</h2>
+        <p><strong>Nombres:</strong>{{user.names}}</p>
+        <p><strong>Apellidos:</strong>{{user.lastNames}}</p>
+        <p><strong>Identificación:</strong>{{user.identification}}</p>
+        <p><strong>Celular:</strong>{{user.phone}}</p>
+        <p><strong>Correo:</strong>{{user.email}}</p>
+
+        <p>Atentamente, Departamento de Sistemas</p>
+        <p>Universidad Católica del Sur.</p>
+    </div>
+</body>
+</html>
