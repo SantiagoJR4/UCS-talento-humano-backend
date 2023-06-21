@@ -34,6 +34,13 @@ class UsersInCall
     private $userStatus = '0';
 
     /**
+     * @var bool
+     *
+     * @ORM\Column(name="state_user_call", type="boolean", nullable=false)
+     */
+    private $stateUserCall;
+
+    /**
      * @var string|null
      *
      * @ORM\Column(name="qualify_cv", type="text", length=0, nullable=true)
@@ -80,6 +87,18 @@ class UsersInCall
     public function setUserStatus(int $userStatus): self
     {
         $this->userStatus = $userStatus;
+
+        return $this;
+    }
+
+    public function isStateUserCall(): ?bool
+    {
+        return $this->stateUserCall;
+    }
+
+    public function setStateUserCall(bool $stateUserCall): self
+    {
+        $this->stateUserCall = $stateUserCall;
 
         return $this;
     }

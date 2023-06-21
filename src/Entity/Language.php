@@ -74,9 +74,9 @@ class Language
     /**
      * @var \DateTime|null
      *
-     * @ORM\Column(name="date_certified", type="date", nullable=true)
+     * @ORM\Column(name="certified_date", type="date", nullable=true)
      */
-    private $dateCertified;
+    private $certifiedDate;
 
     /**
      * @var string|null
@@ -184,14 +184,14 @@ class Language
         return $this;
     }
 
-    public function getDateCertified(): ?\DateTimeInterface
+    public function getCertifiedDate(): ?\DateTimeInterface
     {
-        return $this->dateCertified;
+        return $this->certifiedDate;
     }
 
-    public function setDateCertified(?\DateTimeInterface $dateCertified): self
+    public function setCertifiedDate(?\DateTimeInterface $certifiedDate): self
     {
-        $this->dateCertified = $dateCertified;
+        $this->certifiedDate = $certifiedDate;
 
         return $this;
     }
