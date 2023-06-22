@@ -54,6 +54,13 @@ class TblCall
     /**
      * @var string
      *
+     * @ORM\Column(name="required_to_sign_up", type="text", length=0, nullable=false)
+     */
+    private $requiredToSignUp;
+
+    /**
+     * @var string
+     *
      * @ORM\Column(name="salary", type="text", length=0, nullable=false)
      */
     private $salary;
@@ -122,16 +129,6 @@ class TblCall
     private $startOfContractDate;
 
     /**
-     * @var \User
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="selected_user_id", referencedColumnName="id")
-     * })
-     */
-    private $selectedUser;
-
-    /**
      * @var \SpecialProfile
      *
      * @ORM\ManyToOne(targetEntity="SpecialProfile")
@@ -160,6 +157,16 @@ class TblCall
      * })
      */
     private $profile;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="selected_user_id", referencedColumnName="id")
+     * })
+     */
+    private $selectedUser;
 
     public function getId(): ?int
     {
@@ -198,6 +205,18 @@ class TblCall
     public function setState(int $state): self
     {
         $this->state = $state;
+
+        return $this;
+    }
+
+    public function getRequiredToSignUp(): ?string
+    {
+        return $this->requiredToSignUp;
+    }
+
+    public function setRequiredToSignUp(string $requiredToSignUp): self
+    {
+        $this->requiredToSignUp = $requiredToSignUp;
 
         return $this;
     }
@@ -322,18 +341,6 @@ class TblCall
         return $this;
     }
 
-    public function getSelectedUser(): ?User
-    {
-        return $this->selectedUser;
-    }
-
-    public function setSelectedUser(?User $selectedUser): self
-    {
-        $this->selectedUser = $selectedUser;
-
-        return $this;
-    }
-
     public function getSpecialProfile(): ?SpecialProfile
     {
         return $this->specialProfile;
@@ -366,6 +373,18 @@ class TblCall
     public function setProfile(?Profile $profile): self
     {
         $this->profile = $profile;
+
+        return $this;
+    }
+
+    public function getSelectedUser(): ?User
+    {
+        return $this->selectedUser;
+    }
+
+    public function setSelectedUser(?User $selectedUser): self
+    {
+        $this->selectedUser = $selectedUser;
 
         return $this;
     }
