@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TblCall
  *
- * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"})})
+ * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"})})
  * @ORM\Entity
  */
 class TblCall
@@ -50,6 +50,20 @@ class TblCall
 "})
      */
     private $state;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="required_for_percentages", type="text", length=0, nullable=false)
+     */
+    private $requiredForPercentages;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="required_for_curriculum_vitae", type="text", length=0, nullable=false)
+     */
+    private $requiredForCurriculumVitae;
 
     /**
      * @var string
@@ -129,26 +143,6 @@ class TblCall
     private $startOfContractDate;
 
     /**
-     * @var \SpecialProfile
-     *
-     * @ORM\ManyToOne(targetEntity="SpecialProfile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="special_profile_id", referencedColumnName="id")
-     * })
-     */
-    private $specialProfile;
-
-    /**
-     * @var \Subprofile
-     *
-     * @ORM\ManyToOne(targetEntity="Subprofile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
-     * })
-     */
-    private $subprofile;
-
-    /**
      * @var \Profile
      *
      * @ORM\ManyToOne(targetEntity="Profile")
@@ -167,6 +161,26 @@ class TblCall
      * })
      */
     private $selectedUser;
+
+    /**
+     * @var \SpecialProfile
+     *
+     * @ORM\ManyToOne(targetEntity="SpecialProfile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="special_profile_id", referencedColumnName="id")
+     * })
+     */
+    private $specialProfile;
+
+    /**
+     * @var \Subprofile
+     *
+     * @ORM\ManyToOne(targetEntity="Subprofile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
+     * })
+     */
+    private $subprofile;
 
     public function getId(): ?int
     {
@@ -205,6 +219,30 @@ class TblCall
     public function setState(int $state): self
     {
         $this->state = $state;
+
+        return $this;
+    }
+
+    public function getRequiredForPercentages(): ?string
+    {
+        return $this->requiredForPercentages;
+    }
+
+    public function setRequiredForPercentages(string $requiredForPercentages): self
+    {
+        $this->requiredForPercentages = $requiredForPercentages;
+
+        return $this;
+    }
+
+    public function getRequiredForCurriculumVitae(): ?string
+    {
+        return $this->requiredForCurriculumVitae;
+    }
+
+    public function setRequiredForCurriculumVitae(string $requiredForCurriculumVitae): self
+    {
+        $this->requiredForCurriculumVitae = $requiredForCurriculumVitae;
 
         return $this;
     }
@@ -341,30 +379,6 @@ class TblCall
         return $this;
     }
 
-    public function getSpecialProfile(): ?SpecialProfile
-    {
-        return $this->specialProfile;
-    }
-
-    public function setSpecialProfile(?SpecialProfile $specialProfile): self
-    {
-        $this->specialProfile = $specialProfile;
-
-        return $this;
-    }
-
-    public function getSubprofile(): ?Subprofile
-    {
-        return $this->subprofile;
-    }
-
-    public function setSubprofile(?Subprofile $subprofile): self
-    {
-        $this->subprofile = $subprofile;
-
-        return $this;
-    }
-
     public function getProfile(): ?Profile
     {
         return $this->profile;
@@ -385,6 +399,30 @@ class TblCall
     public function setSelectedUser(?User $selectedUser): self
     {
         $this->selectedUser = $selectedUser;
+
+        return $this;
+    }
+
+    public function getSpecialProfile(): ?SpecialProfile
+    {
+        return $this->specialProfile;
+    }
+
+    public function setSpecialProfile(?SpecialProfile $specialProfile): self
+    {
+        $this->specialProfile = $specialProfile;
+
+        return $this;
+    }
+
+    public function getSubprofile(): ?Subprofile
+    {
+        return $this->subprofile;
+    }
+
+    public function setSubprofile(?Subprofile $subprofile): self
+    {
+        $this->subprofile = $subprofile;
 
         return $this;
     }

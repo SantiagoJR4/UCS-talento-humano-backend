@@ -197,10 +197,7 @@ class CallController extends AbstractController
         $data = $request->request->all();
         $area = $request->request->get('area');
         $isEdited = $request->request->get('editedProfile');
-        $sUnder = $request->request->get('specialUnderGraduate');
-        $sPost = $request->request->get('specialpostGraduate');
-        $sExp = $request->request->get('specialPreviousExperience');
-        $sFurt = $request->request->get('specialfurtherTraining');
+        $special = json_decode($request->request->get('special'), true);
         $newCall = new TblCall();
         // var_dump($data);
         foreach($data as $fieldName => $fieldValue) {
@@ -220,10 +217,10 @@ class CallController extends AbstractController
         if($area === 'TH') {
             if($isEdited) {
                 $newSpecialProfile = new SpecialProfile();
-                $newSpecialProfile->setUnderGraduateTraining($sUnder);
-                $newSpecialProfile->setPostGraduateTraining($sPost);
-                $newSpecialProfile->setPreviousExperience($sExp);
-                $newSpecialProfile->setFurtherTraining($sFurt);
+                $newSpecialProfile->setUnderGraduateTraining($special['specialUnderGraduate']);
+                $newSpecialProfile->setPostGraduateTraining($special['specialpostGraduate']);
+                $newSpecialProfile->setPreviousExperience($special['specialPreviousExperience']);
+                $newSpecialProfile->setFurtherTraining($special['specialfurtherTraining']);
                 $entityManager->persist($newSpecialProfile);
                 $entityManager->flush();
                 $newCall->setSpecialProfile($newSpecialProfile);
@@ -356,6 +353,9 @@ class CallController extends AbstractController
         $callId = $request->query->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         $profile = $call->getProfile();
+        $specialProfile = $call->getSpecialProfile();
+        $requiredForPercentages = $call->getRequiredForPercentages();
+        $requiredForCurriculumVitae = $call->getRequiredForCurriculumVitae();
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select('cp.id', 'c.id as competenceId', 'c.name', 'c.description', 'c.icon')
         // $query->select('cp.id', 'c.id as competenceId')
@@ -370,11 +370,18 @@ class CallController extends AbstractController
         settype($callId, 'integer');
         $profile = $serializer->serialize($profile, 'json');
         $profile = json_decode($profile, true);
+        $requiredForPercentages = json_decode($requiredForPercentages, true);
+        $requiredForCurriculumVitae = json_decode($requiredForCurriculumVitae, true);
+        $specialProfile = $serializer->serialize($specialProfile, 'json');
+        $specialProfile = json_decode($specialProfile, true);
         
         return new JsonResponse(
             [
                 'call' => $callId,
                 'profile' => $profile,
+                'specialProfile' => $specialProfile,
+                'requiredForPercentages' => $requiredForPercentages,
+                'requiredForCurriculumVitae' => $requiredForCurriculumVitae,
                 'competenciesProfile' => $competenciesProfile
             ]
             , 200, []);
