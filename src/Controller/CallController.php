@@ -214,17 +214,17 @@ class CallController extends AbstractController
         }
         $newCall->setState(0);
         $entityManager = $doctrine->getManager();
+        if($isEdited) {
+            $newSpecialProfile = new SpecialProfile();
+            $newSpecialProfile->setUnderGraduateTraining($special['specialUnderGraduate']);
+            $newSpecialProfile->setPostGraduateTraining($special['specialpostGraduate']);
+            $newSpecialProfile->setPreviousExperience($special['specialPreviousExperience']);
+            $newSpecialProfile->setFurtherTraining($special['specialfurtherTraining']);
+            $entityManager->persist($newSpecialProfile);
+            $entityManager->flush();
+            $newCall->setSpecialProfile($newSpecialProfile);
+        }
         if($area === 'TH') {
-            if($isEdited) {
-                $newSpecialProfile = new SpecialProfile();
-                $newSpecialProfile->setUnderGraduateTraining($special['specialUnderGraduate']);
-                $newSpecialProfile->setPostGraduateTraining($special['specialpostGraduate']);
-                $newSpecialProfile->setPreviousExperience($special['specialPreviousExperience']);
-                $newSpecialProfile->setFurtherTraining($special['specialfurtherTraining']);
-                $entityManager->persist($newSpecialProfile);
-                $entityManager->flush();
-                $newCall->setSpecialProfile($newSpecialProfile);
-            }
             $profile = $doctrine->getRepository(Profile::class)->find($data['profileId']);
             $newCall->setProfile($profile);
         } else {
@@ -353,6 +353,7 @@ class CallController extends AbstractController
         $callId = $request->query->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         $profile = $call->getProfile();
+        $subprofile = $call->getSubprofile();
         $specialProfile = $call->getSpecialProfile();
         $requiredForPercentages = $call->getRequiredForPercentages();
         $requiredForCurriculumVitae = $call->getRequiredForCurriculumVitae();
@@ -370,15 +371,18 @@ class CallController extends AbstractController
         settype($callId, 'integer');
         $profile = $serializer->serialize($profile, 'json');
         $profile = json_decode($profile, true);
-        $requiredForPercentages = json_decode($requiredForPercentages, true);
-        $requiredForCurriculumVitae = json_decode($requiredForCurriculumVitae, true);
+        $subprofile = $serializer->serialize($subprofile, 'json');
+        $subprofile = json_decode($subprofile, true);
         $specialProfile = $serializer->serialize($specialProfile, 'json');
         $specialProfile = json_decode($specialProfile, true);
+        $requiredForPercentages = json_decode($requiredForPercentages, true);
+        $requiredForCurriculumVitae = json_decode($requiredForCurriculumVitae, true);
         
         return new JsonResponse(
             [
                 'call' => $callId,
                 'profile' => $profile,
+                'subprofile' => $subprofile,
                 'specialProfile' => $specialProfile,
                 'requiredForPercentages' => $requiredForPercentages,
                 'requiredForCurriculumVitae' => $requiredForCurriculumVitae,
@@ -410,12 +414,13 @@ class CallController extends AbstractController
         $factorsValues = json_decode($request->request->get('factorsValues'),true);
         $callId = $request->request->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        //_______________________________________
         $entityManager = $doctrine->getManager();
         $newCallPercentage = new CallPercentage();
         try {
             foreach($callPercentage as $fieldName => $fieldValue)
         {
-            $newCallPercentage->{'set'.$fieldValue['name']}($fieldValue['value']);
+            $newCallPercentage->{'set'.$fieldValue['name']}($fieldValue['value'] !== 0 ? $fieldValue['value'] : NULL);
         }
         } catch (\Throwable $th) {
             return new JsonResponse('callPercentage');
@@ -423,7 +428,7 @@ class CallController extends AbstractController
         try {
             foreach($hvPercentage as $fieldName => $fieldValue)
         {
-            $newCallPercentage->{'set'.$fieldValue['name']}($fieldValue['value']);
+            $newCallPercentage->{'set'.$fieldValue['name']}($fieldValue['value'] !== 0 ? $fieldValue['value'] : NULL);
         }
         } catch (\Throwable $th) {
             return new JsonResponse('hvPercentage');
@@ -432,19 +437,22 @@ class CallController extends AbstractController
         $newCallPercentage->setCall($call);
         $entityManager->persist($newCallPercentage);
         $entityManager->flush();
-        try {
-            foreach($factorsValues as $key => $crestValue)
+        if( $factorsValues !== NULL )
         {
-            $factor = $entityManager->getRepository(Factor::class)->find($key + 1);
-            $newFactorProfile = new FactorProfile();
-            $newFactorProfile->setCrest($crestValue);
-            $newFactorProfile->setfactor($factor);
-            $newFactorProfile->setCall($call);
-            $entityManager->persist($newFactorProfile);
-        }
-        $entityManager->flush();
-        } catch (\Throwable $th) {
-            return new JsonResponse('factorsValues');
+            try {
+                foreach($factorsValues as $key => $crestValue)
+            {
+                $factor = $entityManager->getRepository(Factor::class)->find($key + 1);
+                $newFactorProfile = new FactorProfile();
+                $newFactorProfile->setCrest($crestValue);
+                $newFactorProfile->setfactor($factor);
+                $newFactorProfile->setCall($call);
+                $entityManager->persist($newFactorProfile);
+            }
+            $entityManager->flush();
+            } catch (\Throwable $th) {
+                return new JsonResponse('factorsValues');
+            }
         }
         try {
             foreach($competenciesPercentage as $fieldName => $fieldValue)
@@ -457,22 +465,24 @@ class CallController extends AbstractController
             $newCompetencePercentage->setInterviewPercentage($fieldValue['valueInterview'] !== 0 ? $fieldValue['valueInterview'] : NULL);
             $entityManager->persist($newCompetencePercentage);
             $entityManager->flush();
-            foreach($fieldValue['factorsInCompetence'] as $index => $factorId)
-            {
-                $factorCall = $entityManager
-                    ->getRepository(FactorProfile::class)
-                    ->findOneBy(['factor' => $factorId, 'call' => $call]);
-                $newScore = new Score();
-                $newScore->setCompetencePercentage($newCompetencePercentage);
-                $newScore->setFactorProfile($factorCall);
-                $entityManager->persist($newScore);
+            if( $factorsValues !== NULL ){
+                foreach($fieldValue['factorsInCompetence'] as $index => $factorId)
+                {
+                    $factorCall = $entityManager
+                        ->getRepository(FactorProfile::class)
+                        ->findOneBy(['factor' => $factorId, 'call' => $call]);
+                    $newScore = new Score();
+                    $newScore->setCompetencePercentage($newCompetencePercentage);
+                    $newScore->setFactorProfile($factorCall);
+                    $entityManager->persist($newScore);
+                }
             }
         }
         } catch (\Throwable $th) {
             return new JsonResponse('competenciesPercentage');
         }
         $entityManager->flush();
-        return new JsonResponse($competenciesPercentage, 200, []);
+        return new JsonResponse(['done'=>'hecho'], 200, []);
     }
 
     #[Route('/get-users-from-call', name: 'app_get_users_from_call')]

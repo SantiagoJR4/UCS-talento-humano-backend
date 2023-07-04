@@ -52,93 +52,100 @@ class TblCall
     private $state;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="required_for_percentages", type="text", length=0, nullable=false)
+     * @ORM\Column(name="required_for_percentages", type="text", length=0, nullable=true)
      */
     private $requiredForPercentages;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="required_for_curriculum_vitae", type="text", length=0, nullable=false)
+     * @ORM\Column(name="required_for_curriculum_vitae", type="text", length=0, nullable=true)
      */
     private $requiredForCurriculumVitae;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="required_to_sign_up", type="text", length=0, nullable=false)
+     * @ORM\Column(name="required_to_sign_up", type="text", length=0, nullable=true)
      */
     private $requiredToSignUp;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="salary", type="text", length=0, nullable=false)
+     * @ORM\Column(name="salary", type="text", length=0, nullable=true)
      */
     private $salary;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="opening_date", type="date", nullable=false)
+     * @ORM\Column(name="opening_date", type="date", nullable=true)
      */
     private $openingDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="reception_deadline_date", type="date", nullable=false)
+     * @ORM\Column(name="reception_deadline_date", type="date", nullable=true)
      */
     private $receptionDeadlineDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="selection_date", type="date", nullable=false)
+     * @ORM\Column(name="selection_date", type="date", nullable=true)
      */
     private $selectionDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="publication_date", type="date", nullable=false)
+     * @ORM\Column(name="publication_date", type="date", nullable=true)
      */
     private $publicationDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="knowledge_test_date", type="datetime", nullable=false)
+     * @ORM\Column(name="knowledge_test_date", type="datetime", nullable=true)
      */
     private $knowledgeTestDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="knowledge_results_date", type="date", nullable=false)
+     * @ORM\Column(name="knowledge_results_date", type="date", nullable=true)
      */
     private $knowledgeResultsDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="psycho_and_interview_date", type="datetime", nullable=false)
+     * @ORM\Column(name="psycho_date", type="datetime", nullable=true)
      */
-    private $psychoAndInterviewDate;
+    private $psychoDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="final_results_date", type="date", nullable=false)
+     * @ORM\Column(name="interview_date", type="datetime", nullable=true)
+     */
+    private $interviewDate;
+
+    /**
+     * @var \DateTime|null
+     *
+     * @ORM\Column(name="final_results_date", type="date", nullable=true)
      */
     private $finalResultsDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="start_of_contract_date", type="date", nullable=false)
+     * @ORM\Column(name="start_of_contract_date", type="date", nullable=true)
      */
     private $startOfContractDate;
 
@@ -192,7 +199,7 @@ class TblCall
         return $this->name;
     }
 
-    public function setName(?int $name): self
+    public function setName(?int $name): static
     {
         $this->name = $name;
 
@@ -204,7 +211,7 @@ class TblCall
         return $this->description;
     }
 
-    public function setDescription(string $description): self
+    public function setDescription(string $description): static
     {
         $this->description = $description;
 
@@ -216,7 +223,7 @@ class TblCall
         return $this->state;
     }
 
-    public function setState(int $state): self
+    public function setState(int $state): static
     {
         $this->state = $state;
 
@@ -228,7 +235,7 @@ class TblCall
         return $this->requiredForPercentages;
     }
 
-    public function setRequiredForPercentages(string $requiredForPercentages): self
+    public function setRequiredForPercentages(?string $requiredForPercentages): static
     {
         $this->requiredForPercentages = $requiredForPercentages;
 
@@ -240,7 +247,7 @@ class TblCall
         return $this->requiredForCurriculumVitae;
     }
 
-    public function setRequiredForCurriculumVitae(string $requiredForCurriculumVitae): self
+    public function setRequiredForCurriculumVitae(?string $requiredForCurriculumVitae): static
     {
         $this->requiredForCurriculumVitae = $requiredForCurriculumVitae;
 
@@ -252,7 +259,7 @@ class TblCall
         return $this->requiredToSignUp;
     }
 
-    public function setRequiredToSignUp(string $requiredToSignUp): self
+    public function setRequiredToSignUp(?string $requiredToSignUp): static
     {
         $this->requiredToSignUp = $requiredToSignUp;
 
@@ -264,7 +271,7 @@ class TblCall
         return $this->salary;
     }
 
-    public function setSalary(string $salary): self
+    public function setSalary(?string $salary): static
     {
         $this->salary = $salary;
 
@@ -276,7 +283,7 @@ class TblCall
         return $this->openingDate;
     }
 
-    public function setOpeningDate(\DateTimeInterface $openingDate): self
+    public function setOpeningDate(?\DateTimeInterface $openingDate): static
     {
         $this->openingDate = $openingDate;
 
@@ -288,7 +295,7 @@ class TblCall
         return $this->receptionDeadlineDate;
     }
 
-    public function setReceptionDeadlineDate(\DateTimeInterface $receptionDeadlineDate): self
+    public function setReceptionDeadlineDate(?\DateTimeInterface $receptionDeadlineDate): static
     {
         $this->receptionDeadlineDate = $receptionDeadlineDate;
 
@@ -300,7 +307,7 @@ class TblCall
         return $this->selectionDate;
     }
 
-    public function setSelectionDate(\DateTimeInterface $selectionDate): self
+    public function setSelectionDate(?\DateTimeInterface $selectionDate): static
     {
         $this->selectionDate = $selectionDate;
 
@@ -312,7 +319,7 @@ class TblCall
         return $this->publicationDate;
     }
 
-    public function setPublicationDate(\DateTimeInterface $publicationDate): self
+    public function setPublicationDate(?\DateTimeInterface $publicationDate): static
     {
         $this->publicationDate = $publicationDate;
 
@@ -324,7 +331,7 @@ class TblCall
         return $this->knowledgeTestDate;
     }
 
-    public function setKnowledgeTestDate(\DateTimeInterface $knowledgeTestDate): self
+    public function setKnowledgeTestDate(?\DateTimeInterface $knowledgeTestDate): static
     {
         $this->knowledgeTestDate = $knowledgeTestDate;
 
@@ -336,21 +343,33 @@ class TblCall
         return $this->knowledgeResultsDate;
     }
 
-    public function setKnowledgeResultsDate(\DateTimeInterface $knowledgeResultsDate): self
+    public function setKnowledgeResultsDate(?\DateTimeInterface $knowledgeResultsDate): static
     {
         $this->knowledgeResultsDate = $knowledgeResultsDate;
 
         return $this;
     }
 
-    public function getPsychoAndInterviewDate(): ?\DateTimeInterface
+    public function getPsychoDate(): ?\DateTimeInterface
     {
-        return $this->psychoAndInterviewDate;
+        return $this->psychoDate;
     }
 
-    public function setPsychoAndInterviewDate(\DateTimeInterface $psychoAndInterviewDate): self
+    public function setPsychoDate(?\DateTimeInterface $psychoDate): static
     {
-        $this->psychoAndInterviewDate = $psychoAndInterviewDate;
+        $this->psychoDate = $psychoDate;
+
+        return $this;
+    }
+
+    public function getInterviewDate(): ?\DateTimeInterface
+    {
+        return $this->interviewDate;
+    }
+
+    public function setInterviewDate(?\DateTimeInterface $interviewDate): static
+    {
+        $this->interviewDate = $interviewDate;
 
         return $this;
     }
@@ -360,7 +379,7 @@ class TblCall
         return $this->finalResultsDate;
     }
 
-    public function setFinalResultsDate(\DateTimeInterface $finalResultsDate): self
+    public function setFinalResultsDate(?\DateTimeInterface $finalResultsDate): static
     {
         $this->finalResultsDate = $finalResultsDate;
 
@@ -372,7 +391,7 @@ class TblCall
         return $this->startOfContractDate;
     }
 
-    public function setStartOfContractDate(\DateTimeInterface $startOfContractDate): self
+    public function setStartOfContractDate(?\DateTimeInterface $startOfContractDate): static
     {
         $this->startOfContractDate = $startOfContractDate;
 
@@ -384,7 +403,7 @@ class TblCall
         return $this->profile;
     }
 
-    public function setProfile(?Profile $profile): self
+    public function setProfile(?Profile $profile): static
     {
         $this->profile = $profile;
 
@@ -396,7 +415,7 @@ class TblCall
         return $this->selectedUser;
     }
 
-    public function setSelectedUser(?User $selectedUser): self
+    public function setSelectedUser(?User $selectedUser): static
     {
         $this->selectedUser = $selectedUser;
 
@@ -408,7 +427,7 @@ class TblCall
         return $this->specialProfile;
     }
 
-    public function setSpecialProfile(?SpecialProfile $specialProfile): self
+    public function setSpecialProfile(?SpecialProfile $specialProfile): static
     {
         $this->specialProfile = $specialProfile;
 
@@ -420,7 +439,7 @@ class TblCall
         return $this->subprofile;
     }
 
-    public function setSubprofile(?Subprofile $subprofile): self
+    public function setSubprofile(?Subprofile $subprofile): static
     {
         $this->subprofile = $subprofile;
 

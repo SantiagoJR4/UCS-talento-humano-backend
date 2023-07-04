@@ -88,7 +88,7 @@ class Profile
         return $this->name;
     }
 
-    public function setName(string $name): self
+    public function setName(string $name): static
     {
         $this->name = $name;
 
@@ -100,7 +100,7 @@ class Profile
         return $this->area;
     }
 
-    public function setArea(string $area): self
+    public function setArea(string $area): static
     {
         $this->area = $area;
 
@@ -112,7 +112,7 @@ class Profile
         return $this->underGraduateTraining;
     }
 
-    public function setUnderGraduateTraining(string $underGraduateTraining): self
+    public function setUnderGraduateTraining(string $underGraduateTraining): static
     {
         $this->underGraduateTraining = $underGraduateTraining;
 
@@ -124,7 +124,7 @@ class Profile
         return $this->postGraduateTraining;
     }
 
-    public function setPostGraduateTraining(string $postGraduateTraining): self
+    public function setPostGraduateTraining(string $postGraduateTraining): static
     {
         $this->postGraduateTraining = $postGraduateTraining;
 
@@ -136,7 +136,7 @@ class Profile
         return $this->previousExperience;
     }
 
-    public function setPreviousExperience(string $previousExperience): self
+    public function setPreviousExperience(string $previousExperience): static
     {
         $this->previousExperience = $previousExperience;
 
@@ -148,7 +148,7 @@ class Profile
         return $this->furtherTraining;
     }
 
-    public function setFurtherTraining(string $furtherTraining): self
+    public function setFurtherTraining(string $furtherTraining): static
     {
         $this->furtherTraining = $furtherTraining;
 
@@ -160,7 +160,7 @@ class Profile
         return $this->specialRequirements;
     }
 
-    public function setSpecialRequirements(string $specialRequirements): self
+    public function setSpecialRequirements(string $specialRequirements): static
     {
         $this->specialRequirements = $specialRequirements;
 
@@ -172,7 +172,7 @@ class Profile
         return $this->functions;
     }
 
-    public function setFunctions(string $functions): self
+    public function setFunctions(string $functions): static
     {
         $this->functions = $functions;
 

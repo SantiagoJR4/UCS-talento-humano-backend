@@ -84,7 +84,7 @@ class UsersInCall
         return $this->userStatus;
     }
 
-    public function setUserStatus(int $userStatus): self
+    public function setUserStatus(int $userStatus): static
     {
         $this->userStatus = $userStatus;
 
@@ -96,7 +96,7 @@ class UsersInCall
         return $this->stateUserCall;
     }
 
-    public function setStateUserCall(bool $stateUserCall): self
+    public function setStateUserCall(bool $stateUserCall): static
     {
         $this->stateUserCall = $stateUserCall;
 
@@ -108,7 +108,7 @@ class UsersInCall
         return $this->qualifyCv;
     }
 
-    public function setQualifyCv(?string $qualifyCv): self
+    public function setQualifyCv(?string $qualifyCv): static
     {
         $this->qualifyCv = $qualifyCv;
 
@@ -120,7 +120,7 @@ class UsersInCall
         return $this->cvStatus;
     }
 
-    public function setCvStatus(int $cvStatus): self
+    public function setCvStatus(int $cvStatus): static
     {
         $this->cvStatus = $cvStatus;
 
@@ -132,7 +132,7 @@ class UsersInCall
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 
@@ -144,7 +144,7 @@ class UsersInCall
         return $this->call;
     }
 
-    public function setCall(?TblCall $call): self
+    public function setCall(?TblCall $call): static
     {
         $this->call = $call;
 
