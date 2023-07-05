@@ -590,7 +590,7 @@ class CallController extends AbstractController
             $email = (new TemplatedEmail())
                 ->from('convocatorias@unicatolicadelsur.edu.co')
                 ->to($userEmail)
-                ->subject('Revisión')
+                ->subject('Citación Prueba de Conocimiento')
                 ->htmlTemplate('email/approvedHVCallEmail.html.twig')
                 ->context([
                     'fullname' => $fullname,
