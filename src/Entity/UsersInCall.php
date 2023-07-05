@@ -55,16 +55,6 @@ class UsersInCall
     private $cvStatus = '0';
 
     /**
-     * @var \User
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     * })
-     */
-    private $user;
-
-    /**
      * @var \TblCall
      *
      * @ORM\ManyToOne(targetEntity="TblCall")
@@ -73,6 +63,16 @@ class UsersInCall
      * })
      */
     private $call;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * })
+     */
+    private $user;
 
     public function getId(): ?int
     {
@@ -84,7 +84,7 @@ class UsersInCall
         return $this->userStatus;
     }
 
-    public function setUserStatus(int $userStatus): static
+    public function setUserStatus(int $userStatus): self
     {
         $this->userStatus = $userStatus;
 
@@ -96,7 +96,7 @@ class UsersInCall
         return $this->stateUserCall;
     }
 
-    public function setStateUserCall(bool $stateUserCall): static
+    public function setStateUserCall(bool $stateUserCall): self
     {
         $this->stateUserCall = $stateUserCall;
 
@@ -108,7 +108,7 @@ class UsersInCall
         return $this->qualifyCv;
     }
 
-    public function setQualifyCv(?string $qualifyCv): static
+    public function setQualifyCv(?string $qualifyCv): self
     {
         $this->qualifyCv = $qualifyCv;
 
@@ -120,21 +120,9 @@ class UsersInCall
         return $this->cvStatus;
     }
 
-    public function setCvStatus(int $cvStatus): static
+    public function setCvStatus(int $cvStatus): self
     {
         $this->cvStatus = $cvStatus;
-
-        return $this;
-    }
-
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): static
-    {
-        $this->user = $user;
 
         return $this;
     }
@@ -144,9 +132,21 @@ class UsersInCall
         return $this->call;
     }
 
-    public function setCall(?TblCall $call): static
+    public function setCall(?TblCall $call): self
     {
         $this->call = $call;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

@@ -123,7 +123,7 @@ class User
         return $this->names;
     }
 
-    public function setNames(string $names): static
+    public function setNames(string $names): self
     {
         $this->names = $names;
 
@@ -135,7 +135,7 @@ class User
         return $this->lastNames;
     }
 
-    public function setLastNames(string $lastNames): static
+    public function setLastNames(string $lastNames): self
     {
         $this->lastNames = $lastNames;
 
@@ -147,7 +147,7 @@ class User
         return $this->typeIdentification;
     }
 
-    public function setTypeIdentification(string $typeIdentification): static
+    public function setTypeIdentification(string $typeIdentification): self
     {
         $this->typeIdentification = $typeIdentification;
 
@@ -159,7 +159,7 @@ class User
         return $this->identification;
     }
 
-    public function setIdentification(string $identification): static
+    public function setIdentification(string $identification): self
     {
         $this->identification = $identification;
 
@@ -171,7 +171,7 @@ class User
         return $this->email;
     }
 
-    public function setEmail(string $email): static
+    public function setEmail(string $email): self
     {
         $this->email = $email;
 
@@ -183,7 +183,7 @@ class User
         return $this->alternateEmail;
     }
 
-    public function setAlternateEmail(?string $alternateEmail): static
+    public function setAlternateEmail(?string $alternateEmail): self
     {
         $this->alternateEmail = $alternateEmail;
 
@@ -195,7 +195,7 @@ class User
         return $this->phone;
     }
 
-    public function setPhone(string $phone): static
+    public function setPhone(string $phone): self
     {
         $this->phone = $phone;
 
@@ -207,7 +207,7 @@ class User
         return $this->emailStatus;
     }
 
-    public function setEmailStatus(?bool $emailStatus): static
+    public function setEmailStatus(?bool $emailStatus): self
     {
         $this->emailStatus = $emailStatus;
 
@@ -219,7 +219,7 @@ class User
         return $this->password;
     }
 
-    public function setPassword(string $password): static
+    public function setPassword(string $password): self
     {
         $this->password = $password;
 
@@ -231,7 +231,7 @@ class User
         return $this->urlPhoto;
     }
 
-    public function setUrlPhoto(?string $urlPhoto): static
+    public function setUrlPhoto(?string $urlPhoto): self
     {
         $this->urlPhoto = $urlPhoto;
 
@@ -243,7 +243,7 @@ class User
         return $this->userType;
     }
 
-    public function setUserType(int $userType): static
+    public function setUserType(int $userType): self
     {
         $this->userType = $userType;
 
@@ -255,7 +255,7 @@ class User
         return $this->specialUser;
     }
 
-    public function setSpecialUser(?string $specialUser): static
+    public function setSpecialUser(?string $specialUser): self
     {
         $this->specialUser = $specialUser;
 
@@ -267,7 +267,7 @@ class User
         return $this->sub;
     }
 
-    public function setSub(int $sub): static
+    public function setSub(int $sub): self
     {
         $this->sub = $sub;
 
