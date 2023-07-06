@@ -29,23 +29,23 @@ class CallPercentage
     private $curriculumVitae;
 
     /**
-     * @var int
+     * @var int|null
      *
-     * @ORM\Column(name="knowledge_test", type="integer", nullable=false)
+     * @ORM\Column(name="knowledge_test", type="integer", nullable=true)
      */
     private $knowledgeTest;
 
     /**
-     * @var int
+     * @var int|null
      *
-     * @ORM\Column(name="psycho_test", type="integer", nullable=false)
+     * @ORM\Column(name="psycho_test", type="integer", nullable=true)
      */
     private $psychoTest;
 
     /**
-     * @var int
+     * @var int|null
      *
-     * @ORM\Column(name="interview", type="integer", nullable=false)
+     * @ORM\Column(name="interview", type="integer", nullable=true)
      */
     private $interview;
 
@@ -116,7 +116,7 @@ class CallPercentage
         return $this->knowledgeTest;
     }
 
-    public function setKnowledgeTest(int $knowledgeTest): self
+    public function setKnowledgeTest(?int $knowledgeTest): self
     {
         $this->knowledgeTest = $knowledgeTest;
 
@@ -128,7 +128,7 @@ class CallPercentage
         return $this->psychoTest;
     }
 
-    public function setPsychoTest(int $psychoTest): self
+    public function setPsychoTest(?int $psychoTest): self
     {
         $this->psychoTest = $psychoTest;
 
@@ -140,7 +140,7 @@ class CallPercentage
         return $this->interview;
     }
 
-    public function setInterview(int $interview): self
+    public function setInterview(?int $interview): self
     {
         $this->interview = $interview;
 

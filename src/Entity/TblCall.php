@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TblCall
  *
- * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"})})
+ * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"})})
  * @ORM\Entity
  */
 class TblCall
@@ -52,84 +52,102 @@ class TblCall
     private $state;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="salary", type="text", length=0, nullable=false)
+     * @ORM\Column(name="required_for_percentages", type="text", length=0, nullable=true)
+     */
+    private $requiredForPercentages;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="required_for_curriculum_vitae", type="text", length=0, nullable=true)
+     */
+    private $requiredForCurriculumVitae;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="required_to_sign_up", type="text", length=0, nullable=true)
+     */
+    private $requiredToSignUp;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="salary", type="text", length=0, nullable=true)
      */
     private $salary;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="opening_date", type="date", nullable=false)
+     * @ORM\Column(name="opening_date", type="date", nullable=true)
      */
     private $openingDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="reception_deadline_date", type="date", nullable=false)
+     * @ORM\Column(name="reception_deadline_date", type="date", nullable=true)
      */
     private $receptionDeadlineDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="selection_date", type="date", nullable=false)
+     * @ORM\Column(name="selection_date", type="date", nullable=true)
      */
     private $selectionDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="publication_date", type="date", nullable=false)
+     * @ORM\Column(name="publication_date", type="date", nullable=true)
      */
     private $publicationDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="knowledge_test_date", type="datetime", nullable=false)
+     * @ORM\Column(name="knowledge_test_date", type="datetime", nullable=true)
      */
     private $knowledgeTestDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="knowledge_results_date", type="date", nullable=false)
+     * @ORM\Column(name="knowledge_results_date", type="date", nullable=true)
      */
     private $knowledgeResultsDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="psycho_and_interview_date", type="datetime", nullable=false)
+     * @ORM\Column(name="psycho_date", type="datetime", nullable=true)
      */
-    private $psychoAndInterviewDate;
+    private $psychoDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="final_results_date", type="date", nullable=false)
+     * @ORM\Column(name="interview_date", type="datetime", nullable=true)
+     */
+    private $interviewDate;
+
+    /**
+     * @var \DateTime|null
+     *
+     * @ORM\Column(name="final_results_date", type="date", nullable=true)
      */
     private $finalResultsDate;
 
     /**
-     * @var \DateTime
+     * @var \DateTime|null
      *
-     * @ORM\Column(name="start_of_contract_date", type="date", nullable=false)
+     * @ORM\Column(name="start_of_contract_date", type="date", nullable=true)
      */
     private $startOfContractDate;
-
-    /**
-     * @var \User
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="selected_user_id", referencedColumnName="id")
-     * })
-     */
-    private $selectedUser;
 
     /**
      * @var \SpecialProfile
@@ -160,6 +178,16 @@ class TblCall
      * })
      */
     private $profile;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="selected_user_id", referencedColumnName="id")
+     * })
+     */
+    private $selectedUser;
 
     public function getId(): ?int
     {
@@ -202,12 +230,48 @@ class TblCall
         return $this;
     }
 
+    public function getRequiredForPercentages(): ?string
+    {
+        return $this->requiredForPercentages;
+    }
+
+    public function setRequiredForPercentages(?string $requiredForPercentages): self
+    {
+        $this->requiredForPercentages = $requiredForPercentages;
+
+        return $this;
+    }
+
+    public function getRequiredForCurriculumVitae(): ?string
+    {
+        return $this->requiredForCurriculumVitae;
+    }
+
+    public function setRequiredForCurriculumVitae(?string $requiredForCurriculumVitae): self
+    {
+        $this->requiredForCurriculumVitae = $requiredForCurriculumVitae;
+
+        return $this;
+    }
+
+    public function getRequiredToSignUp(): ?string
+    {
+        return $this->requiredToSignUp;
+    }
+
+    public function setRequiredToSignUp(?string $requiredToSignUp): self
+    {
+        $this->requiredToSignUp = $requiredToSignUp;
+
+        return $this;
+    }
+
     public function getSalary(): ?string
     {
         return $this->salary;
     }
 
-    public function setSalary(string $salary): self
+    public function setSalary(?string $salary): self
     {
         $this->salary = $salary;
 
@@ -219,7 +283,7 @@ class TblCall
         return $this->openingDate;
     }
 
-    public function setOpeningDate(\DateTimeInterface $openingDate): self
+    public function setOpeningDate(?\DateTimeInterface $openingDate): self
     {
         $this->openingDate = $openingDate;
 
@@ -231,7 +295,7 @@ class TblCall
         return $this->receptionDeadlineDate;
     }
 
-    public function setReceptionDeadlineDate(\DateTimeInterface $receptionDeadlineDate): self
+    public function setReceptionDeadlineDate(?\DateTimeInterface $receptionDeadlineDate): self
     {
         $this->receptionDeadlineDate = $receptionDeadlineDate;
 
@@ -243,7 +307,7 @@ class TblCall
         return $this->selectionDate;
     }
 
-    public function setSelectionDate(\DateTimeInterface $selectionDate): self
+    public function setSelectionDate(?\DateTimeInterface $selectionDate): self
     {
         $this->selectionDate = $selectionDate;
 
@@ -255,7 +319,7 @@ class TblCall
         return $this->publicationDate;
     }
 
-    public function setPublicationDate(\DateTimeInterface $publicationDate): self
+    public function setPublicationDate(?\DateTimeInterface $publicationDate): self
     {
         $this->publicationDate = $publicationDate;
 
@@ -267,7 +331,7 @@ class TblCall
         return $this->knowledgeTestDate;
     }
 
-    public function setKnowledgeTestDate(\DateTimeInterface $knowledgeTestDate): self
+    public function setKnowledgeTestDate(?\DateTimeInterface $knowledgeTestDate): self
     {
         $this->knowledgeTestDate = $knowledgeTestDate;
 
@@ -279,21 +343,33 @@ class TblCall
         return $this->knowledgeResultsDate;
     }
 
-    public function setKnowledgeResultsDate(\DateTimeInterface $knowledgeResultsDate): self
+    public function setKnowledgeResultsDate(?\DateTimeInterface $knowledgeResultsDate): self
     {
         $this->knowledgeResultsDate = $knowledgeResultsDate;
 
         return $this;
     }
 
-    public function getPsychoAndInterviewDate(): ?\DateTimeInterface
+    public function getPsychoDate(): ?\DateTimeInterface
     {
-        return $this->psychoAndInterviewDate;
+        return $this->psychoDate;
     }
 
-    public function setPsychoAndInterviewDate(\DateTimeInterface $psychoAndInterviewDate): self
+    public function setPsychoDate(?\DateTimeInterface $psychoDate): self
     {
-        $this->psychoAndInterviewDate = $psychoAndInterviewDate;
+        $this->psychoDate = $psychoDate;
+
+        return $this;
+    }
+
+    public function getInterviewDate(): ?\DateTimeInterface
+    {
+        return $this->interviewDate;
+    }
+
+    public function setInterviewDate(?\DateTimeInterface $interviewDate): self
+    {
+        $this->interviewDate = $interviewDate;
 
         return $this;
     }
@@ -303,7 +379,7 @@ class TblCall
         return $this->finalResultsDate;
     }
 
-    public function setFinalResultsDate(\DateTimeInterface $finalResultsDate): self
+    public function setFinalResultsDate(?\DateTimeInterface $finalResultsDate): self
     {
         $this->finalResultsDate = $finalResultsDate;
 
@@ -315,21 +391,9 @@ class TblCall
         return $this->startOfContractDate;
     }
 
-    public function setStartOfContractDate(\DateTimeInterface $startOfContractDate): self
+    public function setStartOfContractDate(?\DateTimeInterface $startOfContractDate): self
     {
         $this->startOfContractDate = $startOfContractDate;
-
-        return $this;
-    }
-
-    public function getSelectedUser(): ?User
-    {
-        return $this->selectedUser;
-    }
-
-    public function setSelectedUser(?User $selectedUser): self
-    {
-        $this->selectedUser = $selectedUser;
 
         return $this;
     }
@@ -366,6 +430,18 @@ class TblCall
     public function setProfile(?Profile $profile): self
     {
         $this->profile = $profile;
+
+        return $this;
+    }
+
+    public function getSelectedUser(): ?User
+    {
+        return $this->selectedUser;
+    }
+
+    public function setSelectedUser(?User $selectedUser): self
+    {
+        $this->selectedUser = $selectedUser;
 
         return $this;
     }

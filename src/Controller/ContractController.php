@@ -23,6 +23,7 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
+use Doctrine\DBAL\Connection;
 
 class ContractController extends AbstractController
 {
@@ -310,5 +311,19 @@ class ContractController extends AbstractController
         $serializerAllCharges = $serializer->serialize($charges,'json');
         if(empty($charges)){ return new JsonResponse(['status'=>false,'message'=>'No se encontró lista de cargos']);}
         return new JsonResponse($serializerAllCharges,200,[],true);
+    }
+
+    #[Route('/contract/get-profiles-charges', name: 'app_get_profiles_charges')]
+    public function getProfilesCharges(Request $request, Connection $connection): JsonResponse
+    {
+        $contractChargeId = $request->query->get('contractChargeId');
+        $sql = "
+            SELECT p.id, p.charge, p.functions, c.type_employee, c.name, p.name
+            FROM profile p
+            JOIN contract_charges c ON JSON_SEARCH(p.charge, 'one', c.id) IS NOT NULL
+            WHERE c.id = :contractChargeId
+        ";
+        $results = $connection->executeQuery($sql, ['contractChargeId' => $contractChargeId])->fetchAllAssociative();
+        return new JsonResponse($results);
     }
 }
