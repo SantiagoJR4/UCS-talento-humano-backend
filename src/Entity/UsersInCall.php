@@ -55,6 +55,48 @@ class UsersInCall
     private $cvStatus = '0';
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="hv_rating", type="decimal", precision=3, scale=2, nullable=true)
+     */
+    private $hvRating;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="knowledge_rating", type="decimal", precision=3, scale=2, nullable=true)
+     */
+    private $knowledgeRating;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="psycho_rating", type="decimal", precision=3, scale=2, nullable=true)
+     */
+    private $psychoRating;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="interview_rating", type="decimal", precision=3, scale=2, nullable=true)
+     */
+    private $interviewRating;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="class_rating", type="decimal", precision=3, scale=2, nullable=true)
+     */
+    private $classRating;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="final_rating", type="decimal", precision=3, scale=2, nullable=true)
+     */
+    private $finalRating;
+
+    /**
      * @var \TblCall
      *
      * @ORM\ManyToOne(targetEntity="TblCall")
@@ -123,6 +165,78 @@ class UsersInCall
     public function setCvStatus(int $cvStatus): self
     {
         $this->cvStatus = $cvStatus;
+
+        return $this;
+    }
+
+    public function getHvRating(): ?string
+    {
+        return $this->hvRating;
+    }
+
+    public function setHvRating(?string $hvRating): self
+    {
+        $this->hvRating = $hvRating;
+
+        return $this;
+    }
+
+    public function getKnowledgeRating(): ?string
+    {
+        return $this->knowledgeRating;
+    }
+
+    public function setKnowledgeRating(?string $knowledgeRating): self
+    {
+        $this->knowledgeRating = $knowledgeRating;
+
+        return $this;
+    }
+
+    public function getPsychoRating(): ?string
+    {
+        return $this->psychoRating;
+    }
+
+    public function setPsychoRating(?string $psychoRating): self
+    {
+        $this->psychoRating = $psychoRating;
+
+        return $this;
+    }
+
+    public function getInterviewRating(): ?string
+    {
+        return $this->interviewRating;
+    }
+
+    public function setInterviewRating(?string $interviewRating): self
+    {
+        $this->interviewRating = $interviewRating;
+
+        return $this;
+    }
+
+    public function getClassRating(): ?string
+    {
+        return $this->classRating;
+    }
+
+    public function setClassRating(?string $classRating): self
+    {
+        $this->classRating = $classRating;
+
+        return $this;
+    }
+
+    public function getFinalRating(): ?string
+    {
+        return $this->finalRating;
+    }
+
+    public function setFinalRating(?string $finalRating): self
+    {
+        $this->finalRating = $finalRating;
 
         return $this;
     }
