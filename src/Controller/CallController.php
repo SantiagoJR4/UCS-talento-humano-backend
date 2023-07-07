@@ -713,6 +713,34 @@ class CallController extends AbstractController
         return new JsonResponse(['status'=>'Correo Enviado'],200,[]);
     }
 
+    #[Route('/appointment-for-interview', name:'app_appointmentForInterview')]
+    public function appointmentForInterview(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
+    {
+        $identification = $request->request->get('identification');
+        $startTime = $request->request->get('startTime');
+        $entityManager = $doctrine->getManager();
+        $user = $entityManager->getRepository(User::class)->findOneBy(['identification' => $identification]);
+        $userEmail = $user->getEmail();
+        $fullname = $user->getNames().' '.$user->getlastNames();
+        try{
+            $email = (new TemplatedEmail())
+                ->from('convocatorias@unicatolicadelsur.edu.co')
+                ->to($userEmail)
+                ->subject('Citación Prueba de Conocimiento')
+                ->htmlTemplate('email/approvedKnowledgeTest.html.twig')
+                ->context([
+                    'fullname' => $fullname,
+                    'startTime' => $startTime
+                ]);         
+            $mailer->send($email);
+            $message = 'La revisión fue enviada con éxito';
+        } catch (\Throwable $th) {
+            $message = 'Error al enviar el correo:'.$th->getMessage();
+            return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
+        return new JsonResponse(['status'=>'Correo Enviado'],200,[]);
+    }
+
     #[Route('/get-state-user-call', name:'app_get_state_user_call')]
     public function getStateUserCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken) : JsonResponse 
     {
