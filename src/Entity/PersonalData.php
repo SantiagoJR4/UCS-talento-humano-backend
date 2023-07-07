@@ -168,7 +168,7 @@ class PersonalData
         return $this->residenceAddress;
     }
 
-    public function setResidenceAddress(string $residenceAddress): self
+    public function setResidenceAddress(string $residenceAddress): static
     {
         $this->residenceAddress = $residenceAddress;
 
@@ -180,7 +180,7 @@ class PersonalData
         return $this->department;
     }
 
-    public function setDepartment(string $department): self
+    public function setDepartment(string $department): static
     {
         $this->department = $department;
 
@@ -192,7 +192,7 @@ class PersonalData
         return $this->municipality;
     }
 
-    public function setMunicipality(string $municipality): self
+    public function setMunicipality(string $municipality): static
     {
         $this->municipality = $municipality;
 
@@ -204,7 +204,7 @@ class PersonalData
         return $this->dateIssue;
     }
 
-    public function setDateIssue(\DateTimeInterface $dateIssue): self
+    public function setDateIssue(\DateTimeInterface $dateIssue): static
     {
         $this->dateIssue = $dateIssue;
 
@@ -216,7 +216,7 @@ class PersonalData
         return $this->placeIssue;
     }
 
-    public function setPlaceIssue(string $placeIssue): self
+    public function setPlaceIssue(string $placeIssue): static
     {
         $this->placeIssue = $placeIssue;
 
@@ -228,7 +228,7 @@ class PersonalData
         return $this->birthdate;
     }
 
-    public function setBirthdate(\DateTimeInterface $birthdate): self
+    public function setBirthdate(\DateTimeInterface $birthdate): static
     {
         $this->birthdate = $birthdate;
 
@@ -240,7 +240,7 @@ class PersonalData
         return $this->birthplace;
     }
 
-    public function setBirthplace(string $birthplace): self
+    public function setBirthplace(string $birthplace): static
     {
         $this->birthplace = $birthplace;
 
@@ -252,7 +252,7 @@ class PersonalData
         return $this->gender;
     }
 
-    public function setGender(string $gender): self
+    public function setGender(string $gender): static
     {
         $this->gender = $gender;
 
@@ -264,7 +264,7 @@ class PersonalData
         return $this->bloodType;
     }
 
-    public function setBloodType(string $bloodType): self
+    public function setBloodType(string $bloodType): static
     {
         $this->bloodType = $bloodType;
 
@@ -276,7 +276,7 @@ class PersonalData
         return $this->maritalStatus;
     }
 
-    public function setMaritalStatus(string $maritalStatus): self
+    public function setMaritalStatus(string $maritalStatus): static
     {
         $this->maritalStatus = $maritalStatus;
 
@@ -288,7 +288,7 @@ class PersonalData
         return $this->urlPhoto;
     }
 
-    public function setUrlPhoto(?string $urlPhoto): self
+    public function setUrlPhoto(?string $urlPhoto): static
     {
         $this->urlPhoto = $urlPhoto;
 
@@ -300,7 +300,7 @@ class PersonalData
         return $this->eps;
     }
 
-    public function setEps(string $eps): self
+    public function setEps(string $eps): static
     {
         $this->eps = $eps;
 
@@ -312,7 +312,7 @@ class PersonalData
         return $this->pension;
     }
 
-    public function setPension(string $pension): self
+    public function setPension(string $pension): static
     {
         $this->pension = $pension;
 
@@ -324,7 +324,7 @@ class PersonalData
         return $this->identificationPdf;
     }
 
-    public function setIdentificationPdf(string $identificationPdf): self
+    public function setIdentificationPdf(string $identificationPdf): static
     {
         $this->identificationPdf = $identificationPdf;
 
@@ -336,7 +336,7 @@ class PersonalData
         return $this->epsPdf;
     }
 
-    public function setEpsPdf(string $epsPdf): self
+    public function setEpsPdf(string $epsPdf): static
     {
         $this->epsPdf = $epsPdf;
 
@@ -348,7 +348,7 @@ class PersonalData
         return $this->pensionPdf;
     }
 
-    public function setPensionPdf(string $pensionPdf): self
+    public function setPensionPdf(string $pensionPdf): static
     {
         $this->pensionPdf = $pensionPdf;
 
@@ -360,7 +360,7 @@ class PersonalData
         return $this->urlCvlac;
     }
 
-    public function setUrlCvlac(?string $urlCvlac): self
+    public function setUrlCvlac(?string $urlCvlac): static
     {
         $this->urlCvlac = $urlCvlac;
 
@@ -372,7 +372,7 @@ class PersonalData
         return $this->history;
     }
 
-    public function setHistory(?string $history): self
+    public function setHistory(?string $history): static
     {
         $this->history = $history;
 
@@ -384,7 +384,7 @@ class PersonalData
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

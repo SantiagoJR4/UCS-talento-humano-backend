@@ -59,6 +59,53 @@ function checkProperties($obj) {
     return true;
 }
 
+function requirementsSignUpToCall($userId, $requiredToSignUp, $doctrine){
+    $entities = [
+        'personalData' => PersonalData::class,
+        'academicTraining' => AcademicTraining::class,
+        'furtherTraining' => FurtherTraining::class,
+        'language' => Language::class,
+        'workExperience' => WorkExperience::class,
+        'teachingExperience' => TeachingExperience::class,
+        'intellectualproduction' => IntellectualProduction::class,
+        'references' => ReferencesData::class,
+        'records' => Record::class,
+    ];
+    $entityCounts = [];
+    foreach ($entities as $key => $entity) {
+        $entityCounts[$key] = count($doctrine->getRepository($entity)->findBy(['user' => $userId]));
+    }
+    try 
+    {
+        $cvlac = $doctrine->getRepository(PersonalData::class)->findOneBy(['user' => $userId])->getUrlCvlac();
+        if($cvlac !== NULL)
+        {
+            $entityCounts['intellectualproduction'] += 1;
+        }
+    } catch (\Throwable $th)
+    {
+        //throw $th;
+    }
+    $requirementsAreMet = [];
+    foreach($requiredToSignUp as $key => $value)
+    {
+        if($value === false || ($value === true && $entityCounts[$key] > 0))
+        {
+            $requirementsAreMet[$key] = true;
+        } else
+        {
+            $requirementsAreMet[$key] = false;
+        }
+    }
+    $canSignUp = checkProperties($requirementsAreMet);
+    return [
+            'requirementsAreMet' => $requirementsAreMet,
+            'requiredToSignUp' => $requiredToSignUp,
+            'entityCounts' => $entityCounts,
+            'canSignUp' => $canSignUp
+    ];
+}
+
 class CallController extends AbstractController
 {
     // #[Route('/get-all-factors', name: 'app_get_all_factors')]
@@ -337,6 +384,18 @@ class CallController extends AbstractController
         return new JsonResponse($entityCounts, 200, []);
     }
 
+    #[Route('/review-sign-up', name: 'app_review_sign_up')]
+    public function reviewSignUp(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        $callId = $request->request->get('callId');
+        $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        $userId = $user->getId();
+        $requiredToSignUp = json_decode($call->getRequiredToSignUp(), true);
+        return new JsonResponse( requirementsSignUpToCall($userId , $requiredToSignUp, $doctrine), 200, []);
+    }
+
     #[Route('/sign-up-to-call', name: 'app_sign_up_to_call')]
     public function signUpToCall(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, MailerInterface $mailer): JsonResponse
     {
@@ -344,123 +403,39 @@ class CallController extends AbstractController
         $user =  $vToken->getUserIdFromToken($token);
         $callId = $request->request->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
-        //--------------------------------------------------------------
         $userId = $user->getId();
-        $entities = [
-            'personalData' => PersonalData::class,
-            'academicTraining' => AcademicTraining::class,
-            'furtherTraining' => FurtherTraining::class,
-            'language' => Language::class,
-            'workExperience' => WorkExperience::class,
-            'teachingExperience' => TeachingExperience::class,
-            'intellectualproduction' => IntellectualProduction::class,
-            'references' => ReferencesData::class,
-            'records' => Record::class,
-        ];
-        $entityCounts = [];
-        foreach ($entities as $key => $entity) {
-            $entityCounts[$key] = count($doctrine->getRepository($entity)->findBy(['user' => $userId]));
-        }
-        try 
-        {
-            $cvlac = $doctrine->getRepository(PersonalData::class)->findOneBy(['user' => $userId])->getUrlCvlac();
-            if($cvlac !== NULL)
-            {
-                $entityCounts['intellectualproduction'] += 1;
-            }
-        } catch (\Throwable $th)
-        {
-            //throw $th;
-        }
-        $requirementsAreMet = [];
         $requiredToSignUp = json_decode($call->getRequiredToSignUp(), true);
-        foreach($requiredToSignUp as $key => $value)
+        $canSignUp = requirementsSignUpToCall($userId , $requiredToSignUp, $doctrine)['canSignUp'];
+        if ($canSignUp)
         {
-            if($value === false || ($value === true && $entityCounts[$key] > 0))
-            {
-                $requirementsAreMet[$key] = true;
-            } else
-            {
-                $requirementsAreMet[$key] = false;
+            $newUsersInCall = new UsersInCall();
+            $newUsersInCall -> setUser($user);
+            $newUsersInCall -> setCall($call);
+            $newUsersInCall -> setStateUserCall(1);
+            $entityManager = $doctrine->getManager();
+            $entityManager->persist($newUsersInCall);
+            $entityManager->flush();
+
+            try{
+                $email = (new TemplatedEmail())
+                    ->from('pasante.santiago@unicatolicadelsur.edu.co') //correo oficina oasic
+                    ->to('talento.humano@unicatolicadelsur.edu.co') //correo talento humano
+                    ->subject('Usuario en proceso de inscripción')
+                    ->htmlTemplate('email/callUserEmail.html.twig')
+                    ->context([
+                        'call' => $call,
+                        'userInCall' => $newUsersInCall,
+                        'user' => $user
+                    ]);
+                $mailer->send($email);
+                $message = 'Correo exitoso!!';
+            } catch (\Throwable $th){
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error', 'message'=>$message]);
             }
+
+            return new JsonResponse(['message' => 'Usuario se ha inscrito'], 200, []);
         }
-        $canSignUp = checkProperties($requirementsAreMet);
-        // return new JsonResponse( [$canSignUp, $requirementsAreMet, $requiredToSignUp, $entityCounts], 200, []);
-        // if ($canSignUp)
-        // {
-        //     $newUsersInCall = new UsersInCall();
-        //     $newUsersInCall -> setUser($user);
-        //     $newUsersInCall -> setCall($call);
-        //     $newUsersInCall -> setStateUserCall(1);
-        //     $entityManager = $doctrine->getManager();
-        //     $entityManager->persist($newUsersInCall);
-        //     $entityManager->flush();
-
-        //     try{
-        //         $email = (new TemplatedEmail())
-        //             ->from('pasante.santiago@unicatolicadelsur.edu.co') //correo oficina oasic
-        //             ->to('talento.humano@unicatolicadelsur.edu.co') //correo talento humano
-        //             ->subject('Usuario en proceso de inscripción')
-        //             ->htmlTemplate('email/callUserEmail.html.twig')
-        //             ->context([
-        //                 'call' => $call,
-        //                 'userInCall' => $newUsersInCall,
-        //                 'user' => $user
-        //             ]);
-        //         $mailer->send($email);
-        //         $message = 'Correo exitoso!!';
-        //     } catch (\Throwable $th){
-        //         $message = 'Error al enviar el correo:'.$th->getMessage();
-        //         return new JsonResponse(['status'=>'Error', 'message'=>$message]);
-        //     }
-
-        //     return new JsonResponse(['message' => 'Usuario se ha inscrito'], 200, []);
-        // }
-        // else
-        // {
-        //     return new JsonResponse( [
-        //         'requirementsAreMet' => $requirementsAreMet,
-        //         'requiredToSignUp' => $requiredToSignUp,
-        //         'entityCounts' => $entityCounts,
-        //         'canSignUp' => $canSignUp
-        //     ],
-        //         200, []);
-        // }
-        return new JsonResponse( [
-            'requirementsAreMet' => $requirementsAreMet,
-            'requiredToSignUp' => $requiredToSignUp,
-            'entityCounts' => $entityCounts,
-            'canSignUp' => $canSignUp
-        ],
-            200, []);
-        //--------------------------------------------------------------
-        // $newUsersInCall = new UsersInCall();
-        // $newUsersInCall -> setUser($user);
-        // $newUsersInCall -> setCall($call);
-        // $newUsersInCall -> setStateUserCall(1);
-        // $entityManager = $doctrine->getManager();
-        // $entityManager->persist($newUsersInCall);
-        // $entityManager->flush();
-
-        // try{
-        //     $email = (new TemplatedEmail())
-        //         ->from('pasante.santiago@unicatolicadelsur.edu.co') //correo oficina oasic
-        //         ->to('talento.humano@unicatolicadelsur.edu.co') //correo talento humano
-        //         ->subject('Usuario en proceso de inscripción')
-        //         ->htmlTemplate('email/callUserEmail.html.twig')
-        //         ->context([
-        //             'call' => $call,
-        //             'userInCall' => $newUsersInCall,
-        //             'user' => $user
-        //         ]);
-        //     $mailer->send($email);
-        //     $message = 'Correo exitoso!!';
-        // } catch (\Throwable $th){
-        //     $message = 'Error al enviar el correo:'.$th->getMessage();
-        //     return new JsonResponse(['status'=>'Error', 'message'=>$message]);
-        // }
-
-        // return new JsonResponse(['message' => 'Usuario se ha inscrito'], 200, []);
     }
 
     #[Route('/registered-calls-by-user', name: 'app_registered_calls_by_user')]
