@@ -726,7 +726,7 @@ class CallController extends AbstractController
             $email = (new TemplatedEmail())
                 ->from('convocatorias@unicatolicadelsur.edu.co')
                 ->to($userEmail)
-                ->subject('Citación Prueba de Conocimiento')
+                ->subject('Citación a Entrevista')
                 ->htmlTemplate('email/approvedKnowledgeTest.html.twig')
                 ->context([
                     'fullname' => $fullname,
@@ -739,6 +739,42 @@ class CallController extends AbstractController
             return new JsonResponse(['status'=>'Error','message'=>$message]);
         }
         return new JsonResponse(['status'=>'Correo Enviado'],200,[]);
+    }
+
+    #[Route('/recordatory-for-class', name:'app_recordatory_for_class')]
+    public function recordatoryForClass(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
+    {
+        $allIdentifications = json_decode( $request->request->get('allIdentifications'), true);
+        $allStartTimes = json_decode($request->request->get('allStartTimes'), true);
+        $date = $request->request->get('date');
+        $subject = $request->request->get('subject');
+        $entityManager = $doctrine->getManager();
+        foreach($allIdentifications as $key => $currentIdentification)
+        {
+            $user = $entityManager->getRepository(User::class)->findOneBy(['identification' => $currentIdentification]);
+            $userEmail = $user->getEmail();
+            $fullname = $user->getNames().' '.$user->getlastNames();
+            $currentStartTime = $allStartTimes[$key];
+            try{
+                $email = (new TemplatedEmail())
+                    ->from('convocatorias@unicatolicadelsur.edu.co')
+                    ->to($userEmail)
+                    ->subject('Información Adicional Entrevista')
+                    ->htmlTemplate('email/recordatoryClass.html.twig')
+                    ->context([
+                        'fullname' => $fullname,
+                        'startTime' => $currentStartTime,
+                        'date' => $date,
+                        'subject' => $subject
+                    ]);         
+                $mailer->send($email);
+                $message = 'La revisión fue enviada con éxito';
+            } catch (\Throwable $th) {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
+        }
+        return new JsonResponse(['status'=>'Correos Enviados'],200,[]);
     }
 
     #[Route('/get-state-user-call', name:'app_get_state_user_call')]
