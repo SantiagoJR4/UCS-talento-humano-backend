@@ -252,7 +252,7 @@ class CallController extends AbstractController
     {
         $data = $request->request->all();
         $area = $request->request->get('area');
-        $isEdited = $request->request->get('editedProfile');
+        $isEdited = json_decode($request->request->get('editedProfile'),true);
         $special = json_decode($request->request->get('special'), true);
         $newCall = new TblCall();
         // var_dump($data);
@@ -284,8 +284,10 @@ class CallController extends AbstractController
             $profile = $doctrine->getRepository(Profile::class)->find($data['profileId']);
             $newCall->setProfile($profile);
         } else {
+            $profile = $doctrine->getRepository(Profile::class)->findOneBy(['name' => 'Docentes o profesores']);
             $subprofile = $doctrine->getRepository(Subprofile::class)->find($data['profileId']);
             $newCall->setSubprofile($subprofile);
+            $newCall->setProfile($profile);
         }
         $entityManager->persist($newCall);
         $entityManager->flush();
@@ -472,9 +474,6 @@ class CallController extends AbstractController
             ->where('cp.profile = :profile')
             ->setParameter('profile', $profile);
         $competenciesProfile = $query->getQuery()->getArrayResult();
-        foreach ($competenciesProfile as &$element) {
-            $element['factorsInCompetence'] = [];
-        }
         settype($callId, 'integer');
         $profile = $serializer->serialize($profile, 'json');
         $profile = json_decode($profile, true);
@@ -484,6 +483,19 @@ class CallController extends AbstractController
         $specialProfile = json_decode($specialProfile, true);
         $requiredForPercentages = json_decode($requiredForPercentages, true);
         $requiredForCurriculumVitae = json_decode($requiredForCurriculumVitae, true);
+        //-----------------------------------------
+        $anotherquery = $doctrine->getManager()->createQueryBuilder();
+        $anotherquery->select('comp.id', 'comp.name', 'comp.icon', 'comp.description')
+            ->from('App\Entity\Competence', 'comp');
+        $allCompetencies = $anotherquery->getQuery()->getArrayResult();
+        $notIncludedCompetencies = array_filter($allCompetencies, function($element) use ($competenciesProfile) {
+            foreach ($competenciesProfile as $item) {
+                if ($item['competenceId'] === $element['id']) {
+                    return false;
+                }
+            }
+            return true;
+        }); 
         
         return new JsonResponse(
             [
@@ -493,7 +505,8 @@ class CallController extends AbstractController
                 'specialProfile' => $specialProfile,
                 'requiredForPercentages' => $requiredForPercentages,
                 'requiredForCurriculumVitae' => $requiredForCurriculumVitae,
-                'competenciesProfile' => $competenciesProfile
+                'competenciesProfile' => $competenciesProfile,
+                'notIncludedCompetencies' => $notIncludedCompetencies
             ]
             , 200, []);
     }
@@ -563,11 +576,15 @@ class CallController extends AbstractController
         }
         try {
             foreach($competenciesPercentage as $fieldName => $fieldValue)
-        {
-            $competenceProfile = $entityManager->getRepository(CompetenceProfile::class)->find($fieldValue['id']);
+            {
             $newCompetencePercentage = new CompetencePercentage();
+            if($fieldValue['id'] !== NULL){
+                $competenceProfile = $entityManager->getRepository(CompetenceProfile::class)->find($fieldValue['id']);
+                $newCompetencePercentage->setCompetenceProfile($competenceProfile);
+            } else {
+                $newCompetencePercentage->setExtraCompetence($fieldValue['extraCompetence']);
+            }
             $newCompetencePercentage->setCall($call);
-            $newCompetencePercentage->setCompetenceProfile($competenceProfile);
             $newCompetencePercentage->setPsychoPercentage($fieldValue['valuePsycho'] !== 0 ? $fieldValue['valuePsycho'] : NULL);
             $newCompetencePercentage->setInterviewPercentage($fieldValue['valueInterview'] !== 0 ? $fieldValue['valueInterview'] : NULL);
             $entityManager->persist($newCompetencePercentage);
