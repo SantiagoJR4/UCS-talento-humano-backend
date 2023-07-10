@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Citación Prueba de Conocimientos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+
+        h1 {
+            color: #166838;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f8f8;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+        }
+
+        p {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{asset('http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/uploads/imagenes/logo_institucional_UniCat%c3%b3lica-02.png')}}"
+            alt="logo Institucional" style="display: block; margin: 0 auto; max-width: 100%;">
+        <h1>Recordatorio Información Adicional Entrevista</h1>
+        <p>
+        <p>Señor(a)</p>
+        <p>{{ fullname }}</p>
+        <p>Cordial saludo,</p>
+        <p>Nos permitimos recordarle que para la entrevista a llevarse a cabo el día {{date}} a las {{ startTime }} en punto, en adición usted deberá preparar una clase con la temática de {{subject}} de una duración de 10 minutos.</p>
+        <p>¡Lo esperamos! Recuerde que debe disponer de al menos una hora para esta fase del proceso.</p>
+
+        <p>Atentamente,</p>
+        <p>Universidad Católica del Sur.</p>
+        <br>
+    </div>
+</body>
+</html>
