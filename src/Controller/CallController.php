@@ -758,6 +758,35 @@ class CallController extends AbstractController
         return new JsonResponse(['status'=>'Correo Enviado'],200,[]);
     }
 
+    #[Route('/not-selected-for-call', name:'app_not_selected_for_call')]
+    public function notSelectedForCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
+    {
+        $allIdentifications = json_decode( $request->request->get('allIdentifications'), true);
+        $entityManager = $doctrine->getManager();
+        foreach($allIdentifications as $key => $currentIdentification)
+        {
+            $user = $entityManager->getRepository(User::class)->findOneBy(['identification' => $currentIdentification]);
+            $userEmail = $user->getEmail();
+            $fullname = $user->getNames().' '.$user->getlastNames();
+            try{
+                $email = (new TemplatedEmail())
+                    ->from('convocatorias@unicatolicadelsur.edu.co')
+                    ->to($userEmail)
+                    ->subject('Resultado de Convocatoria')
+                    ->htmlTemplate('email/notSelectedForCall.html.twig')
+                    ->context([
+                        'fullname' => $fullname,
+                    ]);         
+                $mailer->send($email);
+                $message = 'El correo fue enviado con éxito';
+            } catch (\Throwable $th) {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
+        }
+        return new JsonResponse(['status'=>'Correos Enviados'],200,[]);
+    }
+
     #[Route('/recordatory-for-class', name:'app_recordatory_for_class')]
     public function recordatoryForClass(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
     {
