@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TblCall
  *
- * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"})})
+ * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"})})
  * @ORM\Entity
  */
 class TblCall
@@ -150,26 +150,6 @@ class TblCall
     private $startOfContractDate;
 
     /**
-     * @var \Subprofile
-     *
-     * @ORM\ManyToOne(targetEntity="Subprofile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
-     * })
-     */
-    private $subprofile;
-
-    /**
-     * @var \Profile
-     *
-     * @ORM\ManyToOne(targetEntity="Profile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
-     * })
-     */
-    private $profile;
-
-    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -189,6 +169,26 @@ class TblCall
      */
     private $specialProfile;
 
+    /**
+     * @var \Subprofile
+     *
+     * @ORM\ManyToOne(targetEntity="Subprofile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
+     * })
+     */
+    private $subprofile;
+
+    /**
+     * @var \Profile
+     *
+     * @ORM\ManyToOne(targetEntity="Profile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
+     * })
+     */
+    private $profile;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -199,7 +199,7 @@ class TblCall
         return $this->name;
     }
 
-    public function setName(?int $name): static
+    public function setName(?int $name): self
     {
         $this->name = $name;
 
@@ -211,7 +211,7 @@ class TblCall
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(string $description): self
     {
         $this->description = $description;
 
@@ -223,7 +223,7 @@ class TblCall
         return $this->state;
     }
 
-    public function setState(int $state): static
+    public function setState(int $state): self
     {
         $this->state = $state;
 
@@ -235,7 +235,7 @@ class TblCall
         return $this->requiredForPercentages;
     }
 
-    public function setRequiredForPercentages(?string $requiredForPercentages): static
+    public function setRequiredForPercentages(?string $requiredForPercentages): self
     {
         $this->requiredForPercentages = $requiredForPercentages;
 
@@ -247,7 +247,7 @@ class TblCall
         return $this->requiredForCurriculumVitae;
     }
 
-    public function setRequiredForCurriculumVitae(?string $requiredForCurriculumVitae): static
+    public function setRequiredForCurriculumVitae(?string $requiredForCurriculumVitae): self
     {
         $this->requiredForCurriculumVitae = $requiredForCurriculumVitae;
 
@@ -259,7 +259,7 @@ class TblCall
         return $this->requiredToSignUp;
     }
 
-    public function setRequiredToSignUp(?string $requiredToSignUp): static
+    public function setRequiredToSignUp(?string $requiredToSignUp): self
     {
         $this->requiredToSignUp = $requiredToSignUp;
 
@@ -271,7 +271,7 @@ class TblCall
         return $this->salary;
     }
 
-    public function setSalary(?string $salary): static
+    public function setSalary(?string $salary): self
     {
         $this->salary = $salary;
 
@@ -283,7 +283,7 @@ class TblCall
         return $this->openingDate;
     }
 
-    public function setOpeningDate(?\DateTimeInterface $openingDate): static
+    public function setOpeningDate(?\DateTimeInterface $openingDate): self
     {
         $this->openingDate = $openingDate;
 
@@ -295,7 +295,7 @@ class TblCall
         return $this->receptionDeadlineDate;
     }
 
-    public function setReceptionDeadlineDate(?\DateTimeInterface $receptionDeadlineDate): static
+    public function setReceptionDeadlineDate(?\DateTimeInterface $receptionDeadlineDate): self
     {
         $this->receptionDeadlineDate = $receptionDeadlineDate;
 
@@ -307,7 +307,7 @@ class TblCall
         return $this->selectionDate;
     }
 
-    public function setSelectionDate(?\DateTimeInterface $selectionDate): static
+    public function setSelectionDate(?\DateTimeInterface $selectionDate): self
     {
         $this->selectionDate = $selectionDate;
 
@@ -319,7 +319,7 @@ class TblCall
         return $this->publicationDate;
     }
 
-    public function setPublicationDate(?\DateTimeInterface $publicationDate): static
+    public function setPublicationDate(?\DateTimeInterface $publicationDate): self
     {
         $this->publicationDate = $publicationDate;
 
@@ -331,7 +331,7 @@ class TblCall
         return $this->knowledgeTestDate;
     }
 
-    public function setKnowledgeTestDate(?\DateTimeInterface $knowledgeTestDate): static
+    public function setKnowledgeTestDate(?\DateTimeInterface $knowledgeTestDate): self
     {
         $this->knowledgeTestDate = $knowledgeTestDate;
 
@@ -343,7 +343,7 @@ class TblCall
         return $this->knowledgeResultsDate;
     }
 
-    public function setKnowledgeResultsDate(?\DateTimeInterface $knowledgeResultsDate): static
+    public function setKnowledgeResultsDate(?\DateTimeInterface $knowledgeResultsDate): self
     {
         $this->knowledgeResultsDate = $knowledgeResultsDate;
 
@@ -355,7 +355,7 @@ class TblCall
         return $this->psychoDate;
     }
 
-    public function setPsychoDate(?\DateTimeInterface $psychoDate): static
+    public function setPsychoDate(?\DateTimeInterface $psychoDate): self
     {
         $this->psychoDate = $psychoDate;
 
@@ -367,7 +367,7 @@ class TblCall
         return $this->interviewDate;
     }
 
-    public function setInterviewDate(?\DateTimeInterface $interviewDate): static
+    public function setInterviewDate(?\DateTimeInterface $interviewDate): self
     {
         $this->interviewDate = $interviewDate;
 
@@ -379,7 +379,7 @@ class TblCall
         return $this->finalResultsDate;
     }
 
-    public function setFinalResultsDate(?\DateTimeInterface $finalResultsDate): static
+    public function setFinalResultsDate(?\DateTimeInterface $finalResultsDate): self
     {
         $this->finalResultsDate = $finalResultsDate;
 
@@ -391,33 +391,9 @@ class TblCall
         return $this->startOfContractDate;
     }
 
-    public function setStartOfContractDate(?\DateTimeInterface $startOfContractDate): static
+    public function setStartOfContractDate(?\DateTimeInterface $startOfContractDate): self
     {
         $this->startOfContractDate = $startOfContractDate;
-
-        return $this;
-    }
-
-    public function getSubprofile(): ?Subprofile
-    {
-        return $this->subprofile;
-    }
-
-    public function setSubprofile(?Subprofile $subprofile): static
-    {
-        $this->subprofile = $subprofile;
-
-        return $this;
-    }
-
-    public function getProfile(): ?Profile
-    {
-        return $this->profile;
-    }
-
-    public function setProfile(?Profile $profile): static
-    {
-        $this->profile = $profile;
 
         return $this;
     }
@@ -427,7 +403,7 @@ class TblCall
         return $this->selectedUser;
     }
 
-    public function setSelectedUser(?User $selectedUser): static
+    public function setSelectedUser(?User $selectedUser): self
     {
         $this->selectedUser = $selectedUser;
 
@@ -439,9 +415,33 @@ class TblCall
         return $this->specialProfile;
     }
 
-    public function setSpecialProfile(?SpecialProfile $specialProfile): static
+    public function setSpecialProfile(?SpecialProfile $specialProfile): self
     {
         $this->specialProfile = $specialProfile;
+
+        return $this;
+    }
+
+    public function getSubprofile(): ?Subprofile
+    {
+        return $this->subprofile;
+    }
+
+    public function setSubprofile(?Subprofile $subprofile): self
+    {
+        $this->subprofile = $subprofile;
+
+        return $this;
+    }
+
+    public function getProfile(): ?Profile
+    {
+        return $this->profile;
+    }
+
+    public function setProfile(?Profile $profile): self
+    {
+        $this->profile = $profile;
 
         return $this;
     }

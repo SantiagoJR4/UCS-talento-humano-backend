@@ -52,7 +52,7 @@ class Factor
         return $this->name;
     }
 
-    public function setName(string $name): static
+    public function setName(string $name): self
     {
         $this->name = $name;
 
@@ -64,7 +64,7 @@ class Factor
         return $this->letter;
     }
 
-    public function setLetter(string $letter): static
+    public function setLetter(string $letter): self
     {
         $this->letter = $letter;
 
@@ -76,7 +76,7 @@ class Factor
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(string $description): self
     {
         $this->description = $description;
 

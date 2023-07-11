@@ -70,7 +70,7 @@ class IntellectualProduction
         return $this->typeProd;
     }
 
-    public function setTypeProd(string $typeProd): static
+    public function setTypeProd(string $typeProd): self
     {
         $this->typeProd = $typeProd;
 
@@ -82,7 +82,7 @@ class IntellectualProduction
         return $this->titleProd;
     }
 
-    public function setTitleProd(string $titleProd): static
+    public function setTitleProd(string $titleProd): self
     {
         $this->titleProd = $titleProd;
 
@@ -94,7 +94,7 @@ class IntellectualProduction
         return $this->urlVerification;
     }
 
-    public function setUrlVerification(string $urlVerification): static
+    public function setUrlVerification(string $urlVerification): self
     {
         $this->urlVerification = $urlVerification;
 
@@ -106,7 +106,7 @@ class IntellectualProduction
         return $this->history;
     }
 
-    public function setHistory(?string $history): static
+    public function setHistory(?string $history): self
     {
         $this->history = $history;
 
@@ -118,7 +118,7 @@ class IntellectualProduction
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 

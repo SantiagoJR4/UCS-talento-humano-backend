@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Materias
  *
- * @ORM\Table(name="materias", indexes={@ORM\Index(name="materia_id", columns={"materia_id"}), @ORM\Index(name="programa_id", columns={"programa_id"})})
+ * @ORM\Table(name="materias", indexes={@ORM\Index(name="programa_id", columns={"programa_id"}), @ORM\Index(name="materia_id", columns={"materia_id"})})
  * @ORM\Entity
  */
 class Materias
@@ -97,7 +97,7 @@ class Materias
         return $this->codigo;
     }
 
-    public function setCodigo(?string $codigo): static
+    public function setCodigo(?string $codigo): self
     {
         $this->codigo = $codigo;
 
@@ -109,7 +109,7 @@ class Materias
         return $this->nombre;
     }
 
-    public function setNombre(?string $nombre): static
+    public function setNombre(?string $nombre): self
     {
         $this->nombre = $nombre;
 
@@ -121,7 +121,7 @@ class Materias
         return $this->semestre;
     }
 
-    public function setSemestre(?int $semestre): static
+    public function setSemestre(?int $semestre): self
     {
         $this->semestre = $semestre;
 
@@ -133,7 +133,7 @@ class Materias
         return $this->creditos;
     }
 
-    public function setCreditos(?int $creditos): static
+    public function setCreditos(?int $creditos): self
     {
         $this->creditos = $creditos;
 
@@ -145,7 +145,7 @@ class Materias
         return $this->horas;
     }
 
-    public function setHoras(?int $horas): static
+    public function setHoras(?int $horas): self
     {
         $this->horas = $horas;
 
@@ -157,7 +157,7 @@ class Materias
         return $this->estado;
     }
 
-    public function setEstado(?string $estado): static
+    public function setEstado(?string $estado): self
     {
         $this->estado = $estado;
 
@@ -169,7 +169,7 @@ class Materias
         return $this->codigomoodle;
     }
 
-    public function setCodigomoodle(?string $codigomoodle): static
+    public function setCodigomoodle(?string $codigomoodle): self
     {
         $this->codigomoodle = $codigomoodle;
 
@@ -181,7 +181,7 @@ class Materias
         return $this->materiaId;
     }
 
-    public function setMateriaId(?int $materiaId): static
+    public function setMateriaId(?int $materiaId): self
     {
         $this->materiaId = $materiaId;
 
@@ -193,7 +193,7 @@ class Materias
         return $this->programa;
     }
 
-    public function setPrograma(?Programas $programa): static
+    public function setPrograma(?Programas $programa): self
     {
         $this->programa = $programa;
 

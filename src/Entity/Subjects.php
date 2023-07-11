@@ -46,12 +46,24 @@ class Subjects
         return $this->id;
     }
 
+    public function getMateria(): ?Materias
+    {
+        return $this->materia;
+    }
+
+    public function setMateria(?Materias $materia): self
+    {
+        $this->materia = $materia;
+
+        return $this;
+    }
+
     public function getSubprofile(): ?Subprofile
     {
         return $this->subprofile;
     }
 
-    public function setSubprofile(?Subprofile $subprofile): static
+    public function setSubprofile(?Subprofile $subprofile): self
     {
         $this->subprofile = $subprofile;
 

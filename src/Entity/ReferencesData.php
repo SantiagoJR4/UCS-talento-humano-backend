@@ -84,7 +84,7 @@ class ReferencesData
         return $this->typeReferences;
     }
 
-    public function setTypeReferences(string $typeReferences): static
+    public function setTypeReferences(string $typeReferences): self
     {
         $this->typeReferences = $typeReferences;
 
@@ -96,7 +96,7 @@ class ReferencesData
         return $this->names;
     }
 
-    public function setNames(string $names): static
+    public function setNames(string $names): self
     {
         $this->names = $names;
 
@@ -108,7 +108,7 @@ class ReferencesData
         return $this->relationship;
     }
 
-    public function setRelationship(string $relationship): static
+    public function setRelationship(string $relationship): self
     {
         $this->relationship = $relationship;
 
@@ -120,7 +120,7 @@ class ReferencesData
         return $this->occupation;
     }
 
-    public function setOccupation(string $occupation): static
+    public function setOccupation(string $occupation): self
     {
         $this->occupation = $occupation;
 
@@ -132,7 +132,7 @@ class ReferencesData
         return $this->phone;
     }
 
-    public function setPhone(string $phone): static
+    public function setPhone(string $phone): self
     {
         $this->phone = $phone;
 
@@ -144,7 +144,7 @@ class ReferencesData
         return $this->history;
     }
 
-    public function setHistory(string $history): static
+    public function setHistory(string $history): self
     {
         $this->history = $history;
 
@@ -156,7 +156,7 @@ class ReferencesData
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 

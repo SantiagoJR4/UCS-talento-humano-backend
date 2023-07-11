@@ -46,7 +46,7 @@ class DoctrineMigrationVersions
         return $this->executedAt;
     }
 
-    public function setExecutedAt(?\DateTimeInterface $executedAt): static
+    public function setExecutedAt(?\DateTimeInterface $executedAt): self
     {
         $this->executedAt = $executedAt;
 
@@ -58,7 +58,7 @@ class DoctrineMigrationVersions
         return $this->executionTime;
     }
 
-    public function setExecutionTime(?int $executionTime): static
+    public function setExecutionTime(?int $executionTime): self
     {
         $this->executionTime = $executionTime;
 
