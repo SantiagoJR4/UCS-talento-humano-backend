@@ -414,6 +414,7 @@ class CallController extends AbstractController
             $newUsersInCall = new UsersInCall();
             $newUsersInCall -> setUser($user);
             $newUsersInCall -> setCall($call);
+            $newUsersInCall -> setUserStatus('CV');
             $newUsersInCall -> setStateUserCall(1);
             $entityManager = $doctrine->getManager();
             $entityManager->persist($newUsersInCall);
@@ -619,7 +620,7 @@ class CallController extends AbstractController
             'uc.id', 'uc.userStatus', 'u.id as userId', 'u.names', 'u.lastNames',
             'u.identification', 'u.email', 'u.urlPhoto', 'uc.qualifyCv', 'uc.cvStatus',
             'uc.hvRating','uc.knowledgeRating', 'uc.psychoRating','uc.interviewRating',
-            'uc.classRating', 'uc.finalRating')
+            'uc.classRating', 'uc.finalRating', 'u.phone')
             ->from('App\Entity\UsersInCall', 'uc')
             ->join('uc.user', 'u')
             ->where('uc.call = :callId')

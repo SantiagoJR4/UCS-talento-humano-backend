@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * CompetencePercentage
  *
- * @ORM\Table(name="competence_percentage", indexes={@ORM\Index(name="fk_competence_percentage_call", columns={"call_id"}), @ORM\Index(name="fk_competence_percentage_competence_profile", columns={"competence_profile_id"})})
+ * @ORM\Table(name="competence_percentage", indexes={@ORM\Index(name="fk_competence_percentage_competence_profile", columns={"competence_profile_id"}), @ORM\Index(name="fk_competence_percentage_call", columns={"call_id"})})
  * @ORM\Entity
  */
 class CompetencePercentage
@@ -43,16 +43,6 @@ class CompetencePercentage
     private $extraCompetence;
 
     /**
-     * @var \TblCall
-     *
-     * @ORM\ManyToOne(targetEntity="TblCall")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
-     * })
-     */
-    private $call;
-
-    /**
      * @var \CompetenceProfile
      *
      * @ORM\ManyToOne(targetEntity="CompetenceProfile")
@@ -61,6 +51,16 @@ class CompetencePercentage
      * })
      */
     private $competenceProfile;
+
+    /**
+     * @var \TblCall
+     *
+     * @ORM\ManyToOne(targetEntity="TblCall")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
+     * })
+     */
+    private $call;
 
     public function getId(): ?int
     {
@@ -72,7 +72,7 @@ class CompetencePercentage
         return $this->psychoPercentage;
     }
 
-    public function setPsychoPercentage(?int $psychoPercentage): static
+    public function setPsychoPercentage(?int $psychoPercentage): self
     {
         $this->psychoPercentage = $psychoPercentage;
 
@@ -84,7 +84,7 @@ class CompetencePercentage
         return $this->interviewPercentage;
     }
 
-    public function setInterviewPercentage(?int $interviewPercentage): static
+    public function setInterviewPercentage(?int $interviewPercentage): self
     {
         $this->interviewPercentage = $interviewPercentage;
 
@@ -96,21 +96,9 @@ class CompetencePercentage
         return $this->extraCompetence;
     }
 
-    public function setExtraCompetence(?string $extraCompetence): static
+    public function setExtraCompetence(?string $extraCompetence): self
     {
         $this->extraCompetence = $extraCompetence;
-
-        return $this;
-    }
-
-    public function getCall(): ?TblCall
-    {
-        return $this->call;
-    }
-
-    public function setCall(?TblCall $call): static
-    {
-        $this->call = $call;
 
         return $this;
     }
@@ -120,9 +108,21 @@ class CompetencePercentage
         return $this->competenceProfile;
     }
 
-    public function setCompetenceProfile(?CompetenceProfile $competenceProfile): static
+    public function setCompetenceProfile(?CompetenceProfile $competenceProfile): self
     {
         $this->competenceProfile = $competenceProfile;
+
+        return $this;
+    }
+
+    public function getCall(): ?TblCall
+    {
+        return $this->call;
+    }
+
+    public function setCall(?TblCall $call): self
+    {
+        $this->call = $call;
 
         return $this;
     }
