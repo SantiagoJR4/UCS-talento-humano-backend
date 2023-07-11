@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * CompetencePercentage
  *
- * @ORM\Table(name="competence_percentage", indexes={@ORM\Index(name="fk_competence_percentage_competence_profile", columns={"competence_profile_id"}), @ORM\Index(name="fk_competence_percentage_call", columns={"call_id"})})
+ * @ORM\Table(name="competence_percentage", indexes={@ORM\Index(name="fk_competence_percentage_call", columns={"call_id"}), @ORM\Index(name="fk_competence_percentage_competence_profile", columns={"competence_profile_id"})})
  * @ORM\Entity
  */
 class CompetencePercentage
@@ -34,6 +34,13 @@ class CompetencePercentage
      * @ORM\Column(name="interview_percentage", type="integer", nullable=true, options={"unsigned"=true})
      */
     private $interviewPercentage;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="competence_percentage", type="string", length=255, nullable=true)
+     */
+    private $competencePercentage;
 
     /**
      * @var \TblCall
@@ -80,6 +87,18 @@ class CompetencePercentage
     public function setInterviewPercentage(?int $interviewPercentage): static
     {
         $this->interviewPercentage = $interviewPercentage;
+
+        return $this;
+    }
+
+    public function getCompetencePercentage(): ?string
+    {
+        return $this->competencePercentage;
+    }
+
+    public function setCompetencePercentage(?string $competencePercentage): static
+    {
+        $this->competencePercentage = $competencePercentage;
 
         return $this;
     }

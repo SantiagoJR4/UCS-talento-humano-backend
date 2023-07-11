@@ -308,17 +308,18 @@ class CallController extends AbstractController
         return new JsonResponse($call, 200,[]);
     }
 
-    #[Route('/get-active-calls', name: 'app_get_active_calls')]
-    public function getActiveCalls(ManagerRegistry $doctrine): JsonResponse
+    #[Route('/get-calls', name: 'app_get_active_calls')]
+    public function getActiveCalls(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
+        $states = json_decode($request->request->get('states'));
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select('c', 'p', 'subp', 'spec')
             ->from('App\Entity\TblCall', 'c')
-            ->where('c.state = :state')
+            ->where('c.state IN (:states)')
             ->leftJoin('c.profile', 'p')
             ->leftJoin('c.subprofile', 'subp')
             ->leftJoin('c.specialProfile', 'spec')
-            ->setParameter('state', 0); // TODO: Change this, when needed
+            ->setParameter('states', $states); // TODO: Change this, when needed
             // $querysp = $doctrine->getManager()->createQueryBuilder();
             // $querysp->select('c', 'sp')
             // ->from('App\Entity\TblCall', 'c')
