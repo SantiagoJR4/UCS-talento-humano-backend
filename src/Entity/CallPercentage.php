@@ -104,7 +104,7 @@ class CallPercentage
         return $this->curriculumVitae;
     }
 
-    public function setCurriculumVitae(?int $curriculumVitae): self
+    public function setCurriculumVitae(?int $curriculumVitae): static
     {
         $this->curriculumVitae = $curriculumVitae;
 
@@ -116,7 +116,7 @@ class CallPercentage
         return $this->knowledgeTest;
     }
 
-    public function setKnowledgeTest(?int $knowledgeTest): self
+    public function setKnowledgeTest(?int $knowledgeTest): static
     {
         $this->knowledgeTest = $knowledgeTest;
 
@@ -128,7 +128,7 @@ class CallPercentage
         return $this->psychoTest;
     }
 
-    public function setPsychoTest(?int $psychoTest): self
+    public function setPsychoTest(?int $psychoTest): static
     {
         $this->psychoTest = $psychoTest;
 
@@ -140,7 +140,7 @@ class CallPercentage
         return $this->interview;
     }
 
-    public function setInterview(?int $interview): self
+    public function setInterview(?int $interview): static
     {
         $this->interview = $interview;
 
@@ -152,7 +152,7 @@ class CallPercentage
         return $this->class;
     }
 
-    public function setClass(?int $class): self
+    public function setClass(?int $class): static
     {
         $this->class = $class;
 
@@ -164,7 +164,7 @@ class CallPercentage
         return $this->underGraduateTraining;
     }
 
-    public function setUnderGraduateTraining(?int $underGraduateTraining): self
+    public function setUnderGraduateTraining(?int $underGraduateTraining): static
     {
         $this->underGraduateTraining = $underGraduateTraining;
 
@@ -176,7 +176,7 @@ class CallPercentage
         return $this->postGraduateTraining;
     }
 
-    public function setPostGraduateTraining(?int $postGraduateTraining): self
+    public function setPostGraduateTraining(?int $postGraduateTraining): static
     {
         $this->postGraduateTraining = $postGraduateTraining;
 
@@ -188,7 +188,7 @@ class CallPercentage
         return $this->previousExperience;
     }
 
-    public function setPreviousExperience(?int $previousExperience): self
+    public function setPreviousExperience(?int $previousExperience): static
     {
         $this->previousExperience = $previousExperience;
 
@@ -200,7 +200,7 @@ class CallPercentage
         return $this->furtherTraining;
     }
 
-    public function setFurtherTraining(?int $furtherTraining): self
+    public function setFurtherTraining(?int $furtherTraining): static
     {
         $this->furtherTraining = $furtherTraining;
 
@@ -212,7 +212,7 @@ class CallPercentage
         return $this->call;
     }
 
-    public function setCall(?TblCall $call): self
+    public function setCall(?TblCall $call): static
     {
         $this->call = $call;
 
