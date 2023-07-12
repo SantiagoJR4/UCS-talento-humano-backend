@@ -168,6 +168,7 @@ class CurriculumVitaeController extends AbstractController
             }
         }
         $initialHistory = $entityObj->getHistory();
+        date_default_timezone_set('Etc/GMT+5');
         $addHistory = json_encode(['state'=>1,'date'=>date('Y-m-d H:i:s'), 'call'=> NULL]);
         $newHistory = rtrim($initialHistory, ']').','.$addHistory.']';
         $entityObj->setHistory($newHistory);

@@ -534,6 +534,7 @@ class CallController extends AbstractController
         $hvPercentage = json_decode($request->request->get('hvPercentage'), true);
         $competenciesPercentage = json_decode($request->request->get('competenciesPercentage'), true);
         $factorsValues = json_decode($request->request->get('factorsValues'),true);
+        $scoreHV = $request->request->get('score');
         $callId = $request->request->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         //_______________________________________
@@ -548,6 +549,7 @@ class CallController extends AbstractController
             return new JsonResponse('callPercentage');
         }
         try {
+            // TODO:  see what happens when hvPercentage === NULL
             foreach($hvPercentage as $fieldName => $fieldValue)
         {
             $newCallPercentage->{'set'.$fieldValue['name']}($fieldValue['value'] !== 0 ? $fieldValue['value'] : NULL);
@@ -555,6 +557,7 @@ class CallController extends AbstractController
         } catch (\Throwable $th) {
             return new JsonResponse('hvPercentage');
         }
+        $newCallPercentage->setHvScore($scoreHV);
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         $newCallPercentage->setCall($call);
         $entityManager->persist($newCallPercentage);
