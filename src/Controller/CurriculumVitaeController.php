@@ -220,7 +220,7 @@ class CurriculumVitaeController extends AbstractController
                 }
             }
         }
-
+        date_default_timezone_set('Etc/GMT+5');
         $jsonHistory = json_encode([['state'=>0,'date'=>date('Y-m-d H:i:s'), 'call'=> NULL]]);
         $objEntity->setHistory($jsonHistory);
         $objEntity->setUser($user);
@@ -233,6 +233,7 @@ class CurriculumVitaeController extends AbstractController
     #[Route('/test-controller', name: 'app_test_controller')]
     public function test(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
     {
+        date_default_timezone_set('Etc/GMT+5');
         $initial = "[{\"state\":0,\"date\":\"17-07-2014 17:13:58\",\"call\":null},{\"state\":1,\"date\":\"30-05-2023 17:13:58\",\"call\":3}]";
         $add = json_encode(['state'=>4,'date'=>date('d-m-Y H:i:s'), 'call'=> 7]);
         $result = rtrim($initial, ']').','.$add.']';

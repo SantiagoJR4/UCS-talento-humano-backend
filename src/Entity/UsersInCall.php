@@ -53,54 +53,44 @@ class UsersInCall
     /**
      * @var string|null
      *
-     * @ORM\Column(name="hv_rating", type="decimal", precision=3, scale=2, nullable=true)
+     * @ORM\Column(name="hv_rating", type="text", length=0, nullable=true)
      */
     private $hvRating;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="knowledge_rating", type="decimal", precision=3, scale=2, nullable=true)
+     * @ORM\Column(name="knowledge_rating", type="decimal", precision=4, scale=3, nullable=true)
      */
     private $knowledgeRating;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="psycho_rating", type="decimal", precision=3, scale=2, nullable=true)
+     * @ORM\Column(name="psycho_rating", type="text", length=0, nullable=true)
      */
     private $psychoRating;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="interview_rating", type="decimal", precision=3, scale=2, nullable=true)
+     * @ORM\Column(name="interview_rating", type="text", length=0, nullable=true)
      */
     private $interviewRating;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="class_rating", type="decimal", precision=3, scale=2, nullable=true)
+     * @ORM\Column(name="class_rating", type="text", length=0, nullable=true)
      */
     private $classRating;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="final_rating", type="decimal", precision=3, scale=2, nullable=true)
+     * @ORM\Column(name="final_rating", type="text", length=0, nullable=true)
      */
     private $finalRating;
-
-    /**
-     * @var \TblCall
-     *
-     * @ORM\ManyToOne(targetEntity="TblCall")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
-     * })
-     */
-    private $call;
 
     /**
      * @var \User
@@ -111,6 +101,16 @@ class UsersInCall
      * })
      */
     private $user;
+
+    /**
+     * @var \TblCall
+     *
+     * @ORM\ManyToOne(targetEntity="TblCall")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
+     * })
+     */
+    private $call;
 
     public function getId(): ?int
     {
@@ -237,18 +237,6 @@ class UsersInCall
         return $this;
     }
 
-    public function getCall(): ?TblCall
-    {
-        return $this->call;
-    }
-
-    public function setCall(?TblCall $call): self
-    {
-        $this->call = $call;
-
-        return $this;
-    }
-
     public function getUser(): ?User
     {
         return $this->user;
@@ -257,6 +245,18 @@ class UsersInCall
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getCall(): ?TblCall
+    {
+        return $this->call;
+    }
+
+    public function setCall(?TblCall $call): self
+    {
+        $this->call = $call;
 
         return $this;
     }

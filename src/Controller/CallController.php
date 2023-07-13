@@ -394,6 +394,12 @@ class CallController extends AbstractController
         $user =  $vToken->getUserIdFromToken($token);
         $callId = $request->request->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        $deadline = $call->getReceptionDeadlineDate()->format('Y-m-d');
+        date_default_timezone_set('Etc/GMT+5');
+        if($deadline < date('Y-m-d') )
+        {
+            return new JsonResponse(['deadline' => true], 200, []);
+        }
         $userId = $user->getId();
         $requiredToSignUp = json_decode($call->getRequiredToSignUp(), true);
         return new JsonResponse( requirementsSignUpToCall($userId , $requiredToSignUp, $doctrine), 200, []);
@@ -406,6 +412,12 @@ class CallController extends AbstractController
         $user =  $vToken->getUserIdFromToken($token);
         $callId = $request->request->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        $deadline = $call->getReceptionDeadlineDate()->format('Y-m-d');
+        date_default_timezone_set('Etc/GMT+5');
+        if($deadline < date('Y-m-d') )
+        {
+            return new JsonResponse(['deadline' => true], 200, []);
+        }
         $userId = $user->getId();
         $requiredToSignUp = json_decode($call->getRequiredToSignUp(), true);
         $canSignUp = requirementsSignUpToCall($userId , $requiredToSignUp, $doctrine)['canSignUp'];
@@ -825,6 +837,43 @@ class CallController extends AbstractController
                 return new JsonResponse(['status'=>'Error','message'=>$message]);
         }
         }
+        return new JsonResponse(['status'=>'Correos Enviados'],200,[]);
+    }
+
+    #[Route('/selected-for-call', name:'app_selected_for_call')]
+    public function selectedForCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
+    {
+        // TODO: DO IT WELL!
+        // $allIdentifications = json_decode( $request->request->get('allIdentifications'), true);
+        // $allStartTimes = json_decode($request->request->get('allStartTimes'), true);
+        // $date = $request->request->get('date');
+        // $subject = $request->request->get('subject');
+        // $entityManager = $doctrine->getManager();
+        // foreach($allIdentifications as $key => $currentIdentification)
+        // {
+        //     $user = $entityManager->getRepository(User::class)->findOneBy(['identification' => $currentIdentification]);
+        //     $userEmail = $user->getEmail();
+        //     $fullname = $user->getNames().' '.$user->getlastNames();
+        //     $currentStartTime = $allStartTimes[$key];
+            try{
+                $email = (new TemplatedEmail())
+                    ->from('convocatorias@unicatolicadelsur.edu.co')
+                    ->to('mariacarolinaguerrero10.05@gmail.com')
+                    ->subject('¡Felicitaciones!')
+                    ->htmlTemplate('email/selectedForCall.html.twig')
+                    ->context([
+                        // 'fullname' => $fullname,
+                        // 'startTime' => $currentStartTime,
+                        // 'date' => $date,
+                        // 'subject' => $subject
+                    ]);         
+                $mailer->send($email);
+                $message = 'La revisión fue enviada con éxito';
+            } catch (\Throwable $th) {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
+        // }
         return new JsonResponse(['status'=>'Correos Enviados'],200,[]);
     }
 
