@@ -243,68 +243,63 @@ class ContractController extends AbstractController
 
     //-------------------------------------------------------------------------------
     //-- CONTRACT QUERYS
-    #[Route('/contract/create-contract', name:'app_contract_create_contract')]
-    public function createContract(ManagerRegistry $doctrine, Request $request): JsonResponse
+    #[Route('/contract/create-contract-and-assignment', name:'app_contract_create_contract_and_assignment')]
+    public function createContractAndAssignment(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $isValidToken = $this->validateTokenSuper($request)->getContent();
-        $entiyManager = $doctrine->getManager();
-        $data = json_decode($request->getContent(),true);
-
-        if($isValidToken === false){
+        $entityManager = $doctrine->getManager();
+        $data = json_decode($request->getContent(), true);
+    
+        if ($isValidToken === false) {
             return new JsonResponse(['error' => 'Token no válido']);
-        }
-        else{
-            $user = $entiyManager->getRepository(User::class)->find($data['user']);
-            if(!$user){
-                throw $this->createNotFoundException(
-                    'No user found for id'. $data['id']
-                );
+        } else {
+            $user = $entityManager->getRepository(User::class)->find($data['user']);
+            if (!$user) {
+                throw $this->createNotFoundException('No user found for id' . $data['id']);
             }
-
+    
             $contract = new Contract();
-            $contract -> setTypeContract($data['type_contract']);
-            $contract -> setWorkStart(new DateTime($data['work_start']));
-            $contract -> setInitialContract($data['initial_contract']);
-            $contract -> setExpirationContract(new DateTime($data['expiration_contract']));
-            $contract -> setSalary($data['salary']);
-            $contract -> setWeeklyHours($data['weekly_hours']);
-            $contract -> setFunctions($data['functions']);
-            $contract -> setSpecificfunctions($data['specific_functions']);
-            $contract -> setUser($user);
+            $contract->setTypeContract($data['type_contract']);
+            $contract->setWorkStart(new DateTime($data['work_start']));
+            $contract->setInitialContract($data['initial_contract']);
+            $contract->setExpirationContract(new DateTime($data['expiration_contract']));
+            $contract->setSalary($data['salary']);
+            $contract->setWeeklyHours($data['weekly_hours']);
+            $contract->setFunctions($data['functions']);
+            $contract->setSpecificfunctions($data['specific_functions']);
+            $contract->setUser($user);
+    
+            $entityManager->persist($contract);
+            $entityManager->flush();
+    
+            $contractId = $contract->getId(); // Obtener el ID del contrato recién creado
+            $contractEntity = $entityManager->getRepository(Contract::class)->find($contractId);
 
-            $entiyManager->persist($contract);
-            $entiyManager->flush();
-
-            return new JsonResponse(['status'=>'Success','Code' => '200', 'message' => 'Contrato generado con exito']);
+            $contractChargeId = $data['contractCharges'][0];
+            $profileId = $data['profiles'][0];
+        
+            $contractChargesEntity = $entityManager->getRepository(ContractCharges::class)->find($contractChargeId);
+            if (!$contractChargesEntity) {
+                throw $this->createNotFoundException('No contract charge found for id ' . $contractChargeId);
+            }
+        
+            $profile = $entityManager->getRepository(Profile::class)->find($profileId);
+            if (!$profile) {
+                throw $this->createNotFoundException('No profile found for id ' . $profileId);
+            }
+        
+            $assignment = new ContractAssignment();
+            $assignment->setContract($contractEntity);
+            $assignment->setProfile($profile);
+            $assignment->setCharge($contractChargesEntity);
+        
+            $entityManager->persist($assignment);
+            $entityManager->flush();
+    
+            return new JsonResponse(['status' => 'Success', 'Code' => '200', 'message' => 'Contrato y asignación generados con éxito']);
         }
     }
-
-    #[Route('/contract/assignment', name:'app_contract_assignment')]
-    public function assignment(ManagerRegistry $doctrine,Request $request):JsonResponse
-    {
-        $isValidToken = $this->validateTokenSuper($request)->getContent();
-        $entiyManager = $doctrine->getManager();
-        $data = json_decode($request->getContent(),true);
-
-        if($isValidToken === false){
-            return new JsonResponse(['error' => 'Token no válido']);
-        }
-
-        $contract = $entiyManager->getRepository(Contract::class)->find($data['contract']);
-        $contractCharges = $entiyManager->getRepository(ContractCharges::class)->find($data['contractCharges']);
-        $profile = $entiyManager->getRepository(Profile::class)->find($data['profile']);
-
-        $assignment = new ContractAssignment();
-        $assignment -> setContract($contract);
-        $assignment -> setProfile($profile);
-        $assignment -> setCharge($contractCharges);
-
-        $entiyManager -> persist($assignment);
-        $entiyManager -> flush();
-
-        return new JsonResponse(['status' => 'Success','Code'=>'200','message'=>'Asignación Correcta']);
-
-    }
+    
 
     #[Route('/contract/list-charges', name:'app_contract_list_charges')]
     public function listCharges(ManagerRegistry $doctrine, SerializerInterface $serializer) : JsonResponse

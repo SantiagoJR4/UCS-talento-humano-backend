@@ -150,26 +150,6 @@ class TblCall
     private $startOfContractDate;
 
     /**
-     * @var \SpecialProfile
-     *
-     * @ORM\ManyToOne(targetEntity="SpecialProfile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="special_profile_id", referencedColumnName="id")
-     * })
-     */
-    private $specialProfile;
-
-    /**
-     * @var \Subprofile
-     *
-     * @ORM\ManyToOne(targetEntity="Subprofile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
-     * })
-     */
-    private $subprofile;
-
-    /**
      * @var \Profile
      *
      * @ORM\ManyToOne(targetEntity="Profile")
@@ -188,6 +168,26 @@ class TblCall
      * })
      */
     private $selectedUser;
+
+    /**
+     * @var \SpecialProfile
+     *
+     * @ORM\ManyToOne(targetEntity="SpecialProfile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="special_profile_id", referencedColumnName="id")
+     * })
+     */
+    private $specialProfile;
+
+    /**
+     * @var \Subprofile
+     *
+     * @ORM\ManyToOne(targetEntity="Subprofile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
+     * })
+     */
+    private $subprofile;
 
     public function getId(): ?int
     {
@@ -398,30 +398,6 @@ class TblCall
         return $this;
     }
 
-    public function getSpecialProfile(): ?SpecialProfile
-    {
-        return $this->specialProfile;
-    }
-
-    public function setSpecialProfile(?SpecialProfile $specialProfile): self
-    {
-        $this->specialProfile = $specialProfile;
-
-        return $this;
-    }
-
-    public function getSubprofile(): ?Subprofile
-    {
-        return $this->subprofile;
-    }
-
-    public function setSubprofile(?Subprofile $subprofile): self
-    {
-        $this->subprofile = $subprofile;
-
-        return $this;
-    }
-
     public function getProfile(): ?Profile
     {
         return $this->profile;
@@ -442,6 +418,30 @@ class TblCall
     public function setSelectedUser(?User $selectedUser): self
     {
         $this->selectedUser = $selectedUser;
+
+        return $this;
+    }
+
+    public function getSpecialProfile(): ?SpecialProfile
+    {
+        return $this->specialProfile;
+    }
+
+    public function setSpecialProfile(?SpecialProfile $specialProfile): self
+    {
+        $this->specialProfile = $specialProfile;
+
+        return $this;
+    }
+
+    public function getSubprofile(): ?Subprofile
+    {
+        return $this->subprofile;
+    }
+
+    public function setSubprofile(?Subprofile $subprofile): self
+    {
+        $this->subprofile = $subprofile;
 
         return $this;
     }
