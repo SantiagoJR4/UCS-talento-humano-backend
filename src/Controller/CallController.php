@@ -747,30 +747,37 @@ class CallController extends AbstractController
         return new JsonResponse(['status'=>'Correo Enviado'],200,[]);
     }
 
-    #[Route('/appointment-for-interview', name:'app_appointmentForInterview')]
-    public function appointmentForInterview(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
+    #[Route('/results-cv', name:'app_results_cv')]
+    public function resultsCv(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
     {
-        $identification = $request->request->get('identification');
-        $startTime = $request->request->get('startTime');
+        $data = json_decode( $request->request->get('data'), true);
+        $callName = $request->request->get('callName');
+        $date = $request->request->get('date');
+        $hour = $request->request->get('hour');
         $entityManager = $doctrine->getManager();
-        $user = $entityManager->getRepository(User::class)->findOneBy(['identification' => $identification]);
-        $userEmail = $user->getEmail();
-        $fullname = $user->getNames().' '.$user->getlastNames();
-        try{
-            $email = (new TemplatedEmail())
-                ->from('convocatorias@unicatolicadelsur.edu.co')
-                ->to($userEmail)
-                ->subject('Citación a Entrevista')
-                ->htmlTemplate('email/approvedKnowledgeTest.html.twig')
-                ->context([
-                    'fullname' => $fullname,
-                    'startTime' => $startTime
-                ]);         
-            $mailer->send($email);
-            $message = 'La revisión fue enviada con éxito';
-        } catch (\Throwable $th) {
-            $message = 'Error al enviar el correo:'.$th->getMessage();
-            return new JsonResponse(['status'=>'Error','message'=>$message]);
+        foreach($data as $key => $value)
+        {
+            $user = $entityManager->getRepository(User::class)->find($value['id']);
+            $userEmail = $user->getEmail();
+            $fullname = $user->getNames().' '.$user->getlastNames();
+            try{
+                $email = (new TemplatedEmail())
+                    ->from('convocatorias@unicatolicadelsur.edu.co')
+                    ->to($userEmail)
+                    ->subject($value['approved'] ? 'Citación Prueba de conocimientos' : 'Resultado de Convocatoria')
+                    ->htmlTemplate($value['approved'] ? 'email/approvedHVCallEmail.html.twig' : 'email/notSelectedForCall.html.twig')
+                    ->context([
+                        'fullname' => $fullname,
+                        'callName' => $callName,
+                        'date' => $date,
+                        'hour' => $hour,
+                    ]);         
+                $mailer->send($email);
+                $message = 'El correo fue enviado con éxito';
+            } catch (\Throwable $th) {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
         }
         return new JsonResponse(['status'=>'Correo Enviado'],200,[]);
     }
