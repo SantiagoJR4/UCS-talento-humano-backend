@@ -29,16 +29,6 @@ class FactorProfile
     private $crest;
 
     /**
-     * @var \Factor
-     *
-     * @ORM\ManyToOne(targetEntity="Factor")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="factor_id", referencedColumnName="id")
-     * })
-     */
-    private $factor;
-
-    /**
      * @var \TblCall
      *
      * @ORM\ManyToOne(targetEntity="TblCall")
@@ -47,6 +37,16 @@ class FactorProfile
      * })
      */
     private $call;
+
+    /**
+     * @var \Factor
+     *
+     * @ORM\ManyToOne(targetEntity="Factor")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="factor_id", referencedColumnName="id")
+     * })
+     */
+    private $factor;
 
     public function getId(): ?int
     {
@@ -58,21 +58,9 @@ class FactorProfile
         return $this->crest;
     }
 
-    public function setCrest(int $crest): self
+    public function setCrest(int $crest): static
     {
         $this->crest = $crest;
-
-        return $this;
-    }
-
-    public function getFactor(): ?Factor
-    {
-        return $this->factor;
-    }
-
-    public function setFactor(?Factor $factor): self
-    {
-        $this->factor = $factor;
 
         return $this;
     }
@@ -82,9 +70,21 @@ class FactorProfile
         return $this->call;
     }
 
-    public function setCall(?TblCall $call): self
+    public function setCall(?TblCall $call): static
     {
         $this->call = $call;
+
+        return $this;
+    }
+
+    public function getFactor(): ?Factor
+    {
+        return $this->factor;
+    }
+
+    public function setFactor(?Factor $factor): static
+    {
+        $this->factor = $factor;
 
         return $this;
     }

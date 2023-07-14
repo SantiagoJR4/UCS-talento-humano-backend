@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * CompetenceProfile
  *
- * @ORM\Table(name="competence_profile", indexes={@ORM\Index(name="fk_competence_profile", columns={"profile_id"}), @ORM\Index(name="fk_competence", columns={"competence_id"})})
+ * @ORM\Table(name="competence_profile", indexes={@ORM\Index(name="fk_competence", columns={"competence_id"}), @ORM\Index(name="fk_competence_profile", columns={"profile_id"})})
  * @ORM\Entity
  */
 class CompetenceProfile
@@ -51,7 +51,7 @@ class CompetenceProfile
         return $this->competence;
     }
 
-    public function setCompetence(?Competence $competence): self
+    public function setCompetence(?Competence $competence): static
     {
         $this->competence = $competence;
 
@@ -63,7 +63,7 @@ class CompetenceProfile
         return $this->profile;
     }
 
-    public function setProfile(?Profile $profile): self
+    public function setProfile(?Profile $profile): static
     {
         $this->profile = $profile;
 

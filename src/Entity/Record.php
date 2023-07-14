@@ -77,7 +77,7 @@ class Record
         return $this->taxRecordPdf;
     }
 
-    public function setTaxRecordPdf(string $taxRecordPdf): self
+    public function setTaxRecordPdf(string $taxRecordPdf): static
     {
         $this->taxRecordPdf = $taxRecordPdf;
 
@@ -89,7 +89,7 @@ class Record
         return $this->judicialRecordPdf;
     }
 
-    public function setJudicialRecordPdf(string $judicialRecordPdf): self
+    public function setJudicialRecordPdf(string $judicialRecordPdf): static
     {
         $this->judicialRecordPdf = $judicialRecordPdf;
 
@@ -101,7 +101,7 @@ class Record
         return $this->disciplinaryRecordPdf;
     }
 
-    public function setDisciplinaryRecordPdf(string $disciplinaryRecordPdf): self
+    public function setDisciplinaryRecordPdf(string $disciplinaryRecordPdf): static
     {
         $this->disciplinaryRecordPdf = $disciplinaryRecordPdf;
 
@@ -113,7 +113,7 @@ class Record
         return $this->correctiveMeasuresPdf;
     }
 
-    public function setCorrectiveMeasuresPdf(string $correctiveMeasuresPdf): self
+    public function setCorrectiveMeasuresPdf(string $correctiveMeasuresPdf): static
     {
         $this->correctiveMeasuresPdf = $correctiveMeasuresPdf;
 
@@ -125,7 +125,7 @@ class Record
         return $this->history;
     }
 
-    public function setHistory(?string $history): self
+    public function setHistory(?string $history): static
     {
         $this->history = $history;
 
@@ -137,7 +137,7 @@ class Record
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

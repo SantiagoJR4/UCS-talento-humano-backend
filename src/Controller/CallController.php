@@ -921,7 +921,7 @@ class CallController extends AbstractController
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select('cp.id','cp.curriculumVitae','cp.knowledgeTest','cp.psychoTest',
         'cp.interview','cp.class','cp.underGraduateTraining','cp.postGraduateTraining',
-        'cp.previousExperience','cp.furtherTraining')
+        'cp.previousExperience','cp.furtherTraining','cp.hvScore')
             ->from('App\Entity\CallPercentage', 'cp')
             ->where('cp.call = :callId')
             ->setParameter('callId', $callId);
@@ -936,5 +936,17 @@ class CallController extends AbstractController
         $competencePercentages = $query->getQuery()->getArrayResult();
         // TODO: Aqui va el score -> aplicable a la prueba psicotecnica.
         return new JsonResponse(['callPercentages' => $callPercentages, 'competencePercentages' => $competencePercentages], 200, []);
+    }
+
+    #[Route('/set-hv-rating', name: 'app_set_hv_rating')]
+    public function settingHvRating(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        $userInCallId = $request->request->get('userInCallId');
+        $hvRating = $request->request->get('hvRating');
+        $usersInCall = $doctrine->getRepository(UsersInCall::class)->find($userInCallId);
+        $usersInCall->setHvRating($hvRating);
+        $entityManager = $doctrine->getManager();
+        $entityManager->flush();
+        return new JsonResponse(['done' => 'hecho'], 200, []);
     }
 }
