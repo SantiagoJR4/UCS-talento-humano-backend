@@ -71,6 +71,20 @@ Contrato ocasional de trabajo.
     private $weeklyHours;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="functions", type="text", length=0, nullable=false)
+     */
+    private $functions;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="specific_functions", type="text", length=0, nullable=true)
+     */
+    private $specificFunctions;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -153,6 +167,30 @@ Contrato ocasional de trabajo.
     public function setWeeklyHours(int $weeklyHours): self
     {
         $this->weeklyHours = $weeklyHours;
+
+        return $this;
+    }
+
+    public function getFunctions(): ?string
+    {
+        return $this->functions;
+    }
+
+    public function setFunctions(string $functions): self
+    {
+        $this->functions = $functions;
+
+        return $this;
+    }
+
+    public function getSpecificFunctions(): ?string
+    {
+        return $this->specificFunctions;
+    }
+
+    public function setSpecificFunctions(?string $specificFunctions): self
+    {
+        $this->specificFunctions = $specificFunctions;
 
         return $this;
     }

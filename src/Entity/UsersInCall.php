@@ -34,9 +34,9 @@ class UsersInCall
     private $userStatus = '0';
 
     /**
-     * @var bool
+     * @var bool|null
      *
-     * @ORM\Column(name="state_user_call", type="boolean", nullable=false)
+     * @ORM\Column(name="state_user_call", type="boolean", nullable=true)
      */
     private $stateUserCall;
 
@@ -96,7 +96,7 @@ class UsersInCall
         return $this->stateUserCall;
     }
 
-    public function setStateUserCall(bool $stateUserCall): self
+    public function setStateUserCall(?bool $stateUserCall): self
     {
         $this->stateUserCall = $stateUserCall;
 

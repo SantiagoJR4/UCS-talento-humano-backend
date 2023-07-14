@@ -268,6 +268,8 @@ class ContractController extends AbstractController
             $contract -> setExpirationContract(new DateTime($data['expiration_contract']));
             $contract -> setSalary($data['salary']);
             $contract -> setWeeklyHours($data['weekly_hours']);
+            $contract -> setFunctions($data['functions']);
+            $contract -> setSpecificfunctions($data['specific_functions']);
             $contract -> setUser($user);
 
             $entiyManager->persist($contract);
