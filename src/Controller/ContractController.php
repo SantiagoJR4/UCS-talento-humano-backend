@@ -274,26 +274,34 @@ class ContractController extends AbstractController
     
             $contractId = $contract->getId(); // Obtener el ID del contrato recién creado
             $contractEntity = $entityManager->getRepository(Contract::class)->find($contractId);
-
-            $contractChargeId = $data['contractCharges'][0];
-            $profileId = $data['profiles'][0];
-        
-            $contractChargesEntity = $entityManager->getRepository(ContractCharges::class)->find($contractChargeId);
-            if (!$contractChargesEntity) {
-                throw $this->createNotFoundException('No contract charge found for id ' . $contractChargeId);
+    
+            $contractCharges = $data['contractCharges'];
+            $profiles = $data['profiles'];
+    
+            $numAssignments = min(count($contractCharges), count($profiles));
+    
+            for ($i = 0; $i < $numAssignments; $i++) {
+                $contractChargeId = $contractCharges[$i];
+                $profileId = $profiles[$i];
+    
+                $contractChargesEntity = $entityManager->getRepository(ContractCharges::class)->find($contractChargeId);
+                if (!$contractChargesEntity) {
+                    throw $this->createNotFoundException('No contract charge found for id ' . $contractChargeId);
+                }
+    
+                $profile = $entityManager->getRepository(Profile::class)->find($profileId);
+                if (!$profile) {
+                    throw $this->createNotFoundException('No profile found for id ' . $profileId);
+                }
+    
+                $assignment = new ContractAssignment();
+                $assignment->setContract($contractEntity);
+                $assignment->setProfile($profile);
+                $assignment->setCharge($contractChargesEntity);
+    
+                $entityManager->persist($assignment);
             }
-        
-            $profile = $entityManager->getRepository(Profile::class)->find($profileId);
-            if (!$profile) {
-                throw $this->createNotFoundException('No profile found for id ' . $profileId);
-            }
-        
-            $assignment = new ContractAssignment();
-            $assignment->setContract($contractEntity);
-            $assignment->setProfile($profile);
-            $assignment->setCharge($contractChargesEntity);
-        
-            $entityManager->persist($assignment);
+    
             $entityManager->flush();
     
             return new JsonResponse(['status' => 'Success', 'Code' => '200', 'message' => 'Contrato y asignación generados con éxito']);
