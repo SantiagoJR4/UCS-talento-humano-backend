@@ -395,7 +395,7 @@ class CallController extends AbstractController
         $callId = $request->request->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         $deadline = $call->getReceptionDeadlineDate()->format('Y-m-d');
-        date_default_timezone_set('Etc/GMT+5');
+        date_default_timezone_set('America/Bogota');
         if($deadline < date('Y-m-d') )
         {
             return new JsonResponse(['deadline' => true], 200, []);
@@ -413,7 +413,7 @@ class CallController extends AbstractController
         $callId = $request->request->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         $deadline = $call->getReceptionDeadlineDate()->format('Y-m-d');
-        date_default_timezone_set('Etc/GMT+5');
+        date_default_timezone_set('America/Bogota');
         if($deadline < date('Y-m-d') )
         {
             return new JsonResponse(['deadline' => true], 200, []);
