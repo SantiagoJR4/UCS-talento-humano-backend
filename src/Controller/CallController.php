@@ -255,7 +255,6 @@ class CallController extends AbstractController
         $isEdited = json_decode($request->request->get('editedProfile'),true);
         $special = json_decode($request->request->get('special'), true);
         $newCall = new TblCall();
-        // var_dump($data);
         foreach($data as $fieldName => $fieldValue) {
             $dateTime = '';
             if (property_exists($newCall, $fieldName) && $fieldName !== 'ProfileId') {
@@ -270,6 +269,18 @@ class CallController extends AbstractController
         }
         $newCall->setState(0);
         $entityManager = $doctrine->getManager();
+        $requiredForPercentages = json_decode($data['requiredForPercentages'], true);
+        $stepsOfCall = [];
+        foreach ($requiredForPercentages as $key => $value) {
+            if( $key === 'curriculumVitae' && !!$value ){ array_push( $stepsOfCall, 'CV' ); }
+            if( $key === 'knowledgeTest' && !!$value ){ array_push( $stepsOfCall, 'KT' ); }
+            if( $key === 'psychoTest' && !!$value ){ array_push( $stepsOfCall, 'PT' ); }
+            if( $key === 'interview' && !!$value ){ array_push( $stepsOfCall, 'IN' ); }
+            if( $key === 'class' && !!$value ){ array_push( $stepsOfCall, 'CL' ); }
+        }
+        array_push( $stepsOfCall, 'FI', 'SE' );
+        $stepsOfCall = json_encode($stepsOfCall);
+        $newCall->setStepsOfCall($stepsOfCall);
         if($isEdited) {
             $newSpecialProfile = new SpecialProfile();
             $newSpecialProfile->setUnderGraduateTraining($special['specialUnderGraduate']);
@@ -291,7 +302,7 @@ class CallController extends AbstractController
         }
         $entityManager->persist($newCall);
         $entityManager->flush();
-        return new JsonResponse($data,200,[]);
+        return new JsonResponse(['legend' => 'call has been created.'],200,[]);
     }
 
     #[Route('/get-call', name: 'app_get_call')]
@@ -426,8 +437,15 @@ class CallController extends AbstractController
             $newUsersInCall = new UsersInCall();
             $newUsersInCall -> setUser($user);
             $newUsersInCall -> setCall($call);
-            $newUsersInCall -> setUserStatus('CV');
+            $newUsersInCall -> setUserStatus(json_encode(['CV']));
             $newUsersInCall -> setStateUserCall(1);
+            $newUsersInCall ->setStatus(json_encode(array(
+                "CVSTATUS" => 0,
+                "KTSTATUS" => 0,
+                "PTSTATUS" => 0,
+                "INSTATUS" => 0,
+                "CLSTATUS" => 0
+            )));
             $entityManager = $doctrine->getManager();
             $entityManager->persist($newUsersInCall);
             $entityManager->flush();
@@ -633,7 +651,7 @@ class CallController extends AbstractController
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select(
             'uc.id', 'uc.userStatus', 'u.id as userId', 'u.names', 'u.lastNames',
-            'u.identification', 'u.email', 'u.urlPhoto', 'uc.qualifyCv', 'uc.cvStatus',
+            'u.identification', 'u.email', 'u.urlPhoto', 'uc.qualifyCv', 'uc.status',
             'uc.hvRating','uc.knowledgeRating', 'uc.psychoRating','uc.interviewRating',
             'uc.classRating', 'uc.finalRating', 'u.phone')
             ->from('App\Entity\UsersInCall', 'uc')
@@ -670,7 +688,9 @@ class CallController extends AbstractController
         $entityManager = $doctrine->getManager();
         $userInCall = $entityManager->getRepository(UsersInCall::class)->find($user['id']);
         $userInCall->setQualifyCv($qualifyCV);
-        $userInCall->setCvStatus(1);
+        $userInCallStatus = json_decode($userInCall->getStatus(), true);
+        $userInCallStatus['CVSTATUS'] = 3; 
+        $userInCall->setStatus(json_encode($userInCallStatus));
         $entityManager->flush();
 
         if( $askAgain !== NULL ){
@@ -752,12 +772,33 @@ class CallController extends AbstractController
     {
         $data = json_decode( $request->request->get('data'), true);
         $callName = $request->request->get('callName');
+        $callId = $request->request->get('callId');
         $date = $request->request->get('date');
         $hour = $request->request->get('hour');
+        $step =  $request->request->get('step');
+        
         $entityManager = $doctrine->getManager();
+        $call = $entityManager->getRepository(TblCall::class)->find($callId);
+        $callSteps = json_decode($call->getStepsOfCall(), true);
         foreach($data as $key => $value)
         {
             $user = $entityManager->getRepository(User::class)->find($value['id']);
+            $userInCall = $entityManager->getRepository(UsersInCall::class)->findOneBy(['user' => $value['id'], 'call' => $callId]);
+            $userInCallStatus = json_decode($userInCall->getStatus(), true);
+            if($value['approved'])
+            {
+                $userInCallStatus[$step] = 1;
+                $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                $currentUserStatus = end($arrayUserStatus);
+                $index = array_search($currentUserStatus, $callSteps);
+                array_push($arrayUserStatus, $callSteps[$index + 1]);
+                $userInCall->setUserStatus(json_encode($arrayUserStatus));
+            }
+            else
+            {
+                $userInCallStatus[$step] = 2;
+            }
+            $entityManager->flush();
             $userEmail = $user->getEmail();
             $fullname = $user->getNames().' '.$user->getlastNames();
             try{
