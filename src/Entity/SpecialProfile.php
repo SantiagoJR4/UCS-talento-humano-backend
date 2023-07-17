@@ -60,7 +60,7 @@ class SpecialProfile
         return $this->underGraduateTraining;
     }
 
-    public function setUnderGraduateTraining(string $underGraduateTraining): static
+    public function setUnderGraduateTraining(string $underGraduateTraining): self
     {
         $this->underGraduateTraining = $underGraduateTraining;
 
@@ -72,7 +72,7 @@ class SpecialProfile
         return $this->postGraduateTraining;
     }
 
-    public function setPostGraduateTraining(string $postGraduateTraining): static
+    public function setPostGraduateTraining(string $postGraduateTraining): self
     {
         $this->postGraduateTraining = $postGraduateTraining;
 
@@ -84,7 +84,7 @@ class SpecialProfile
         return $this->previousExperience;
     }
 
-    public function setPreviousExperience(string $previousExperience): static
+    public function setPreviousExperience(string $previousExperience): self
     {
         $this->previousExperience = $previousExperience;
 
@@ -96,7 +96,7 @@ class SpecialProfile
         return $this->furtherTraining;
     }
 
-    public function setFurtherTraining(string $furtherTraining): static
+    public function setFurtherTraining(string $furtherTraining): self
     {
         $this->furtherTraining = $furtherTraining;
 

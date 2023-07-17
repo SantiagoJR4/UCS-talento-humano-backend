@@ -271,14 +271,17 @@ class CallController extends AbstractController
         $entityManager = $doctrine->getManager();
         $requiredForPercentages = json_decode($data['requiredForPercentages'], true);
         $stepsOfCall = [];
+        $allSteps = [];
         foreach ($requiredForPercentages as $key => $value) {
-            if( $key === 'curriculumVitae' && !!$value ){ array_push( $stepsOfCall, 'CV' ); }
-            if( $key === 'knowledgeTest' && !!$value ){ array_push( $stepsOfCall, 'KT' ); }
-            if( $key === 'psychoTest' && !!$value ){ array_push( $stepsOfCall, 'PT' ); }
-            if( $key === 'interview' && !!$value ){ array_push( $stepsOfCall, 'IN' ); }
-            if( $key === 'class' && !!$value ){ array_push( $stepsOfCall, 'CL' ); }
+            if( $key === 'curriculumVitae' && !!$value ){ array_push( $allSteps, 'CV' ); }
+            if( $key === 'knowledgeTest' && !!$value ){ array_push( $allSteps, 'KT' ); }
+            if( $key === 'psychoTest' && !!$value ){ array_push( $allSteps, 'PT' ); }
+            if( $key === 'interview' && !!$value ){ array_push( $allSteps, 'IN' ); }
+            if( $key === 'class' && !!$value ){ array_push( $allSteps, 'CL' ); }
         }
-        array_push( $stepsOfCall, 'FI', 'SE' );
+        array_push( $allSteps, 'FI', 'SE' );
+        $currentStep = $allSteps[0];
+        $stepsOfCall = ['allSteps' => $allSteps, 'currentStep' => $currentStep];
         $stepsOfCall = json_encode($stepsOfCall);
         $newCall->setStepsOfCall($stepsOfCall);
         if($isEdited) {
@@ -689,7 +692,7 @@ class CallController extends AbstractController
         $userInCall = $entityManager->getRepository(UsersInCall::class)->find($user['id']);
         $userInCall->setQualifyCv($qualifyCV);
         $userInCallStatus = json_decode($userInCall->getStatus(), true);
-        $userInCallStatus['CVSTATUS'] = 3; 
+        $userInCallStatus['CVSTATUS'] = $askAgain === NULL ? 3 : 4; 
         $userInCall->setStatus(json_encode($userInCallStatus));
         $entityManager->flush();
 
@@ -780,6 +783,8 @@ class CallController extends AbstractController
         $entityManager = $doctrine->getManager();
         $call = $entityManager->getRepository(TblCall::class)->find($callId);
         $callSteps = json_decode($call->getStepsOfCall(), true);
+        $allSteps = $callSteps['allSteps'];
+        $currentStep = $callSteps['currentStep'];
         foreach($data as $key => $value)
         {
             $user = $entityManager->getRepository(User::class)->find($value['id']);
@@ -790,14 +795,15 @@ class CallController extends AbstractController
                 $userInCallStatus[$step] = 1;
                 $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
                 $currentUserStatus = end($arrayUserStatus);
-                $index = array_search($currentUserStatus, $callSteps);
-                array_push($arrayUserStatus, $callSteps[$index + 1]);
+                $index = array_search($currentUserStatus, $allSteps);
+                array_push($arrayUserStatus, $allSteps[$index + 1]);
                 $userInCall->setUserStatus(json_encode($arrayUserStatus));
             }
             else
             {
                 $userInCallStatus[$step] = 2;
             }
+            $userInCall->setStatus(json_encode($userInCallStatus));
             $entityManager->flush();
             $userEmail = $user->getEmail();
             $fullname = $user->getNames().' '.$user->getlastNames();
@@ -818,8 +824,13 @@ class CallController extends AbstractController
             } catch (\Throwable $th) {
                 $message = 'Error al enviar el correo:'.$th->getMessage();
                 return new JsonResponse(['status'=>'Error','message'=>$message]);
+            }
         }
-        }
+        $index = array_search($currentStep, $allSteps);
+        $nextStep = $allSteps[$index + 1];
+        $stepsOfCall = json_encode(['allSteps' => $allSteps, 'currentStep' => $nextStep]);
+        $call->setStepsOfCall($stepsOfCall);
+        $entityManager->flush();
         return new JsonResponse(['status'=>'Correo Enviado'],200,[]);
     }
 

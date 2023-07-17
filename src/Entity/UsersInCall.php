@@ -23,9 +23,9 @@ class UsersInCall
     private $id;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="user_status", type="string", length=2, nullable=false, options={"comment"="CV:hoja_de_vida; KT:Prueba_de_conocimientos; PT:Psicotecnica; IN:Entrevista;CL:Clase; FI:final; SE: Seleccionado;"})
+     * @ORM\Column(name="user_status", type="text", length=0, nullable=true, options={"comment"="CV:hoja_de_vida; KT:Prueba_de_conocimientos; PT:Psicotecnica; IN:Entrevista;CL:Clase; FI:final; SE: Seleccionado;"})
      */
     private $userStatus;
 
@@ -44,11 +44,11 @@ class UsersInCall
     private $qualifyCv;
 
     /**
-     * @var int
+     * @var string|null
      *
-     * @ORM\Column(name="cv_status", type="smallint", nullable=false)
+     * @ORM\Column(name="status", type="text", length=0, nullable=true)
      */
-    private $cvStatus = '0';
+    private $status;
 
     /**
      * @var string|null
@@ -93,16 +93,6 @@ class UsersInCall
     private $finalRating;
 
     /**
-     * @var \TblCall
-     *
-     * @ORM\ManyToOne(targetEntity="TblCall")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
-     * })
-     */
-    private $call;
-
-    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -111,6 +101,16 @@ class UsersInCall
      * })
      */
     private $user;
+
+    /**
+     * @var \TblCall
+     *
+     * @ORM\ManyToOne(targetEntity="TblCall")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
+     * })
+     */
+    private $call;
 
     public function getId(): ?int
     {
@@ -122,7 +122,7 @@ class UsersInCall
         return $this->userStatus;
     }
 
-    public function setUserStatus(string $userStatus): static
+    public function setUserStatus(?string $userStatus): self
     {
         $this->userStatus = $userStatus;
 
@@ -134,7 +134,7 @@ class UsersInCall
         return $this->stateUserCall;
     }
 
-    public function setStateUserCall(bool $stateUserCall): static
+    public function setStateUserCall(bool $stateUserCall): self
     {
         $this->stateUserCall = $stateUserCall;
 
@@ -146,21 +146,21 @@ class UsersInCall
         return $this->qualifyCv;
     }
 
-    public function setQualifyCv(?string $qualifyCv): static
+    public function setQualifyCv(?string $qualifyCv): self
     {
         $this->qualifyCv = $qualifyCv;
 
         return $this;
     }
 
-    public function getCvStatus(): ?int
+    public function getStatus(): ?string
     {
-        return $this->cvStatus;
+        return $this->status;
     }
 
-    public function setCvStatus(int $cvStatus): static
+    public function setStatus(?string $status): self
     {
-        $this->cvStatus = $cvStatus;
+        $this->status = $status;
 
         return $this;
     }
@@ -170,7 +170,7 @@ class UsersInCall
         return $this->hvRating;
     }
 
-    public function setHvRating(?string $hvRating): static
+    public function setHvRating(?string $hvRating): self
     {
         $this->hvRating = $hvRating;
 
@@ -182,7 +182,7 @@ class UsersInCall
         return $this->knowledgeRating;
     }
 
-    public function setKnowledgeRating(?string $knowledgeRating): static
+    public function setKnowledgeRating(?string $knowledgeRating): self
     {
         $this->knowledgeRating = $knowledgeRating;
 
@@ -194,7 +194,7 @@ class UsersInCall
         return $this->psychoRating;
     }
 
-    public function setPsychoRating(?string $psychoRating): static
+    public function setPsychoRating(?string $psychoRating): self
     {
         $this->psychoRating = $psychoRating;
 
@@ -206,7 +206,7 @@ class UsersInCall
         return $this->interviewRating;
     }
 
-    public function setInterviewRating(?string $interviewRating): static
+    public function setInterviewRating(?string $interviewRating): self
     {
         $this->interviewRating = $interviewRating;
 
@@ -218,7 +218,7 @@ class UsersInCall
         return $this->classRating;
     }
 
-    public function setClassRating(?string $classRating): static
+    public function setClassRating(?string $classRating): self
     {
         $this->classRating = $classRating;
 
@@ -230,21 +230,9 @@ class UsersInCall
         return $this->finalRating;
     }
 
-    public function setFinalRating(?string $finalRating): static
+    public function setFinalRating(?string $finalRating): self
     {
         $this->finalRating = $finalRating;
-
-        return $this;
-    }
-
-    public function getCall(): ?TblCall
-    {
-        return $this->call;
-    }
-
-    public function setCall(?TblCall $call): static
-    {
-        $this->call = $call;
 
         return $this;
     }
@@ -254,9 +242,21 @@ class UsersInCall
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function getCall(): ?TblCall
+    {
+        return $this->call;
+    }
+
+    public function setCall(?TblCall $call): self
+    {
+        $this->call = $call;
 
         return $this;
     }

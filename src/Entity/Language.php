@@ -105,7 +105,7 @@ class Language
         return $this->nameLanguage;
     }
 
-    public function setNameLanguage(string $nameLanguage): static
+    public function setNameLanguage(string $nameLanguage): self
     {
         $this->nameLanguage = $nameLanguage;
 
@@ -117,7 +117,7 @@ class Language
         return $this->toSpeak;
     }
 
-    public function setToSpeak(?string $toSpeak): static
+    public function setToSpeak(?string $toSpeak): self
     {
         $this->toSpeak = $toSpeak;
 
@@ -129,7 +129,7 @@ class Language
         return $this->toRead;
     }
 
-    public function setToRead(?string $toRead): static
+    public function setToRead(?string $toRead): self
     {
         $this->toRead = $toRead;
 
@@ -141,7 +141,7 @@ class Language
         return $this->toWrite;
     }
 
-    public function setToWrite(?string $toWrite): static
+    public function setToWrite(?string $toWrite): self
     {
         $this->toWrite = $toWrite;
 
@@ -153,7 +153,7 @@ class Language
         return $this->isCertified;
     }
 
-    public function setIsCertified(?bool $isCertified): static
+    public function setIsCertified(?bool $isCertified): self
     {
         $this->isCertified = $isCertified;
 
@@ -165,7 +165,7 @@ class Language
         return $this->levellanguage;
     }
 
-    public function setLevellanguage(?string $levellanguage): static
+    public function setLevellanguage(?string $levellanguage): self
     {
         $this->levellanguage = $levellanguage;
 
@@ -177,7 +177,7 @@ class Language
         return $this->certifiedPdf;
     }
 
-    public function setCertifiedPdf(?string $certifiedPdf): static
+    public function setCertifiedPdf(?string $certifiedPdf): self
     {
         $this->certifiedPdf = $certifiedPdf;
 
@@ -189,7 +189,7 @@ class Language
         return $this->certifiedDate;
     }
 
-    public function setCertifiedDate(?\DateTimeInterface $certifiedDate): static
+    public function setCertifiedDate(?\DateTimeInterface $certifiedDate): self
     {
         $this->certifiedDate = $certifiedDate;
 
@@ -201,7 +201,7 @@ class Language
         return $this->history;
     }
 
-    public function setHistory(?string $history): static
+    public function setHistory(?string $history): self
     {
         $this->history = $history;
 
@@ -213,7 +213,7 @@ class Language
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 

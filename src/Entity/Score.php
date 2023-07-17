@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Score
  *
- * @ORM\Table(name="score", indexes={@ORM\Index(name="fk_score_competence_profile", columns={"competence_percentage_id"}), @ORM\Index(name="fk_score_factor_profile", columns={"factor_profile_id"})})
+ * @ORM\Table(name="score", indexes={@ORM\Index(name="fk_score_factor_profile", columns={"factor_profile_id"}), @ORM\Index(name="fk_score_competence_profile", columns={"competence_percentage_id"})})
  * @ORM\Entity
  */
 class Score
@@ -22,16 +22,6 @@ class Score
     private $id;
 
     /**
-     * @var \CompetencePercentage
-     *
-     * @ORM\ManyToOne(targetEntity="CompetencePercentage")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="competence_percentage_id", referencedColumnName="id")
-     * })
-     */
-    private $competencePercentage;
-
-    /**
      * @var \FactorProfile
      *
      * @ORM\ManyToOne(targetEntity="FactorProfile")
@@ -41,21 +31,19 @@ class Score
      */
     private $factorProfile;
 
+    /**
+     * @var \CompetencePercentage
+     *
+     * @ORM\ManyToOne(targetEntity="CompetencePercentage")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="competence_percentage_id", referencedColumnName="id")
+     * })
+     */
+    private $competencePercentage;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getCompetencePercentage(): ?CompetencePercentage
-    {
-        return $this->competencePercentage;
-    }
-
-    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): static
-    {
-        $this->competencePercentage = $competencePercentage;
-
-        return $this;
     }
 
     public function getFactorProfile(): ?FactorProfile
@@ -63,9 +51,21 @@ class Score
         return $this->factorProfile;
     }
 
-    public function setFactorProfile(?FactorProfile $factorProfile): static
+    public function setFactorProfile(?FactorProfile $factorProfile): self
     {
         $this->factorProfile = $factorProfile;
+
+        return $this;
+    }
+
+    public function getCompetencePercentage(): ?CompetencePercentage
+    {
+        return $this->competencePercentage;
+    }
+
+    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): self
+    {
+        $this->competencePercentage = $competencePercentage;
 
         return $this;
     }
