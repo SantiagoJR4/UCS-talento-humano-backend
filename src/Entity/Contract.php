@@ -57,6 +57,14 @@ Contrato ocasional de trabajo.
     private $expirationContract;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="work_dedication", type="string", length=255, nullable=false, options={"comment"="'TC':'Tiempo Completo'
+'MT':'Medio Tiempo'"})
+     */
+    private $workDedication;
+
+    /**
      * @var int
      *
      * @ORM\Column(name="salary", type="integer", nullable=false)
@@ -143,6 +151,18 @@ Contrato ocasional de trabajo.
     public function setExpirationContract(\DateTimeInterface $expirationContract): self
     {
         $this->expirationContract = $expirationContract;
+
+        return $this;
+    }
+
+    public function getWorkDedication(): ?string
+    {
+        return $this->workDedication;
+    }
+
+    public function setWorkDedication(string $workDedication): self
+    {
+        $this->workDedication = $workDedication;
 
         return $this;
     }
