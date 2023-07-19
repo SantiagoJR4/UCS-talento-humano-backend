@@ -133,7 +133,7 @@ class TeachingExperience
         return $this->isForeignUniversity;
     }
 
-    public function setIsForeignUniversity(?bool $isForeignUniversity): static
+    public function setIsForeignUniversity(?bool $isForeignUniversity): self
     {
         $this->isForeignUniversity = $isForeignUniversity;
 
@@ -145,7 +145,7 @@ class TeachingExperience
         return $this->snies;
     }
 
-    public function setSnies(string $snies): static
+    public function setSnies(string $snies): self
     {
         $this->snies = $snies;
 
@@ -157,7 +157,7 @@ class TeachingExperience
         return $this->nameUniversity;
     }
 
-    public function setNameUniversity(string $nameUniversity): static
+    public function setNameUniversity(string $nameUniversity): self
     {
         $this->nameUniversity = $nameUniversity;
 
@@ -169,7 +169,7 @@ class TeachingExperience
         return $this->faculty;
     }
 
-    public function setFaculty(string $faculty): static
+    public function setFaculty(string $faculty): self
     {
         $this->faculty = $faculty;
 
@@ -181,7 +181,7 @@ class TeachingExperience
         return $this->program;
     }
 
-    public function setProgram(string $program): static
+    public function setProgram(string $program): self
     {
         $this->program = $program;
 
@@ -193,7 +193,7 @@ class TeachingExperience
         return $this->admissionDate;
     }
 
-    public function setAdmissionDate(\DateTimeInterface $admissionDate): static
+    public function setAdmissionDate(\DateTimeInterface $admissionDate): self
     {
         $this->admissionDate = $admissionDate;
 
@@ -205,7 +205,7 @@ class TeachingExperience
         return $this->isActive;
     }
 
-    public function setIsActive(?bool $isActive): static
+    public function setIsActive(?bool $isActive): self
     {
         $this->isActive = $isActive;
 
@@ -217,7 +217,7 @@ class TeachingExperience
         return $this->retirementDate;
     }
 
-    public function setRetirementDate(?\DateTimeInterface $retirementDate): static
+    public function setRetirementDate(?\DateTimeInterface $retirementDate): self
     {
         $this->retirementDate = $retirementDate;
 
@@ -229,7 +229,7 @@ class TeachingExperience
         return $this->timeWorked;
     }
 
-    public function setTimeWorked(?string $timeWorked): static
+    public function setTimeWorked(?string $timeWorked): self
     {
         $this->timeWorked = $timeWorked;
 
@@ -241,7 +241,7 @@ class TeachingExperience
         return $this->contractModality;
     }
 
-    public function setContractModality(string $contractModality): static
+    public function setContractModality(string $contractModality): self
     {
         $this->contractModality = $contractModality;
 
@@ -253,7 +253,7 @@ class TeachingExperience
         return $this->courseLoad;
     }
 
-    public function setCourseLoad(string $courseLoad): static
+    public function setCourseLoad(string $courseLoad): self
     {
         $this->courseLoad = $courseLoad;
 
@@ -265,7 +265,7 @@ class TeachingExperience
         return $this->certifiedPdf;
     }
 
-    public function setCertifiedPdf(?string $certifiedPdf): static
+    public function setCertifiedPdf(?string $certifiedPdf): self
     {
         $this->certifiedPdf = $certifiedPdf;
 
@@ -277,7 +277,7 @@ class TeachingExperience
         return $this->history;
     }
 
-    public function setHistory(?string $history): static
+    public function setHistory(?string $history): self
     {
         $this->history = $history;
 
@@ -289,7 +289,7 @@ class TeachingExperience
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 

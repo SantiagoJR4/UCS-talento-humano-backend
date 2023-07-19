@@ -101,7 +101,7 @@ class Medicaltest
         return $this->city;
     }
 
-    public function setCity(string $city): static
+    public function setCity(string $city): self
     {
         $this->city = $city;
 
@@ -113,7 +113,7 @@ class Medicaltest
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): static
+    public function setDate(\DateTimeInterface $date): self
     {
         $this->date = $date;
 
@@ -125,7 +125,7 @@ class Medicaltest
         return $this->address;
     }
 
-    public function setAddress(string $address): static
+    public function setAddress(string $address): self
     {
         $this->address = $address;
 
@@ -137,7 +137,7 @@ class Medicaltest
         return $this->medicalcenter;
     }
 
-    public function setMedicalcenter(string $medicalcenter): static
+    public function setMedicalcenter(string $medicalcenter): self
     {
         $this->medicalcenter = $medicalcenter;
 
@@ -149,7 +149,7 @@ class Medicaltest
         return $this->phone;
     }
 
-    public function setPhone(string $phone): static
+    public function setPhone(string $phone): self
     {
         $this->phone = $phone;
 
@@ -161,7 +161,7 @@ class Medicaltest
         return $this->typetest;
     }
 
-    public function setTypetest(string $typetest): static
+    public function setTypetest(string $typetest): self
     {
         $this->typetest = $typetest;
 
@@ -173,7 +173,7 @@ class Medicaltest
         return $this->ocupationalmedicaltest;
     }
 
-    public function setOcupationalmedicaltest(string $ocupationalmedicaltest): static
+    public function setOcupationalmedicaltest(string $ocupationalmedicaltest): self
     {
         $this->ocupationalmedicaltest = $ocupationalmedicaltest;
 
@@ -185,7 +185,7 @@ class Medicaltest
         return $this->state;
     }
 
-    public function setState(string $state): static
+    public function setState(string $state): self
     {
         $this->state = $state;
 
@@ -197,7 +197,7 @@ class Medicaltest
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 

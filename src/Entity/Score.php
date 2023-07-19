@@ -33,6 +33,16 @@ class Score
     private $factorProfile;
 
     /**
+     * @var \FactorProfile
+     *
+     * @ORM\ManyToOne(targetEntity="FactorProfile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="factor_profile_id", referencedColumnName="id")
+     * })
+     */
+    private $factorProfile;
+
+    /**
      * @var \CompetencePercentage
      *
      * @ORM\ManyToOne(targetEntity="CompetencePercentage")
@@ -59,26 +69,26 @@ class Score
         return $this;
     }
 
-    public function getCompetencePercentage(): ?CompetencePercentage
-    {
-        return $this->competencePercentage;
-    }
-
-    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): static
-    {
-        $this->competencePercentage = $competencePercentage;
-
-        return $this;
-    }
-
     public function getFactorProfile(): ?FactorProfile
     {
         return $this->factorProfile;
     }
 
-    public function setFactorProfile(?FactorProfile $factorProfile): static
+    public function setFactorProfile(?FactorProfile $factorProfile): self
     {
         $this->factorProfile = $factorProfile;
+
+        return $this;
+    }
+
+    public function getCompetencePercentage(): ?CompetencePercentage
+    {
+        return $this->competencePercentage;
+    }
+
+    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): self
+    {
+        $this->competencePercentage = $competencePercentage;
 
         return $this;
     }

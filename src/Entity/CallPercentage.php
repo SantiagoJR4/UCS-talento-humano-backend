@@ -31,27 +31,21 @@ class CallPercentage
 
     /**
      * @var int|null
-     * @var int|null
      *
-     * @ORM\Column(name="knowledge_test", type="integer", nullable=true)
      * @ORM\Column(name="knowledge_test", type="integer", nullable=true)
      */
     private $knowledgeTest;
 
     /**
      * @var int|null
-     * @var int|null
      *
-     * @ORM\Column(name="psycho_test", type="integer", nullable=true)
      * @ORM\Column(name="psycho_test", type="integer", nullable=true)
      */
     private $psychoTest;
 
     /**
      * @var int|null
-     * @var int|null
      *
-     * @ORM\Column(name="interview", type="integer", nullable=true)
      * @ORM\Column(name="interview", type="integer", nullable=true)
      */
     private $interview;
@@ -118,7 +112,7 @@ class CallPercentage
         return $this->curriculumVitae;
     }
 
-    public function setCurriculumVitae(?int $curriculumVitae): static
+    public function setCurriculumVitae(?int $curriculumVitae): self
     {
         $this->curriculumVitae = $curriculumVitae;
 
@@ -130,11 +124,7 @@ class CallPercentage
         return $this->knowledgeTest;
     }
 
-<<<<<<< HEAD
     public function setKnowledgeTest(?int $knowledgeTest): static
-=======
-    public function setKnowledgeTest(?int $knowledgeTest): self
->>>>>>> fixedHv-Backend
     {
         $this->knowledgeTest = $knowledgeTest;
 
@@ -146,11 +136,7 @@ class CallPercentage
         return $this->psychoTest;
     }
 
-<<<<<<< HEAD
     public function setPsychoTest(?int $psychoTest): static
-=======
-    public function setPsychoTest(?int $psychoTest): self
->>>>>>> fixedHv-Backend
     {
         $this->psychoTest = $psychoTest;
 
@@ -162,11 +148,7 @@ class CallPercentage
         return $this->interview;
     }
 
-<<<<<<< HEAD
     public function setInterview(?int $interview): static
-=======
-    public function setInterview(?int $interview): self
->>>>>>> fixedHv-Backend
     {
         $this->interview = $interview;
 
@@ -178,7 +160,7 @@ class CallPercentage
         return $this->class;
     }
 
-    public function setClass(?int $class): static
+    public function setClass(?int $class): self
     {
         $this->class = $class;
 
@@ -190,7 +172,7 @@ class CallPercentage
         return $this->underGraduateTraining;
     }
 
-    public function setUnderGraduateTraining(?int $underGraduateTraining): static
+    public function setUnderGraduateTraining(?int $underGraduateTraining): self
     {
         $this->underGraduateTraining = $underGraduateTraining;
 
@@ -202,7 +184,7 @@ class CallPercentage
         return $this->postGraduateTraining;
     }
 
-    public function setPostGraduateTraining(?int $postGraduateTraining): static
+    public function setPostGraduateTraining(?int $postGraduateTraining): self
     {
         $this->postGraduateTraining = $postGraduateTraining;
 
@@ -214,7 +196,7 @@ class CallPercentage
         return $this->previousExperience;
     }
 
-    public function setPreviousExperience(?int $previousExperience): static
+    public function setPreviousExperience(?int $previousExperience): self
     {
         $this->previousExperience = $previousExperience;
 
@@ -226,7 +208,7 @@ class CallPercentage
         return $this->furtherTraining;
     }
 
-    public function setFurtherTraining(?int $furtherTraining): static
+    public function setFurtherTraining(?int $furtherTraining): self
     {
         $this->furtherTraining = $furtherTraining;
 
@@ -238,7 +220,7 @@ class CallPercentage
         return $this->hvScore;
     }
 
-    public function setHvScore(?string $hvScore): static
+    public function setHvScore(?string $hvScore): self
     {
         $this->hvScore = $hvScore;
 
@@ -250,7 +232,7 @@ class CallPercentage
         return $this->call;
     }
 
-    public function setCall(?TblCall $call): static
+    public function setCall(?TblCall $call): self
     {
         $this->call = $call;
 
