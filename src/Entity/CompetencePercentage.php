@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * CompetencePercentage
  *
- * @ORM\Table(name="competence_percentage", indexes={@ORM\Index(name="fk_competence_percentage_competence_profile", columns={"competence_profile_id"}), @ORM\Index(name="fk_competence_percentage_call", columns={"call_id"})})
+ * @ORM\Table(name="competence_percentage", indexes={@ORM\Index(name="fk_competence_percentage_call", columns={"call_id"}), @ORM\Index(name="fk_competence_percentage_competence_profile", columns={"competence_profile_id"})})
  * @ORM\Entity
  */
 class CompetencePercentage
@@ -43,16 +43,6 @@ class CompetencePercentage
     private $extraCompetence;
 
     /**
-     * @var \CompetenceProfile
-     *
-     * @ORM\ManyToOne(targetEntity="CompetenceProfile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="competence_profile_id", referencedColumnName="id")
-     * })
-     */
-    private $competenceProfile;
-
-    /**
      * @var \TblCall
      *
      * @ORM\ManyToOne(targetEntity="TblCall")
@@ -61,6 +51,16 @@ class CompetencePercentage
      * })
      */
     private $call;
+
+    /**
+     * @var \CompetenceProfile
+     *
+     * @ORM\ManyToOne(targetEntity="CompetenceProfile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="competence_profile_id", referencedColumnName="id")
+     * })
+     */
+    private $competenceProfile;
 
     public function getId(): ?int
     {
@@ -103,18 +103,6 @@ class CompetencePercentage
         return $this;
     }
 
-    public function getCompetenceProfile(): ?CompetenceProfile
-    {
-        return $this->competenceProfile;
-    }
-
-    public function setCompetenceProfile(?CompetenceProfile $competenceProfile): self
-    {
-        $this->competenceProfile = $competenceProfile;
-
-        return $this;
-    }
-
     public function getCall(): ?TblCall
     {
         return $this->call;
@@ -123,6 +111,18 @@ class CompetencePercentage
     public function setCall(?TblCall $call): self
     {
         $this->call = $call;
+
+        return $this;
+    }
+
+    public function getCompetenceProfile(): ?CompetenceProfile
+    {
+        return $this->competenceProfile;
+    }
+
+    public function setCompetenceProfile(?CompetenceProfile $competenceProfile): self
+    {
+        $this->competenceProfile = $competenceProfile;
 
         return $this;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -107,6 +108,155 @@ class AcademicTraining
      * })
      */
     private $user;
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getAcademicModality(): ?string
+    {
+        return $this->academicModality;
+    }
+
+    public function setAcademicModality(string $academicModality): self
+    {
+        $this->academicModality = $academicModality;
+
+        return $this;
+    }
+
+    public function getDate(): ?\DateTimeInterface
+    {
+        return $this->date;
+    }
+
+    public function setDate(\DateTimeInterface $date): self
+    {
+        $this->date = $date;
+
+        return $this;
+    }
+
+    public function getProgramMethodology(): ?string
+    {
+        return $this->programMethodology;
+    }
+
+    public function setProgramMethodology(string $programMethodology): self
+    {
+        $this->programMethodology = $programMethodology;
+
+        return $this;
+    }
+
+    public function getTitleName(): ?string
+    {
+        return $this->titleName;
+    }
+
+    public function setTitleName(string $titleName): self
+    {
+        $this->titleName = $titleName;
+
+        return $this;
+    }
+
+    public function getSnies(): ?string
+    {
+        return $this->snies;
+    }
+
+    public function setSnies(?string $snies): self
+    {
+        $this->snies = $snies;
+
+        return $this;
+    }
+
+    public function isIsForeignUniversity(): ?bool
+    {
+        return $this->isForeignUniversity;
+    }
+
+    public function setIsForeignUniversity(bool $isForeignUniversity): self
+    {
+        $this->isForeignUniversity = $isForeignUniversity;
+
+        return $this;
+    }
+
+    public function getNameUniversity(): ?string
+    {
+        return $this->nameUniversity;
+    }
+
+    public function setNameUniversity(string $nameUniversity): self
+    {
+        $this->nameUniversity = $nameUniversity;
+
+        return $this;
+    }
+
+    public function getDegreePdf(): ?string
+    {
+        return $this->degreePdf;
+    }
+
+    public function setDegreePdf(?string $degreePdf): self
+    {
+        $this->degreePdf = $degreePdf;
+
+        return $this;
+    }
+
+    public function getDiplomaPdf(): ?string
+    {
+        return $this->diplomaPdf;
+    }
+
+    public function setDiplomaPdf(string $diplomaPdf): self
+    {
+        $this->diplomaPdf = $diplomaPdf;
+
+        return $this;
+    }
+
+    public function getCertifiedTitlePdf(): ?string
+    {
+        return $this->certifiedTitlePdf;
+    }
+
+    public function setCertifiedTitlePdf(?string $certifiedTitlePdf): self
+    {
+        $this->certifiedTitlePdf = $certifiedTitlePdf;
+
+        return $this;
+    }
+
+    public function getHistory(): ?string
+    {
+        return $this->history;
+    }
+
+    public function setHistory(?string $history): self
+    {
+        $this->history = $history;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
 
 
 }

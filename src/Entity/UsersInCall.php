@@ -30,9 +30,9 @@ class UsersInCall
     private $userStatus;
 
     /**
-     * @var bool|null
+     * @var bool
      *
-     * @ORM\Column(name="state_user_call", type="boolean", nullable=true)
+     * @ORM\Column(name="state_user_call", type="boolean", nullable=false)
      */
     private $stateUserCall;
 
@@ -93,15 +93,6 @@ class UsersInCall
     private $finalRating;
 
     /**
-     * @var \TblCall
-     *
-     * @ORM\ManyToOne(targetEntity="TblCall")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
-     * })
-     */
-    private $call;
-    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -110,6 +101,16 @@ class UsersInCall
      * })
      */
     private $user;
+
+    /**
+     * @var \TblCall
+     *
+     * @ORM\ManyToOne(targetEntity="TblCall")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
+     * })
+     */
+    private $call;
 
     public function getId(): ?int
     {

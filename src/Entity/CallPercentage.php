@@ -124,7 +124,7 @@ class CallPercentage
         return $this->knowledgeTest;
     }
 
-    public function setKnowledgeTest(?int $knowledgeTest): static
+    public function setKnowledgeTest(?int $knowledgeTest): self
     {
         $this->knowledgeTest = $knowledgeTest;
 
@@ -136,7 +136,7 @@ class CallPercentage
         return $this->psychoTest;
     }
 
-    public function setPsychoTest(?int $psychoTest): static
+    public function setPsychoTest(?int $psychoTest): self
     {
         $this->psychoTest = $psychoTest;
 
@@ -148,7 +148,7 @@ class CallPercentage
         return $this->interview;
     }
 
-    public function setInterview(?int $interview): static
+    public function setInterview(?int $interview): self
     {
         $this->interview = $interview;
 

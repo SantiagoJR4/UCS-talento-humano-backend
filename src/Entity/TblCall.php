@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TblCall
  *
- * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"})})
+ * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"})})
  * @ORM\Entity
  */
 class TblCall
@@ -81,84 +81,49 @@ class TblCall
 
     /**
      * @var string|null
-     * @var string|null
      *
-     * @ORM\Column(name="required_for_percentages", type="text", length=0, nullable=true)
-     */
-    private $requiredForPercentages;
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="required_for_curriculum_vitae", type="text", length=0, nullable=true)
-     */
-    private $requiredForCurriculumVitae;
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="required_to_sign_up", type="text", length=0, nullable=true)
-     */
-    private $requiredToSignUp;
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="salary", type="text", length=0, nullable=true)
      * @ORM\Column(name="salary", type="text", length=0, nullable=true)
      */
     private $salary;
 
     /**
      * @var \DateTime|null
-     * @var \DateTime|null
      *
-     * @ORM\Column(name="opening_date", type="date", nullable=true)
      * @ORM\Column(name="opening_date", type="date", nullable=true)
      */
     private $openingDate;
 
     /**
      * @var \DateTime|null
-     * @var \DateTime|null
      *
-     * @ORM\Column(name="reception_deadline_date", type="date", nullable=true)
      * @ORM\Column(name="reception_deadline_date", type="date", nullable=true)
      */
     private $receptionDeadlineDate;
 
     /**
      * @var \DateTime|null
-     * @var \DateTime|null
      *
-     * @ORM\Column(name="selection_date", type="date", nullable=true)
      * @ORM\Column(name="selection_date", type="date", nullable=true)
      */
     private $selectionDate;
 
     /**
      * @var \DateTime|null
-     * @var \DateTime|null
      *
-     * @ORM\Column(name="publication_date", type="date", nullable=true)
      * @ORM\Column(name="publication_date", type="date", nullable=true)
      */
     private $publicationDate;
 
     /**
      * @var \DateTime|null
-     * @var \DateTime|null
      *
-     * @ORM\Column(name="knowledge_test_date", type="datetime", nullable=true)
      * @ORM\Column(name="knowledge_test_date", type="datetime", nullable=true)
      */
     private $knowledgeTestDate;
 
     /**
      * @var \DateTime|null
-     * @var \DateTime|null
      *
-     * @ORM\Column(name="knowledge_results_date", type="date", nullable=true)
      * @ORM\Column(name="knowledge_results_date", type="date", nullable=true)
      */
     private $knowledgeResultsDate;
@@ -172,58 +137,24 @@ class TblCall
 
     /**
      * @var \DateTime|null
-     * @var \DateTime|null
      *
-     * @ORM\Column(name="psycho_date", type="datetime", nullable=true)
+     * @ORM\Column(name="interview_date", type="datetime", nullable=true)
      */
-    private $psychoDate;
+    private $interviewDate;
 
     /**
      * @var \DateTime|null
      *
-     * @ORM\Column(name="interview_date", type="datetime", nullable=true)
-     * @ORM\Column(name="interview_date", type="datetime", nullable=true)
-     */
-    private $interviewDate;
-    private $interviewDate;
-
-    /**
-     * @var \DateTime|null
-     * @var \DateTime|null
-     *
-     * @ORM\Column(name="final_results_date", type="date", nullable=true)
      * @ORM\Column(name="final_results_date", type="date", nullable=true)
      */
     private $finalResultsDate;
 
     /**
      * @var \DateTime|null
-     * @var \DateTime|null
      *
-     * @ORM\Column(name="start_of_contract_date", type="date", nullable=true)
      * @ORM\Column(name="start_of_contract_date", type="date", nullable=true)
      */
     private $startOfContractDate;
-
-    /**
-     * @var \Profile
-     *
-     * @ORM\ManyToOne(targetEntity="Profile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
-     * })
-     */
-    private $profile;
-
-    /**
-     * @var \User
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="selected_user_id", referencedColumnName="id")
-     * })
-     */
-    private $selectedUser;
 
     /**
      * @var \SpecialProfile
@@ -244,6 +175,26 @@ class TblCall
      * })
      */
     private $subprofile;
+
+    /**
+     * @var \Profile
+     *
+     * @ORM\ManyToOne(targetEntity="Profile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
+     * })
+     */
+    private $profile;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="selected_user_id", referencedColumnName="id")
+     * })
+     */
+    private $selectedUser;
 
     public function getId(): ?int
     {
@@ -433,12 +384,10 @@ class TblCall
     public function getInterviewDate(): ?\DateTimeInterface
     {
         return $this->interviewDate;
-        return $this->interviewDate;
     }
 
     public function setInterviewDate(?\DateTimeInterface $interviewDate): self
     {
-        $this->interviewDate = $interviewDate;
         $this->interviewDate = $interviewDate;
 
         return $this;
@@ -468,30 +417,6 @@ class TblCall
         return $this;
     }
 
-    public function getProfile(): ?Profile
-    {
-        return $this->profile;
-    }
-
-    public function setProfile(?Profile $profile): self
-    {
-        $this->profile = $profile;
-
-        return $this;
-    }
-
-    public function getSelectedUser(): ?User
-    {
-        return $this->selectedUser;
-    }
-
-    public function setSelectedUser(?User $selectedUser): self
-    {
-        $this->selectedUser = $selectedUser;
-
-        return $this;
-    }
-
     public function getSpecialProfile(): ?SpecialProfile
     {
         return $this->specialProfile;
@@ -512,6 +437,30 @@ class TblCall
     public function setSubprofile(?Subprofile $subprofile): self
     {
         $this->subprofile = $subprofile;
+
+        return $this;
+    }
+
+    public function getProfile(): ?Profile
+    {
+        return $this->profile;
+    }
+
+    public function setProfile(?Profile $profile): self
+    {
+        $this->profile = $profile;
+
+        return $this;
+    }
+
+    public function getSelectedUser(): ?User
+    {
+        return $this->selectedUser;
+    }
+
+    public function setSelectedUser(?User $selectedUser): self
+    {
+        $this->selectedUser = $selectedUser;
 
         return $this;
     }
