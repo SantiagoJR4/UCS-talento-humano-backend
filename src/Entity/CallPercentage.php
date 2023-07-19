@@ -31,21 +31,27 @@ class CallPercentage
 
     /**
      * @var int|null
+     * @var int|null
      *
+     * @ORM\Column(name="knowledge_test", type="integer", nullable=true)
      * @ORM\Column(name="knowledge_test", type="integer", nullable=true)
      */
     private $knowledgeTest;
 
     /**
      * @var int|null
+     * @var int|null
      *
+     * @ORM\Column(name="psycho_test", type="integer", nullable=true)
      * @ORM\Column(name="psycho_test", type="integer", nullable=true)
      */
     private $psychoTest;
 
     /**
      * @var int|null
+     * @var int|null
      *
+     * @ORM\Column(name="interview", type="integer", nullable=true)
      * @ORM\Column(name="interview", type="integer", nullable=true)
      */
     private $interview;
@@ -124,7 +130,11 @@ class CallPercentage
         return $this->knowledgeTest;
     }
 
+<<<<<<< HEAD
     public function setKnowledgeTest(?int $knowledgeTest): static
+=======
+    public function setKnowledgeTest(?int $knowledgeTest): self
+>>>>>>> fixedHv-Backend
     {
         $this->knowledgeTest = $knowledgeTest;
 
@@ -136,7 +146,11 @@ class CallPercentage
         return $this->psychoTest;
     }
 
+<<<<<<< HEAD
     public function setPsychoTest(?int $psychoTest): static
+=======
+    public function setPsychoTest(?int $psychoTest): self
+>>>>>>> fixedHv-Backend
     {
         $this->psychoTest = $psychoTest;
 
@@ -148,7 +162,11 @@ class CallPercentage
         return $this->interview;
     }
 
+<<<<<<< HEAD
     public function setInterview(?int $interview): static
+=======
+    public function setInterview(?int $interview): self
+>>>>>>> fixedHv-Backend
     {
         $this->interview = $interview;
 

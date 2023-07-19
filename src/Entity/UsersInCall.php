@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * UsersInCall
  *
- * @ORM\Table(name="users_in_call", indexes={@ORM\Index(name="fk_users_in_call_user", columns={"user_id"}), @ORM\Index(name="fk_users_in_call_call", columns={"call_id"})})
+ * @ORM\Table(name="users_in_call", indexes={@ORM\Index(name="fk_users_in_call_call", columns={"call_id"}), @ORM\Index(name="fk_users_in_call_user", columns={"user_id"})})
  * @ORM\Entity
  */
 class UsersInCall
@@ -30,9 +30,9 @@ class UsersInCall
     private $userStatus;
 
     /**
-     * @var bool
+     * @var bool|null
      *
-     * @ORM\Column(name="state_user_call", type="boolean", nullable=false)
+     * @ORM\Column(name="state_user_call", type="boolean", nullable=true)
      */
     private $stateUserCall;
 
@@ -101,6 +101,16 @@ class UsersInCall
      * })
      */
     private $call;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * })
+     */
+    private $user;
 
     /**
      * @var \User

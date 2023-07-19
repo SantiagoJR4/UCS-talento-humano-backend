@@ -277,7 +277,6 @@ class CurriculumVitaeController extends AbstractController
             $fechas[] = [
                 'admission_date' => $workExperience->getAdmissionDate()->format('d/m/Y'),
                 'retirement_date' => $workExperience->getRetirementDate() ? $workExperience->getRetirementDate()->format('d/m/Y') : date('d/m/Y')
-
             ];
         }
     
@@ -316,11 +315,11 @@ class CurriculumVitaeController extends AbstractController
     
         // Restar los espacios sin trabajar al total de días trabajados
         $totalDiasTrabajados -= $diasSinTrabajar;
-    
+
         if ($totalDiasTrabajados < 0) {
             $totalDiasTrabajados = 0;
         }
-                // Obtener los valores de años, meses y días
+        // Obtener los valores de años, meses y días
         $años = floor($totalDiasTrabajados / 360);
         $meses = floor(($totalDiasTrabajados % 360) / 30);
         $dias = $totalDiasTrabajados % 30;

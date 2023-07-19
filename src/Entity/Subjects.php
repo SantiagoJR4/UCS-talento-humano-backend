@@ -41,6 +41,16 @@ class Subjects
      */
     private $materia;
 
+    /**
+     * @var \Materias
+     *
+     * @ORM\ManyToOne(targetEntity="Materias")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="materia_id", referencedColumnName="id")
+     * })
+     */
+    private $materia;
+
     public function getId(): ?int
     {
         return $this->id;

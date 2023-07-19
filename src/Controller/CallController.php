@@ -31,6 +31,7 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Lcobucci\JWT\Validation\Validator;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -452,6 +453,29 @@ class CallController extends AbstractController
 
             return new JsonResponse(['message' => 'Usuario se ha inscrito'], 200, []);
         }
+    }
+    #[Route('/update-sign-up-to-call',name:'app_update_sign_up_to_call')]
+    public function updateSignUpToCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $data = json_decode($request->getContent(),true);
+
+        $userId = $data['userId'];
+        $tblCallID = $data['tblCall'];
+        $entityManager = $doctrine->getManager();
+        $tblCall = $entityManager->getRepository(TblCall::class)->find($tblCallID);
+        $user=$entityManager->getRepository(User::class)->find($userId);
+
+        $signUpCall = $entityManager->getRepository(UsersInCall::class)->find($data['id']);
+
+        $signUpCall -> setStateUserCall(1);
+        $signUpCall -> setUser($user);
+        $signUpCall -> setCall($tblCall);
+
+        $entityManager->persist($signUpCall);
+        $entityManager->flush();
+        
+        return new JsonResponse(['status'=>'Success','code'=>'200']);
     }
 
     #[Route('/registered-calls-by-user', name: 'app_registered_calls_by_user')]
@@ -955,5 +979,23 @@ class CallController extends AbstractController
         $entityManager = $doctrine->getManager();
         $entityManager->flush();
         return new JsonResponse(['done' => 'hecho'], 200, []);
+    }
+    #[Route('/get-one-call/{id}', name:'app_get_one_call')]
+    public function getOneCall(ManagerRegistry $doctrine,int $id) : JsonResponse
+    {
+        $tblCall = $doctrine->getRepository(TblCall::class)->find($id);
+        $userInCall = $doctrine->getRepository(UsersInCall::class)->findOneBy(['call' => $tblCall]);
+    
+        if (!$userInCall) {
+            return new JsonResponse(['status' => false, 'message' => 'No se encontró convocatoria']);
+        }
+    
+        $response = [
+            'id' => $userInCall->getId(),
+            'userId' => $userInCall->getUser()->getId(),
+            'stateUserInCall' => $userInCall->isStateUserCall()
+        ];
+    
+        return new JsonResponse($response);
     }
 }
