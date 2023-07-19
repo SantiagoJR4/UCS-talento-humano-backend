@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -83,6 +84,13 @@ class CallPercentage
      * @ORM\Column(name="further_training", type="integer", nullable=true)
      */
     private $furtherTraining;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="hv_score", type="text", length=0, nullable=true)
+     */
+    private $hvScore;
 
     /**
      * @var \TblCall
@@ -203,6 +211,18 @@ class CallPercentage
     public function setFurtherTraining(?int $furtherTraining): self
     {
         $this->furtherTraining = $furtherTraining;
+
+        return $this;
+    }
+
+    public function getHvScore(): ?string
+    {
+        return $this->hvScore;
+    }
+
+    public function setHvScore(?string $hvScore): self
+    {
+        $this->hvScore = $hvScore;
 
         return $this;
     }

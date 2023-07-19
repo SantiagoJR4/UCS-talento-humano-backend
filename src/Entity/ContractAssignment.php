@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * ContractAssignment
  *
- * @ORM\Table(name="contract_assignment", indexes={@ORM\Index(name="fk_contract_assignment_contract", columns={"contract_id"}), @ORM\Index(name="fk_contract_assignment_profile", columns={"profile_id"}), @ORM\Index(name="fk_contract_assignment_contract_charges", columns={"charge_id"})})
+ * @ORM\Table(name="contract_assignment")
  * @ORM\Entity
  */
 class ContractAssignment
@@ -22,72 +22,63 @@ class ContractAssignment
     private $id;
 
     /**
-     * @var \Profile
+     * @var int
      *
-     * @ORM\ManyToOne(targetEntity="Profile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
-     * })
+     * @ORM\Column(name="contract_id", type="integer", nullable=false)
      */
-    private $profile;
+    private $contractId;
 
     /**
-     * @var \Contract
+     * @var int
      *
-     * @ORM\ManyToOne(targetEntity="Contract")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="contract_id", referencedColumnName="id")
-     * })
+     * @ORM\Column(name="profile_id", type="integer", nullable=false)
      */
-    private $contract;
+    private $profileId;
 
     /**
-     * @var \ContractCharges
+     * @var int
      *
-     * @ORM\ManyToOne(targetEntity="ContractCharges")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="charge_id", referencedColumnName="id")
-     * })
+     * @ORM\Column(name="charge_id", type="integer", nullable=false)
      */
-    private $charge;
+    private $chargeId;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getProfile(): ?Profile
+    public function getContractId(): ?int
     {
-        return $this->profile;
+        return $this->contractId;
     }
 
-    public function setProfile(?Profile $profile): self
+    public function setContractId(int $contractId): self
     {
-        $this->profile = $profile;
+        $this->contractId = $contractId;
 
         return $this;
     }
 
-    public function getContract(): ?Contract
+    public function getProfileId(): ?int
     {
-        return $this->contract;
+        return $this->profileId;
     }
 
-    public function setContract(?Contract $contract): self
+    public function setProfileId(int $profileId): self
     {
-        $this->contract = $contract;
+        $this->profileId = $profileId;
 
         return $this;
     }
 
-    public function getCharge(): ?ContractCharges
+    public function getChargeId(): ?int
     {
-        return $this->charge;
+        return $this->chargeId;
     }
 
-    public function setCharge(?ContractCharges $charge): self
+    public function setChargeId(int $chargeId): self
     {
-        $this->charge = $charge;
+        $this->chargeId = $chargeId;
 
         return $this;
     }

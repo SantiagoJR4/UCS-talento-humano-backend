@@ -37,6 +37,13 @@ class TblCall
     private $description;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="steps_of_call", type="text", length=0, nullable=true)
+     */
+    private $stepsOfCall;
+
+    /**
      * @var int
      *
      * @ORM\Column(name="state", type="smallint", nullable=false, options={"comment"="0->created,
@@ -150,6 +157,16 @@ class TblCall
     private $startOfContractDate;
 
     /**
+     * @var \SpecialProfile
+     *
+     * @ORM\ManyToOne(targetEntity="SpecialProfile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="special_profile_id", referencedColumnName="id")
+     * })
+     */
+    private $specialProfile;
+
+    /**
      * @var \Subprofile
      *
      * @ORM\ManyToOne(targetEntity="Subprofile")
@@ -179,16 +196,6 @@ class TblCall
      */
     private $selectedUser;
 
-    /**
-     * @var \SpecialProfile
-     *
-     * @ORM\ManyToOne(targetEntity="SpecialProfile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="special_profile_id", referencedColumnName="id")
-     * })
-     */
-    private $specialProfile;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -214,6 +221,18 @@ class TblCall
     public function setDescription(string $description): self
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    public function getStepsOfCall(): ?string
+    {
+        return $this->stepsOfCall;
+    }
+
+    public function setStepsOfCall(?string $stepsOfCall): self
+    {
+        $this->stepsOfCall = $stepsOfCall;
 
         return $this;
     }
@@ -398,6 +417,18 @@ class TblCall
         return $this;
     }
 
+    public function getSpecialProfile(): ?SpecialProfile
+    {
+        return $this->specialProfile;
+    }
+
+    public function setSpecialProfile(?SpecialProfile $specialProfile): self
+    {
+        $this->specialProfile = $specialProfile;
+
+        return $this;
+    }
+
     public function getSubprofile(): ?Subprofile
     {
         return $this->subprofile;
@@ -430,18 +461,6 @@ class TblCall
     public function setSelectedUser(?User $selectedUser): self
     {
         $this->selectedUser = $selectedUser;
-
-        return $this;
-    }
-
-    public function getSpecialProfile(): ?SpecialProfile
-    {
-        return $this->specialProfile;
-    }
-
-    public function setSpecialProfile(?SpecialProfile $specialProfile): self
-    {
-        $this->specialProfile = $specialProfile;
 
         return $this;
     }

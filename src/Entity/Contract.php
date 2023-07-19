@@ -25,42 +25,35 @@ class Contract
     /**
      * @var string
      *
-     * @ORM\Column(name="type_contract", type="string", length=255, nullable=false, options={"comment"="Contrato a Término Fijo.
-Contrato a término indefinido.
-Contrato de Obra o labor.
-Contrato civil por prestación de servicios.
-Contrato de aprendizaje.
-Contrato ocasional de trabajo.
-"})
+     * @ORM\Column(name="type_contract", type="string", length=255, nullable=false)
      */
     private $typeContract;
 
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="work_start", type="date", nullable=false, options={"comment"="Fecha iniciación de labores"})
+     * @ORM\Column(name="work_start", type="date", nullable=false)
      */
     private $workStart;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="initial_contract", type="string", length=255, nullable=false, options={"comment"="Término inicial del contrato"})
+     * @ORM\Column(name="initial_contract", type="string", length=255, nullable=false)
      */
     private $initialContract;
 
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="expiration_contract", type="date", nullable=false, options={"comment"="Vence el día"})
+     * @ORM\Column(name="expiration_contract", type="date", nullable=false)
      */
     private $expirationContract;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="work_dedication", type="string", length=255, nullable=false, options={"comment"="'TC':'Tiempo Completo'
-'MT':'Medio Tiempo'"})
+     * @ORM\Column(name="work_dedication", type="string", length=255, nullable=false)
      */
     private $workDedication;
 
@@ -86,9 +79,9 @@ Contrato ocasional de trabajo.
     private $functions;
 
     /**
-     * @var string|null
+     * @var string
      *
-     * @ORM\Column(name="specific_functions", type="text", length=0, nullable=true)
+     * @ORM\Column(name="specific_functions", type="text", length=0, nullable=false)
      */
     private $specificFunctions;
 
@@ -208,7 +201,7 @@ Contrato ocasional de trabajo.
         return $this->specificFunctions;
     }
 
-    public function setSpecificFunctions(?string $specificFunctions): self
+    public function setSpecificFunctions(string $specificFunctions): self
     {
         $this->specificFunctions = $specificFunctions;
 

@@ -107,6 +107,13 @@ class User
     private $specialUser;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="history", type="text", length=0, nullable=false)
+     */
+    private $history;
+
+    /**
      * @var int
      *
      * @ORM\Column(name="sub", type="integer", nullable=false, options={"unsigned"=true})
@@ -258,6 +265,18 @@ class User
     public function setSpecialUser(?string $specialUser): self
     {
         $this->specialUser = $specialUser;
+
+        return $this;
+    }
+
+    public function getHistory(): ?string
+    {
+        return $this->history;
+    }
+
+    public function setHistory(string $history): self
+    {
+        $this->history = $history;
 
         return $this;
     }

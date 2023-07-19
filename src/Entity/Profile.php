@@ -37,9 +37,9 @@ class Profile
     private $area;
 
     /**
-     * @var string|null
+     * @var string
      *
-     * @ORM\Column(name="charge", type="text", length=0, nullable=true)
+     * @ORM\Column(name="charge", type="text", length=0, nullable=false)
      */
     private $charge;
 
@@ -119,7 +119,7 @@ class Profile
         return $this->charge;
     }
 
-    public function setCharge(?string $charge): self
+    public function setCharge(string $charge): self
     {
         $this->charge = $charge;
 

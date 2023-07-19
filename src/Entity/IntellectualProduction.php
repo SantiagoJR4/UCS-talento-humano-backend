@@ -23,25 +23,32 @@ class IntellectualProduction
     private $id;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="type_prod", type="string", length=2, nullable=false, options={"fixed"=true})
+     * @ORM\Column(name="type_prod", type="string", length=2, nullable=true, options={"fixed"=true})
      */
     private $typeProd;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="title_prod", type="string", length=255, nullable=false)
+     * @ORM\Column(name="title_prod", type="string", length=255, nullable=true)
      */
     private $titleProd;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="url_verification", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="url_verification", type="text", length=65535, nullable=true)
      */
     private $urlVerification;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="cvlac", type="string", length=255, nullable=true)
+     */
+    private $cvlac;
 
     /**
      * @var string|null
@@ -70,7 +77,7 @@ class IntellectualProduction
         return $this->typeProd;
     }
 
-    public function setTypeProd(string $typeProd): self
+    public function setTypeProd(?string $typeProd): self
     {
         $this->typeProd = $typeProd;
 
@@ -82,7 +89,7 @@ class IntellectualProduction
         return $this->titleProd;
     }
 
-    public function setTitleProd(string $titleProd): self
+    public function setTitleProd(?string $titleProd): self
     {
         $this->titleProd = $titleProd;
 
@@ -94,9 +101,21 @@ class IntellectualProduction
         return $this->urlVerification;
     }
 
-    public function setUrlVerification(string $urlVerification): self
+    public function setUrlVerification(?string $urlVerification): self
     {
         $this->urlVerification = $urlVerification;
+
+        return $this;
+    }
+
+    public function getCvlac(): ?string
+    {
+        return $this->cvlac;
+    }
+
+    public function setCvlac(?string $cvlac): self
+    {
+        $this->cvlac = $cvlac;
 
         return $this;
     }

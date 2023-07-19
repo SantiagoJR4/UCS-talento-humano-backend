@@ -297,9 +297,9 @@ class ContractController extends AbstractController
                 }
     
                 $assignment = new ContractAssignment();
-                $assignment->setContract($contractEntity);
-                $assignment->setProfile($profile);
-                $assignment->setCharge($contractChargesEntity);
+                $assignment->setContractId($contractEntity);
+                $assignment->setProfileId($profile);
+                $assignment->setChargeId($contractChargesEntity);
     
                 $entityManager->persist($assignment);
             }
@@ -338,10 +338,11 @@ class ContractController extends AbstractController
     public function saveFileContract(Request $request): JsonResponse
     {
         $file = $request->files->get('file');
+        $userName = $request->request->get('userName');
 
         if ($file instanceof UploadedFile) {
             $folderDestination = $this->getParameter('contract');
-            $fileName = 'contrato.docx'; // Nombre del archivo en el servidor, puedes cambiarlo si lo necesitas
+            $fileName = 'contrato_' . preg_replace('/[^A-Za-z0-9\-_]+/', '_', $userName) . '.docx';
             
             try {
                 $file->move($folderDestination, $fileName);

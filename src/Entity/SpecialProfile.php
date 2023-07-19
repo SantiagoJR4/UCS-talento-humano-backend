@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -24,28 +25,28 @@ class SpecialProfile
     /**
      * @var string
      *
-     * @ORM\Column(name="under_graduate_training", type="string", length=255, nullable=false)
+     * @ORM\Column(name="under_graduate_training", type="text", length=65535, nullable=false)
      */
     private $underGraduateTraining;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="post_graduate_training", type="string", length=255, nullable=false)
+     * @ORM\Column(name="post_graduate_training", type="text", length=65535, nullable=false)
      */
     private $postGraduateTraining;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="previous_experience", type="string", length=255, nullable=false)
+     * @ORM\Column(name="previous_experience", type="text", length=65535, nullable=false)
      */
     private $previousExperience;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="further_training", type="string", length=255, nullable=false)
+     * @ORM\Column(name="further_training", type="text", length=65535, nullable=false)
      */
     private $furtherTraining;
 
