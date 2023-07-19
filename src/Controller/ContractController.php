@@ -24,6 +24,7 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\DBAL\Connection;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class ContractController extends AbstractController
 {
@@ -331,5 +332,29 @@ class ContractController extends AbstractController
         ";
         $results = $connection->executeQuery($sql, ['contractChargeId' => $contractChargeId])->fetchAllAssociative();
         return new JsonResponse($results);
+    }
+
+    #[Route('/contract/saveFileContract', name: 'app_contract_save_file_contract')]
+    public function saveFileContract(Request $request): JsonResponse
+    {
+        $file = $request->files->get('file');
+
+        if ($file instanceof UploadedFile) {
+            $folderDestination = $this->getParameter('contract');
+            $fileName = 'contrato.docx'; // Nombre del archivo en el servidor, puedes cambiarlo si lo necesitas
+            
+            try {
+                $file->move($folderDestination, $fileName);
+                if (file_exists($folderDestination . DIRECTORY_SEPARATOR . $fileName)) {
+                    return new JsonResponse(['message' => 'Archivo guardado correctamente en el servidor.']);
+                } else {
+                    return new JsonResponse(['error' => 'Error al guardar el archivo en el servidor.']);
+                }
+            } catch (\Exception $e) {
+                return new JsonResponse(['error' => 'Error al guardar el archivo en el servidor.']);
+            }
+        }
+
+        return new JsonResponse(['error' => 'Archivo no válido.']);
     }
 }
