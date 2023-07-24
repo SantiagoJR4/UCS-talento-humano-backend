@@ -53,7 +53,7 @@ class Contract
     /**
      * @var string
      *
-     * @ORM\Column(name="work_dedication", type="string", length=255, nullable=false)
+     * @ORM\Column(name="work_dedication", type="text", length=0, nullable=false)
      */
     private $workDedication;
 

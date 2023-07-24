@@ -264,10 +264,10 @@ class ContractController extends AbstractController
             $contract->setWorkStart(new DateTime($data['work_start']));
             $contract->setInitialContract($data['initial_contract']);
             $contract->setExpirationContract(new DateTime($data['expiration_contract']));
-            $contract->setWorkDedication($data['work_dedication']);
+            $contract->setWorkDedication(json_encode($data['work_dedication']));
             $contract->setSalary($data['salary']);
             $contract->setWeeklyHours($data['weekly_hours']);
-            $contract->setFunctions($data['functions']);
+            $contract->setFunctions(json_encode($data['functions']));
             $contract->setSpecificfunctions($data['specific_functions']);
             $contract->setUser($user);
     
@@ -275,7 +275,7 @@ class ContractController extends AbstractController
             $entityManager->flush();
     
             $contractId = $contract->getId(); // Obtener el ID del contrato recién creado
-            $contractEntity = $entityManager->getRepository(Contract::class)->find($contractId);
+            //$contractEntity = $entityManager->getRepository(Contract::class)->find($contractId);
     
             $contractCharges = $data['contractCharges'];
             $profiles = $data['profiles'];
@@ -297,9 +297,9 @@ class ContractController extends AbstractController
                 }
     
                 $assignment = new ContractAssignment();
-                $assignment->setContractId($contractEntity);
-                $assignment->setProfileId($profile);
-                $assignment->setChargeId($contractChargesEntity);
+                $assignment->setContractId($contractId);
+                $assignment->setProfileId($profileId);
+                $assignment->setChargeId($contractChargeId);
     
                 $entityManager->persist($assignment);
             }
