@@ -93,16 +93,6 @@ class UsersInCall
     private $finalRating;
 
     /**
-     * @var \User
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     * })
-     */
-    private $user;
-
-    /**
      * @var \TblCall
      *
      * @ORM\ManyToOne(targetEntity="TblCall")
@@ -111,6 +101,16 @@ class UsersInCall
      * })
      */
     private $call;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * })
+     */
+    private $user;
 
     public function getId(): ?int
     {
@@ -237,18 +237,6 @@ class UsersInCall
         return $this;
     }
 
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
     public function getCall(): ?TblCall
     {
         return $this->call;
@@ -257,6 +245,18 @@ class UsersInCall
     public function setCall(?TblCall $call): self
     {
         $this->call = $call;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

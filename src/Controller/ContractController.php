@@ -327,8 +327,8 @@ class ContractController extends AbstractController
         $sql = "
             SELECT p.id, p.charge, p.functions, c.type_employee, c.name, p.name
             FROM profile p
-            JOIN contract_charges c ON JSON_SEARCH(p.charge, 'one', c.id) IS NOT NULL
-            WHERE c.id = :contractChargeId
+            JOIN contract_charges c ON JSON_CONTAINS(p.charge, CAST(c.id AS CHAR), '$')
+            WHERE c.id = :contractChargeId;
         ";
         $results = $connection->executeQuery($sql, ['contractChargeId' => $contractChargeId])->fetchAllAssociative();
         return new JsonResponse($results);

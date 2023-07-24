@@ -26,14 +26,12 @@ class Contract
      * @var string
      *
      * @ORM\Column(name="type_contract", type="string", length=255, nullable=false)
-     * @ORM\Column(name="type_contract", type="string", length=255, nullable=false)
      */
     private $typeContract;
 
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="work_start", type="date", nullable=false)
      * @ORM\Column(name="work_start", type="date", nullable=false)
      */
     private $workStart;
@@ -42,14 +40,12 @@ class Contract
      * @var string
      *
      * @ORM\Column(name="initial_contract", type="string", length=255, nullable=false)
-     * @ORM\Column(name="initial_contract", type="string", length=255, nullable=false)
      */
     private $initialContract;
 
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="expiration_contract", type="date", nullable=false)
      * @ORM\Column(name="expiration_contract", type="date", nullable=false)
      */
     private $expirationContract;
@@ -84,9 +80,7 @@ class Contract
 
     /**
      * @var string
-     * @var string
      *
-     * @ORM\Column(name="specific_functions", type="text", length=0, nullable=false)
      * @ORM\Column(name="specific_functions", type="text", length=0, nullable=false)
      */
     private $specificFunctions;
@@ -207,7 +201,6 @@ class Contract
         return $this->specificFunctions;
     }
 
-    public function setSpecificFunctions(string $specificFunctions): self
     public function setSpecificFunctions(string $specificFunctions): self
     {
         $this->specificFunctions = $specificFunctions;
