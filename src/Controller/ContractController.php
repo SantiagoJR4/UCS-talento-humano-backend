@@ -297,9 +297,9 @@ class ContractController extends AbstractController
                 }
     
                 $assignment = new ContractAssignment();
-                $assignment->setContractId($contractId);
-                $assignment->setProfileId($profileId);
-                $assignment->setChargeId($contractChargeId);
+                $assignment->setContract($contractId);
+                $assignment->setProfile($profileId);
+                $assignment->setCharge($contractChargeId);
     
                 $entityManager->persist($assignment);
             }
