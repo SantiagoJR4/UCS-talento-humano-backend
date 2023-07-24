@@ -275,7 +275,7 @@ class ContractController extends AbstractController
             $entityManager->flush();
     
             $contractId = $contract->getId(); // Obtener el ID del contrato recién creado
-            //$contractEntity = $entityManager->getRepository(Contract::class)->find($contractId);
+            $contractEntity = $entityManager->getRepository(Contract::class)->find($contractId);
     
             $contractCharges = $data['contractCharges'];
             $profiles = $data['profiles'];
@@ -297,9 +297,9 @@ class ContractController extends AbstractController
                 }
     
                 $assignment = new ContractAssignment();
-                $assignment->setContract($contractId);
-                $assignment->setProfile($profileId);
-                $assignment->setCharge($contractChargeId);
+                $assignment->setContract($contractEntity);
+                $assignment->setProfile($profile);
+                $assignment->setCharge($contractChargesEntity);
     
                 $entityManager->persist($assignment);
             }
