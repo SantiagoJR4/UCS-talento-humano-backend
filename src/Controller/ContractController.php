@@ -14,7 +14,6 @@ use Doctrine\Persistence\ManagerRegistry;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use PhpParser\Node\Stmt\TryCatch;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -28,6 +27,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class ContractController extends AbstractController
 {
+    
     //TODO: HACER TOKEN PARA SUPERUSUARIOS
     public function validateTokenSuper(Request $request): JsonResponse
     {
@@ -49,7 +49,7 @@ class ContractController extends AbstractController
             return new JsonResponse(false);
         }
     }
-    
+
     #[Route('/contract/create-medicalTest', name: 'app_contract_medicalTest')]
     public function create(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
     {
@@ -86,15 +86,17 @@ class ContractController extends AbstractController
     
             try{
                 $email = (new TemplatedEmail())
-                    ->from('santipo12@gmail.com')
-                    ->to($user->getEmail())
+                    ->from('pasante.santiago@unicatolicadelsur.edu.co')
+                    ->to($user->getEmail(), 'pasante.santiago@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
                     ->subject('Asignación de cita médica')
                     ->htmlTemplate('email/medicalTestEmail.html.twig')
                     ->context([
                         'user' => $user,
                         'medicalTest' => $medicalTest
                     ]);         
+
                 $mailer->send($email);
+
                 $message = 'El examén médico fue programado con éxito, se envío un correo con la información a ' . $user->getEmail();
             } catch (\Throwable $th) {
                 $message = 'Error al enviar el correo:'.$th->getMessage();
@@ -147,7 +149,7 @@ class ContractController extends AbstractController
         try{
             $email = (new TemplatedEmail())
                 ->from('santipo12@gmail.com')
-                ->to($user->getEmail())
+                ->to($user->getEmail(),'pasante.santiago@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
                 ->subject('Actualización Cita Médica')
                 ->htmlTemplate('email/medicalTestEmail.html.twig')
                 ->context([
@@ -247,70 +249,142 @@ class ContractController extends AbstractController
     #[Route('/contract/create-contract-and-assignment', name:'app_contract_create_contract_and_assignment')]
     public function createContractAndAssignment(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
-        $isValidToken = $this->validateTokenSuper($request)->getContent();
-        $entityManager = $doctrine->getManager();
-        $data = json_decode($request->getContent(), true);
-    
-        if ($isValidToken === false) {
-            return new JsonResponse(['error' => 'Token no válido']);
-        } else {
-            $user = $entityManager->getRepository(User::class)->find($data['user']);
-            if (!$user) {
-                throw $this->createNotFoundException('No user found for id' . $data['id']);
-            }
-    
-            $contract = new Contract();
-            $contract->setTypeContract($data['type_contract']);
-            $contract->setWorkStart(new DateTime($data['work_start']));
-            $contract->setInitialContract($data['initial_contract']);
-            $contract->setExpirationContract(new DateTime($data['expiration_contract']));
-            $contract->setWorkDedication(json_encode($data['work_dedication']));
-            $contract->setSalary($data['salary']);
-            $contract->setWeeklyHours($data['weekly_hours']);
-            $contract->setFunctions(json_encode($data['functions']));
-            $contract->setSpecificfunctions($data['specific_functions']);
-            $contract->setUser($user);
-    
-            $entityManager->persist($contract);
-            $entityManager->flush();
-    
-            $contractId = $contract->getId(); // Obtener el ID del contrato recién creado
-            $contractEntity = $entityManager->getRepository(Contract::class)->find($contractId);
-    
-            $contractCharges = $data['contractCharges'];
-            $profiles = $data['profiles'];
-    
-            $numAssignments = min(count($contractCharges), count($profiles));
-    
-            for ($i = 0; $i < $numAssignments; $i++) {
-                $contractChargeId = $contractCharges[$i];
-                $profileId = $profiles[$i];
-    
-                $contractChargesEntity = $entityManager->getRepository(ContractCharges::class)->find($contractChargeId);
-                if (!$contractChargesEntity) {
-                    throw $this->createNotFoundException('No contract charge found for id ' . $contractChargeId);
-                }
-    
-                $profile = $entityManager->getRepository(Profile::class)->find($profileId);
-                if (!$profile) {
-                    throw $this->createNotFoundException('No profile found for id ' . $profileId);
-                }
-    
-                $assignment = new ContractAssignment();
-                $assignment->setContract($contractEntity);
-                $assignment->setProfile($profile);
-                $assignment->setCharge($contractChargesEntity);
-    
-                $entityManager->persist($assignment);
-            }
-    
-            $entityManager->flush();
-    
-            return new JsonResponse(['status' => 'Success', 'Code' => '200', 'message' => 'Contrato y asignación generados con éxito']);
-        }
-    }
-    
+			$isValidToken = $this->validateTokenSuper($request)->getContent();
+			$entityManager = $doctrine->getManager();
+			$data = $request->request->all();
 
+            $workStart = $data['work_start'];
+            $expirationContract = $data['expiration_contract'];
+
+			if ($isValidToken === false) {
+					return new JsonResponse(['error' => 'Token no válido']);
+			} else {
+				$user = $entityManager->getRepository(User::class)->find($data['user']);
+				if (!$user) {
+						throw $this->createNotFoundException('No user found for id' . $data['id']);
+				}
+				$contract = new Contract();
+				$contract->setTypeContract($data['type_contract']);
+                if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$workStart)){
+                    $dateTimeWorkStart = new DateTime($workStart);
+                    $contract->setWorkStart($dateTimeWorkStart);
+                }
+				$contract->setInitialContract($data['initial_contract']);
+                if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$expirationContract)){
+                    $dateTimeExpirationContract = new DateTime($expirationContract);
+                    $contract->setExpirationContract($dateTimeExpirationContract);
+                }
+				$contract->setWorkDedication(json_encode($data['work_dedication']));
+				$contract->setSalary($data['salary']);
+				$contract->setWeeklyHours($data['weekly_hours']);
+				$contract->setFunctions(json_encode($data['functions']));
+				$contract->setSpecificfunctions($data['specific_functions']);
+				$contract->setUser($user);
+
+				$file = $request->files->get('file');
+				$identificationUser = $data['identificationUser'];
+				
+				if ($file instanceof UploadedFile) {
+					$folderDestination = $this->getParameter('contract')
+                        .'/'
+                        .$identificationUser;
+					$fileName = 'contrato_' . preg_replace('/[^A-Za-z0-9\-_]+/', '_', $identificationUser) . '.docx';
+                    
+					try {
+						$file->move($folderDestination, $fileName);
+								$contract->setContractFile($fileName);
+						} catch (\Exception $e) {
+								return new JsonResponse(['error' => 'Error al guardar el archivo en el servidor.']);
+						}
+				}
+
+				$entityManager->persist($contract);
+				$entityManager->flush();
+
+				$contractId = $contract->getId(); // Obtener el ID del contrato recién creado
+				$contractEntity = $entityManager->getRepository(Contract::class)->find($contractId);
+
+				$contractCharges = json_decode($data['contractCharges'],true);
+				$profiles = json_decode($data['profiles'],true);
+
+				$numAssignments = min(count($contractCharges), count($profiles));
+
+				for ($i = 0; $i < $numAssignments; $i++) {
+						$contractChargeId = $contractCharges[$i];
+						$profileId = $profiles[$i];
+
+						$contractChargesEntity = $entityManager->getRepository(ContractCharges::class)->find($contractChargeId);
+						if (!$contractChargesEntity) {
+								throw $this->createNotFoundException('No contract charge found for id ' . $contractChargeId);
+						}
+
+						$profile = $entityManager->getRepository(Profile::class)->find($profileId);
+						if (!$profile) {
+								throw $this->createNotFoundException('No profile found for id ' . $profileId);
+						}
+
+						$assignment = new ContractAssignment();
+						$assignment->setContract($contractEntity);
+						$assignment->setProfile($profile);
+						$assignment->setCharge($contractChargesEntity);
+
+						$entityManager->persist($assignment);
+				}
+
+				$entityManager->flush();
+
+				return new JsonResponse(['status' => 'Success', 'Code' => '200', 'message' => 'Contrato y asignación generados con éxito']);
+			}
+    }
+
+		#[Route('/contract/read-dontract/{id}', name:'app_read_contract')]
+		public function readContract(ManagerRegistry $doctrine, int $id): JsonResponse
+		{
+			$user = $doctrine->getRepository(User::class)->find($id);
+			if (!$user) {
+					return new JsonResponse(['status' => false, 'message' => 'No se encontró el usuario']);
+			}
+
+			// Obtener todos los contratos asociados al usuario
+			$contracts = $doctrine->getRepository(Contract::class)->findBy(['user' => $user]);
+			if (empty($contracts)) {
+					return new JsonResponse(['status' => false, 'message' => 'No se encontraron contratos para este usuario']);
+			}
+
+			$contractData = [];
+			foreach ($contracts as $contract) {
+					// Obtener la asignación del contrato actual
+					$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findOneBy(['contract' => $contract->getId()]);
+
+					$contractData[] = [
+							'contract' => [
+									'type_contract' => $contract->getTypeContract(),
+									'work_start' => $contract->getWorkStart()->format('Y-m-d'),
+									'initial_contract' => $contract->getInitialContract(),
+									'expiration_contract' => $contract->getExpirationContract()->format('Y-m-d'),
+									'work_dedication' => $contract->getWorkDedication(),
+									'salary' => $contract->getSalary(),
+									'weekly_hours' => $contract->getWeeklyHours(),
+									'functions' => $contract->getFunctions(),
+									'specific_functions' => $contract->getSpecificFunctions(),
+									'contract_file' => $contract->getContractFile(),
+									// Agregar más campos del contrato según tu modelo
+							],
+							'assignment' => [
+									'profile_id' => $assignmentContract ? $assignmentContract->getProfile() : null,
+									'charge_id' => $assignmentContract ? $assignmentContract->getCharge() : null,
+									// Agregar más campos de la asignación según tu modelo
+							],
+					];
+			}
+
+			return new JsonResponse([
+					'status' => true,
+					'contract_data' => $contractData,
+			]);
+
+		}
+	
     #[Route('/contract/list-charges', name:'app_contract_list_charges')]
     public function listCharges(ManagerRegistry $doctrine, SerializerInterface $serializer) : JsonResponse
     {
@@ -332,30 +406,5 @@ class ContractController extends AbstractController
         ";
         $results = $connection->executeQuery($sql, ['contractChargeId' => $contractChargeId])->fetchAllAssociative();
         return new JsonResponse($results);
-    }
-
-    #[Route('/contract/saveFileContract', name: 'app_contract_save_file_contract')]
-    public function saveFileContract(Request $request): JsonResponse
-    {
-        $file = $request->files->get('file');
-        $userName = $request->request->get('userName');
-
-        if ($file instanceof UploadedFile) {
-            $folderDestination = $this->getParameter('contract');
-            $fileName = 'contrato_' . preg_replace('/[^A-Za-z0-9\-_]+/', '_', $userName) . '.docx';
-            
-            try {
-                $file->move($folderDestination, $fileName);
-                if (file_exists($folderDestination . DIRECTORY_SEPARATOR . $fileName)) {
-                    return new JsonResponse(['message' => 'Archivo guardado correctamente en el servidor.']);
-                } else {
-                    return new JsonResponse(['error' => 'Error al guardar el archivo en el servidor.']);
-                }
-            } catch (\Exception $e) {
-                return new JsonResponse(['error' => 'Error al guardar el archivo en el servidor.']);
-            }
-        }
-
-        return new JsonResponse(['error' => 'Archivo no válido.']);
     }
 }

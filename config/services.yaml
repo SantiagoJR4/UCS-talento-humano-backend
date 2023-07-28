@@ -34,3 +34,4 @@ services:
 
     firebase_jwt:
         class: Firebase\JWT\JWT
+

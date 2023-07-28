@@ -86,6 +86,13 @@ class Contract
     private $specificFunctions;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="contract_file", type="text", length=0, nullable=false)
+     */
+    private $contractFile;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -204,6 +211,18 @@ class Contract
     public function setSpecificFunctions(string $specificFunctions): self
     {
         $this->specificFunctions = $specificFunctions;
+
+        return $this;
+    }
+
+    public function getContractFile(): ?string
+    {
+        return $this->contractFile;
+    }
+
+    public function setContractFile(string $contractFile): self
+    {
+        $this->contractFile = $contractFile;
 
         return $this;
     }
