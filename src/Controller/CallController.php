@@ -247,6 +247,7 @@ class CallController extends AbstractController
         return new JsonResponse(['done' => 'está hecho'],200,[]);
     }
 
+    //TODO: Agregar en jury el campo de jefe Inmediato
     #[Route('/create-new-call', name: 'app_create_new_call')]
     public function createNewCall(ManagerRegistry $doctrine, SerializerInterface $serializer, Request $request): JsonResponse
     {
@@ -321,6 +322,13 @@ class CallController extends AbstractController
             ->leftJoin('c.specialProfile', 'spec')
             ->setParameter('id', $callId);
         $call = $query->getQuery()->getArrayResult();
+        $call = convertDateTimeToString2($call);
+        $call = $call[0];
+        $call['requiredForPercentages'] = json_decode($call['requiredForPercentages'], true);
+        $call['requiredForCurriculumVitae'] = json_decode($call['requiredForCurriculumVitae'], true);
+        $call['requiredToSignUp'] = json_decode($call['requiredToSignUp'], true);
+        $call['stepsOfCall'] = json_decode($call['stepsOfCall'], true);
+        $call['salary'] = json_decode($call['salary'], true);
         return new JsonResponse($call, 200,[]);
     }
 
@@ -1007,5 +1015,23 @@ class CallController extends AbstractController
         $entityManager = $doctrine->getManager();
         $entityManager->flush();
         return new JsonResponse(['done' => 'hecho'], 200, []);
+    }
+
+    #[Route('/get-posible-users-for-jury', name: 'app_posible_users_for_jury')]
+    public function posibleUsersForJury(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        //TODO: Add token
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select('u.id', 'u.names', 'u.lastNames')
+            ->from('App\Entity\User', 'u')
+            ->where('u.userType IN (:userType)')
+            ->setParameter('userType', [1,2,3]);
+        $array = $query->getQuery()->getArrayResult();
+        $usersForJury = array();
+        foreach ($array as $person) {
+            $fullName = $person["names"] . " " . $person["lastNames"];
+            $usersForJury[] = array("id" => $person["id"], "fullName" => $fullName);
+        }
+        return new JsonResponse($usersForJury, 200, []);
     }
 }
