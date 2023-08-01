@@ -56,7 +56,8 @@ class UserController extends AbstractController
             'type_identification' => $dataUser->getTypeIdentification(),
             'identification' => $dataUser->getIdentification(),
             'email' => $dataUser->getEmail(),
-            'phone' => $dataUser->getPhone()
+            'phone' => $dataUser->getPhone(),
+            'sub' => $dataUser->getSub()
         ];
 
         $json = $helpers->serializador($data);
@@ -79,7 +80,6 @@ class UserController extends AbstractController
                 'email' => $user->getEmail(),
                 'phone' => $user->getPhone(),
                 'url_photo' => $user->getUrlPhoto()
-
             ];
         }
 

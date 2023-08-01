@@ -43,16 +43,6 @@ class CompetencePercentage
     private $extraCompetence;
 
     /**
-     * @var \TblCall
-     *
-     * @ORM\ManyToOne(targetEntity="TblCall")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
-     * })
-     */
-    private $call;
-
-    /**
      * @var \CompetenceProfile
      *
      * @ORM\ManyToOne(targetEntity="CompetenceProfile")
@@ -61,6 +51,16 @@ class CompetencePercentage
      * })
      */
     private $competenceProfile;
+
+    /**
+     * @var \TblCall
+     *
+     * @ORM\ManyToOne(targetEntity="TblCall")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="call_id", referencedColumnName="id")
+     * })
+     */
+    private $call;
 
     public function getId(): ?int
     {
@@ -103,18 +103,6 @@ class CompetencePercentage
         return $this;
     }
 
-    public function getCall(): ?TblCall
-    {
-        return $this->call;
-    }
-
-    public function setCall(?TblCall $call): self
-    {
-        $this->call = $call;
-
-        return $this;
-    }
-
     public function getCompetenceProfile(): ?CompetenceProfile
     {
         return $this->competenceProfile;
@@ -123,6 +111,18 @@ class CompetencePercentage
     public function setCompetenceProfile(?CompetenceProfile $competenceProfile): self
     {
         $this->competenceProfile = $competenceProfile;
+
+        return $this;
+    }
+
+    public function getCall(): ?TblCall
+    {
+        return $this->call;
+    }
+
+    public function setCall(?TblCall $call): self
+    {
+        $this->call = $call;
 
         return $this;
     }
