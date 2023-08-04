@@ -157,26 +157,6 @@ class TblCall
     private $startOfContractDate;
 
     /**
-     * @var \Profile
-     *
-     * @ORM\ManyToOne(targetEntity="Profile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
-     * })
-     */
-    private $profile;
-
-    /**
-     * @var \User
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="selected_user_id", referencedColumnName="id")
-     * })
-     */
-    private $selectedUser;
-
-    /**
      * @var \SpecialProfile
      *
      * @ORM\ManyToOne(targetEntity="SpecialProfile")
@@ -195,6 +175,26 @@ class TblCall
      * })
      */
     private $subprofile;
+
+    /**
+     * @var \Profile
+     *
+     * @ORM\ManyToOne(targetEntity="Profile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
+     * })
+     */
+    private $profile;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="selected_user_id", referencedColumnName="id")
+     * })
+     */
+    private $selectedUser;
 
     public function getId(): ?int
     {
@@ -417,30 +417,6 @@ class TblCall
         return $this;
     }
 
-    public function getProfile(): ?Profile
-    {
-        return $this->profile;
-    }
-
-    public function setProfile(?Profile $profile): self
-    {
-        $this->profile = $profile;
-
-        return $this;
-    }
-
-    public function getSelectedUser(): ?User
-    {
-        return $this->selectedUser;
-    }
-
-    public function setSelectedUser(?User $selectedUser): self
-    {
-        $this->selectedUser = $selectedUser;
-
-        return $this;
-    }
-
     public function getSpecialProfile(): ?SpecialProfile
     {
         return $this->specialProfile;
@@ -461,6 +437,30 @@ class TblCall
     public function setSubprofile(?Subprofile $subprofile): self
     {
         $this->subprofile = $subprofile;
+
+        return $this;
+    }
+
+    public function getProfile(): ?Profile
+    {
+        return $this->profile;
+    }
+
+    public function setProfile(?Profile $profile): self
+    {
+        $this->profile = $profile;
+
+        return $this;
+    }
+
+    public function getSelectedUser(): ?User
+    {
+        return $this->selectedUser;
+    }
+
+    public function setSelectedUser(?User $selectedUser): self
+    {
+        $this->selectedUser = $selectedUser;
 
         return $this;
     }

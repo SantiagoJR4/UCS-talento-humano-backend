@@ -274,10 +274,10 @@
 									$dateTimeExpirationContract = new DateTime($expirationContract);
 									$contract->setExpirationContract($dateTimeExpirationContract);
 							}
-			$contract->setWorkDedication(json_encode($data['work_dedication']));
+			$contract->setWorkDedication($data['work_dedication']);
 			$contract->setSalary($data['salary']);
 			$contract->setWeeklyHours($data['weekly_hours']);
-			$contract->setFunctions(json_encode($data['functions']));
+			$contract->setFunctions($data['functions']);
 			$contract->setSpecificfunctions($data['specific_functions']);
 			$contract->setUser($user);
 
@@ -341,70 +341,68 @@
 	public function readContract(ManagerRegistry $doctrine, int $id): JsonResponse
 	{
 		$user = $doctrine->getRepository(User::class)->find($id);
-		if (!$user) {
-			return new JsonResponse(['status' => false, 'message' => 'No se encontró el usuario']);
-		}
+        if (!$user) {
+            return new JsonResponse(['status' => false, 'message' => 'No se encontró el usuario']);
+        }
 
-		// Obtener todos los contratos asociados al usuario
-		$contracts = $doctrine->getRepository(Contract::class)->findBy(['user' => $user]);
-		if (empty($contracts)) {
-			return new JsonResponse(['status' => false, 'message' => 'No se encontraron contratos para este usuario']);
-		}
+        // Obtener todos los contratos asociados al usuario
+        $contracts = $doctrine->getRepository(Contract::class)->findBy(['user' => $user]);
+        if (empty($contracts)) {
+            return new JsonResponse(['status' => false, 'message' => 'No se encontraron contratos para este usuario']);
+        }
 
 		$contractData = [];
-		foreach ($contracts as $contract) {
-			// Obtener la asignación del contrato actual
-			$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findOneBy(['contract' => $contract->getId()]);
-			
-			$assignmentData = [
-				'profile_id' => null,
-				'charge_id' => null,
-			];
+        foreach ($contracts as $contract) {
+            // Obtener todas las asignaciones del contrato actual
+            $assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
 
-			if ($assignmentContract) {
-				$profile = $assignmentContract->getProfile();
-				$charge = $assignmentContract->getCharge();
+            $assignmentsProfiles = [];
+            $assignmentsCharges = [];
+            foreach ($assignmentContract as $assignment) {
+                $profile = $assignment->getProfile();
+                $charge = $assignment->getCharge();
 
-				if ($profile) {
-					$assignmentData['profile_id'] = [
-							'id' => $profile->getId(),
-							'name' => $profile->getName(),
-							// Agregar más campos del perfil según tu modelo
-					];
-				}
+                if ($profile) {
+                    $assignmentsProfiles[] = [
+                        'id' => $profile->getId(),
+                        'name' => $profile->getName(),
+                        // Agregar más campos del perfil según tu modelo
+                    ];
+                }
 
-				if ($charge) {
-					$assignmentData['charge_id'] = [
-							'id' => $charge->getId(),
-							'name' => $charge->getName(),
-							// Agregar más campos del cargo según tu modelo
-					];
-				}
-		}
-			$contractData[] = [
-				'contract' => [
-							'id' => $contract->getId(),
-							'type_contract' => $contract->getTypeContract(),
-							'work_start' => $contract->getWorkStart()->format('Y-m-d'),
-							'initial_contract' => $contract->getInitialContract(),
-							'expiration_contract' => $contract->getExpirationContract()->format('Y-m-d'),
-							'work_dedication' => $contract->getWorkDedication(),
-							'salary' => $contract->getSalary(),
-							'weekly_hours' => $contract->getWeeklyHours(),
-							'functions' => $contract->getFunctions(),
-							'specific_functions' => $contract->getSpecificFunctions(),
-							'contract_file' => $contract->getContractFile(),
-							// Agregar más campos del contrato según tu modelo
-				],
-				'assignment' => $assignmentData,
-			];
-		}
+                if ($charge) {
+                    $assignmentsCharges[] = [
+                        'id' => $charge->getId(),
+                        'name' => $charge->getName(),
+                        // Agregar más campos del cargo según tu modelo
+                    ];
+                }
+            }
 
-		return new JsonResponse([
-			'status' => true,
-			'contract_data' => $contractData,
-		]);
+            $contractData[] = [
+                'contract' => [
+                    'id' => $contract->getId(),
+                    'type_contract' => $contract->getTypeContract(),
+                    'work_start' => $contract->getWorkStart()->format('Y-m-d'),
+                    'initial_contract' => $contract->getInitialContract(),
+                    'expiration_contract' => $contract->getExpirationContract()->format('Y-m-d'),
+                    'work_dedication' => $contract->getWorkDedication(),
+                    'salary' => $contract->getSalary(),
+                    'weekly_hours' => $contract->getWeeklyHours(),
+                    'functions' => $contract->getFunctions(),
+                    'specific_functions' => $contract->getSpecificFunctions(),
+                    'contract_file' => $contract->getContractFile(),
+                    // Agregar más campos del contrato según tu modelo
+                ],
+                'assignmentsProfiles' => $assignmentsProfiles,
+                'assignmentsCharges' => $assignmentsCharges,
+            ];
+        }
 
+        return new JsonResponse([
+            'status' => true,
+            'contract_data' => $contractData,
+        ]); 
 	}
 
 	#[Route('/contract/list-charges', name:'app_contract_list_charges')]
