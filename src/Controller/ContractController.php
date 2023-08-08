@@ -404,7 +404,7 @@
             'contract_data' => $contractData,
         ]); 
 	}
-
+	//--------------------------------------------------------------------------------------------
 	#[Route('/contract/list-charges', name:'app_contract_list_charges')]
 	public function listCharges(ManagerRegistry $doctrine, SerializerInterface $serializer) : JsonResponse
 	{
