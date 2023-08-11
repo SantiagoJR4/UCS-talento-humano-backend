@@ -41,7 +41,7 @@ class ContractController extends AbstractController
         
         // Validar si el userType es 1 (superusuario)
         $userType = $decodedToken->userType;
-        if ($isTokenValid && $userType === 1) {
+        if ($isTokenValid && $userType === 8) {
             return new JsonResponse(['isValid' => true, 'userType' => $userType]);
         } else {
             return new JsonResponse(false);

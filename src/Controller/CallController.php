@@ -586,7 +586,7 @@ class CallController extends AbstractController
         $expirationTime = $decodedToken->exp;
         $userType = $decodedToken->userType;
         $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
-        if( $userType !== 1 || !$isTokenValid)
+        if( $userType !== 8 || !$isTokenValid)
         {
             return new JsonResponse(['isValid' => $isTokenValid], 200, []);
         }
@@ -707,7 +707,7 @@ class CallController extends AbstractController
         $userType = $decodedToken->userType;
         $specialUser = $decodedToken->specialUser;
         $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
-        if( $userType !== 1 || !$isTokenValid || $specialUser !== 'CTH')
+        if( $userType !== 8 || !$isTokenValid || $specialUser !== 'CTH')
         {
             return new JsonResponse(['isValid' => $isTokenValid], 403, []);
         }
@@ -1044,7 +1044,7 @@ class CallController extends AbstractController
         $query->select('u.id', 'u.names', 'u.lastNames')
             ->from('App\Entity\User', 'u')
             ->where('u.userType IN (:userType)')
-            ->setParameter('userType', [1,2,3]);
+            ->setParameter('userType', [1,2,8]);
         $array = $query->getQuery()->getArrayResult();
         $usersForJury = array();
         foreach ($array as $person) {
