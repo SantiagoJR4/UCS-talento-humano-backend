@@ -8,7 +8,8 @@
 	use App\Entity\Medicaltest;
 	use App\Entity\Profile;
 	use App\Entity\User;
-	use App\Service\ValidateToken;
+use App\Entity\WorkHistory;
+use App\Service\ValidateToken;
 	use DateTime;
 	use Doctrine\Persistence\ManagerRegistry;
 	use Firebase\JWT\JWT;
@@ -253,8 +254,8 @@
 		$entityManager = $doctrine->getManager();
 		$data = $request->request->all();
 
-					$workStart = $data['work_start'];
-					$expirationContract = $data['expiration_contract'];
+		$workStart = $data['work_start'];
+		$expirationContract = $data['expiration_contract'];
 
 		if ($isValidToken === false) {
 				return new JsonResponse(['error' => 'Token no válido']);
@@ -265,15 +266,15 @@
 			}
 			$contract = new Contract();
 			$contract->setTypeContract($data['type_contract']);
-							if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$workStart)){
-									$dateTimeWorkStart = new DateTime($workStart);
-									$contract->setWorkStart($dateTimeWorkStart);
-							}
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$workStart)){
+					$dateTimeWorkStart = new DateTime($workStart);
+					$contract->setWorkStart($dateTimeWorkStart);
+			}
 			$contract->setInitialContract($data['initial_contract']);
-							if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$expirationContract)){
-									$dateTimeExpirationContract = new DateTime($expirationContract);
-									$contract->setExpirationContract($dateTimeExpirationContract);
-							}
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$expirationContract)){
+					$dateTimeExpirationContract = new DateTime($expirationContract);
+					$contract->setExpirationContract($dateTimeExpirationContract);
+			}
 			$contract->setWorkDedication($data['work_dedication']);
 			$contract->setSalary($data['salary']);
 			$contract->setWeeklyHours($data['weekly_hours']);
@@ -403,6 +404,116 @@
             'status' => true,
             'contract_data' => $contractData,
         ]); 
+	}
+	//--------------------------------------------------------------------------------------------
+	#[Route('/contract/work-history', name:'app_contract_work_history')]
+	public function addWorkHistory(ManagerRegistry $doctrine, Request $request) : JsonResponse
+	{
+		$isValidToken = $this->validateTokenSuper($request)->getContent();
+		$entityManager = $doctrine->getManager();
+		$data = $request->request->all();
+
+		$dateDocument = $data['dateDocument'];
+
+		if($isValidToken === false){
+			return new JsonResponse(['error' => 'Token no válido']);
+		}else{
+			$user = $entityManager->getRepository(User::class)->find($data['user']);
+			if(!$user){
+				throw $this->createNotFoundException(
+					'No user found for id'.$data['id']
+				);
+			}
+			$workHistory = new WorkHistory();
+			
+			$addToTypeDocument = '';
+			switch (true) {
+				case isset($data['typeOtroSi']) :
+					$addToTypeDocument = $data['typeOtroSi'];
+					break;
+				case isset($data['typeAfiliaciones']):
+					$addToTypeDocument = $data['typeAfiliaciones'];
+					break;
+				case isset($data['typeExamenMedico']):
+					$addToTypeDocument = $data['typeExamenMedico'];
+					break;
+			}
+
+			$addToNewValue = '';
+			switch(true){
+				case isset($data['newCharge']):
+					$addToNewValue = $data['newCharge'];
+					$workHistory->setNewvalue($addToNewValue);
+					break;
+				case isset($data['newSalary']):
+					$addToNewValue = $data['newSalary'];
+					$workHistory->setNewvalue($addToNewValue);
+					break;
+				case isset($data['newWorkDedication']):
+					$addToNewValue = $data['newWorkDedication'];
+					$workHistory->setNewvalue($addToNewValue);
+					break;
+			}
+
+			$typeDocument = $data['typeDocument'] . '-' . $addToTypeDocument;
+			$workHistory->setTypeDocument($typeDocument);
+			//$workHistory->setTypeDocument($data['type_document'].'-'.$data['type_otroSi'].'-'.$data['type_afiliaciones'].'-'.$data['type_examenMedico']);
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$dateDocument)){
+				$dateTimeDocument = new DateTime($dateDocument);
+				$workHistory->setDateDocument($dateTimeDocument);
+			}
+			$workHistory->setOtherDocument($data['other_document']);
+			$workHistory->setDescription($data['description']);
+			$workHistory->setUser($user);
+
+			$file = $request->files->get('documentPdf');
+			$nameFile = $data['fileName'];
+			$identificationUser = $data['identificationUser'];
+
+			if($file instanceof UploadedFile){
+				$folderDestination = $this->getParameter('contract').'/'.$identificationUser;
+				$fileName = $identificationUser.'_'.$nameFile;
+
+				try{
+					$file->move($folderDestination,$fileName);
+					$workHistory->setDocumentPdf($fileName);
+				}catch(\Exception $e) {
+					return new JsonResponse(['error' => 'Error al guardar el archivo en el servidor.']);
+				}
+			}
+
+			$entityManager->persist($workHistory);
+			$entityManager->flush();
+		}
+
+		return new JsonResponse(['status'=>'Success','message'=>'Historia laboral creada con éxito']);
+	}
+
+	#[Route('/contract/list-work-history/{id}',name:'app_contract_list_work_history')]
+	public function listWorkHistory(ManagerRegistry $doctrine, int $id) : JsonResponse
+	{
+		$user = $doctrine->getRepository(User::class)->find($id);
+		if (!$user) {
+            return new JsonResponse(['status' => false, 'message' => 'No se encontró el usuario']);
+        }
+		$workHistorys = $doctrine->getRepository(WorkHistory::class)->findBy(['user'=>$user]);
+		if(empty($workHistorys)){
+			return new JsonResponse(['status'=>false,'message'=>'No se encontró historia laboral para el usuario']);
+		}
+
+		$workHistoryData = [];
+		foreach($workHistorys as $workHistory){
+			$workHistoryData[] = [
+				'id' => $workHistory->getId(),
+				'type_document' => $workHistory->getTypeDocument(),
+				'date_document' => $workHistory->getDateDocument()->format('Y-m-d'),
+				'other_document' => $workHistory->getOtherDocument(),
+				'description' => $workHistory->getDescription(),
+				'new_value' => $workHistory->getNewValue(),
+				'document_pdf' => $workHistory->getDocumentPdf()
+			];
+		}
+		return new JsonResponse(['work_history_data' => $workHistoryData]);
 	}
 	//--------------------------------------------------------------------------------------------
 	#[Route('/contract/list-charges', name:'app_contract_list_charges')]
