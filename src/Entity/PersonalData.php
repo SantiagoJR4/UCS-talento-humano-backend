@@ -137,6 +137,27 @@ class PersonalData
     /**
      * @var string|null
      *
+     * @ORM\Column(name="bank_account_pdf", type="text", length=65535, nullable=true)
+     */
+    private $bankAccountPdf;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="rut_pdf", type="text", length=65535, nullable=true)
+     */
+    private $rutPdf;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="severance_fund_pdf", type="text", length=65535, nullable=true)
+     */
+    private $severanceFundPdf;
+
+    /**
+     * @var string|null
+     *
      * @ORM\Column(name="url_cvlac", type="string", length=255, nullable=true)
      */
     private $urlCvlac;
@@ -351,6 +372,42 @@ class PersonalData
     public function setPensionPdf(string $pensionPdf): self
     {
         $this->pensionPdf = $pensionPdf;
+
+        return $this;
+    }
+
+    public function getBankAccountPdf(): ?string
+    {
+        return $this->bankAccountPdf;
+    }
+
+    public function setBankAccountPdf(?string $bankAccountPdf): self
+    {
+        $this->bankAccountPdf = $bankAccountPdf;
+
+        return $this;
+    }
+
+    public function getRutPdf(): ?string
+    {
+        return $this->rutPdf;
+    }
+
+    public function setRutPdf(?string $rutPdf): self
+    {
+        $this->rutPdf = $rutPdf;
+
+        return $this;
+    }
+
+    public function getSeveranceFundPdf(): ?string
+    {
+        return $this->severanceFundPdf;
+    }
+
+    public function setSeveranceFundPdf(?string $severanceFundPdf): self
+    {
+        $this->severanceFundPdf = $severanceFundPdf;
 
         return $this;
     }
