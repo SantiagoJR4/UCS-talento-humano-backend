@@ -26,83 +26,80 @@ use App\Service\ValidateToken;
 	use Doctrine\DBAL\Connection;
 	use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-	class ContractController extends AbstractController
-	{
-
-	//TODO: HACER TOKEN PARA SUPERUSUARIOS
-	public function validateTokenSuper(Request $request): JsonResponse
-	{
-			$jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
-			$token = $request->query->get('token');
-			try {
-					$decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
-			} catch (\Exception $e) {
-					return new JsonResponse(false);
-			}
-			$expirationTime = $decodedToken->exp;
-			$isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
-			
-			// Validar si el userType es 1 (superusuario)
-			$userType = $decodedToken->userType;
-			if ($isTokenValid && $userType === 1) {
-					return new JsonResponse(['isValid' => true, 'userType' => $userType]);
-			} else {
-					return new JsonResponse(false);
-			}
-	}
-
-	#[Route('/contract/create-medicalTest', name: 'app_contract_medicalTest')]
-	public function create(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
-	{
-			$isValidToken = $this->validateTokenSuper($request)->getContent();
-			$entiyManager = $doctrine->getManager();
-			$data = json_decode($request->getContent(),true);
-
-			if($isValidToken === false){
-					return new JsonResponse(['error' => 'Token no válido']);
-			}
-			else{
-					//Trabajador seleccionado
-					$user = $entiyManager->getRepository(User::class)->find($data['user']);
-					if (!$user) {
-							throw $this->createNotFoundException(
-									'No user found for id '.$data['id']
-							);
-					}
-
-					$medicalTest = new Medicaltest();
-					$medicalTest -> setCity($data['city']);
-					$medicalTest -> setDate(new DateTime($data['date']));
-					$medicalTest -> setAddress($data['address']);
-					$medicalTest -> setMedicalcenter($data['medicalCenter']); //AMPM SAS
-					//$medicalTest -> setHour($data['hour']);
-					$medicalTest -> setPhone($data['phone']);
-					$medicalTest -> setTypetest($data['typeTest']);
-					$medicalTest -> setOcupationalmedicaltest($data['ocupationMedicalTest']);
-					$medicalTest -> setState('0');
-					$medicalTest -> setUser($user);
-					
-					$entiyManager->persist($medicalTest);
-					$entiyManager->flush();
-
-					try{
-							$email = (new TemplatedEmail())
-									->from('pasante.santiago@unicatolicadelsur.edu.co')
-									->to($user->getEmail(), 'pasante.santiago@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
-									->subject('Asignación de cita médica')
-									->htmlTemplate('email/medicalTestEmail.html.twig')
-									->context([
-											'user' => $user,
-											'medicalTest' => $medicalTest
-									]);         
-
-							$mailer->send($email);
-
-							$message = 'El examén médico fue programado con éxito, se envío un correo con la información a ' . $user->getEmail();
-					} catch (\Throwable $th) {
-							$message = 'Error al enviar el correo:'.$th->getMessage();
-							return new JsonResponse(['status'=>'Error','message'=>$message]);
-					}
+class ContractController extends AbstractController
+{
+    //TODO: HACER TOKEN PARA SUPERUSUARIOS
+    public function validateTokenSuper(Request $request): JsonResponse
+    {
+        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $token = $request->query->get('token');
+        try {
+            $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
+        } catch (\Exception $e) {
+            return new JsonResponse(false);
+        }
+        $expirationTime = $decodedToken->exp;
+        $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
+        
+        // Validar si el userType es 1 (superusuario)
+        $userType = $decodedToken->userType;
+        if ($isTokenValid && $userType === 8) {
+            return new JsonResponse(['isValid' => true, 'userType' => $userType]);
+        } else {
+            return new JsonResponse(false);
+        }
+    }
+    
+    #[Route('/contract/create-medicalTest', name: 'app_contract_medicalTest')]
+    public function create(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
+    {
+        $isValidToken = $this->validateTokenSuper($request)->getContent();
+        $entiyManager = $doctrine->getManager();
+        $data = json_decode($request->getContent(),true);
+    
+        if($isValidToken === false){
+            return new JsonResponse(['error' => 'Token no válido']);
+        }
+        else{
+            //Trabajador seleccionado
+            $user = $entiyManager->getRepository(User::class)->find($data['user']);
+            if (!$user) {
+                throw $this->createNotFoundException(
+                    'No user found for id '.$data['id']
+                );
+            }
+    
+            $medicalTest = new Medicaltest();
+            $medicalTest -> setCity($data['city']);
+            $medicalTest -> setDate(new DateTime($data['date']));
+            $medicalTest -> setAddress($data['address']);
+            $medicalTest -> setMedicalcenter($data['medicalCenter']); //AMPM SAS
+            //$medicalTest -> setHour($data['hour']);
+            $medicalTest -> setPhone($data['phone']);
+            $medicalTest -> setTypetest($data['typeTest']);
+            $medicalTest -> setOcupationalmedicaltest($data['ocupationMedicalTest']);
+            $medicalTest -> setState('0');
+            $medicalTest -> setUser($user);
+            
+            $entiyManager->persist($medicalTest);
+            $entiyManager->flush();
+    
+            try{
+                $email = (new TemplatedEmail())
+                    ->from('santipo12@gmail.com')
+                    ->to($user->getEmail())
+                    ->subject('Asignación de cita médica')
+                    ->htmlTemplate('email/medicalTestEmail.html.twig')
+                    ->context([
+                        'user' => $user,
+                        'medicalTest' => $medicalTest
+                    ]);         
+                $mailer->send($email);
+                $message = 'El examén médico fue programado con éxito, se envío un correo con la información a ' . $user->getEmail();
+            } catch (\Throwable $th) {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error','message'=>$message]);
+            }
 
 					return new JsonResponse(['status'=>'Success','code'=>'200','message'=>$message]);
 			}

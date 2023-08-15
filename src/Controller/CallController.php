@@ -248,9 +248,28 @@ class CallController extends AbstractController
         return new JsonResponse(['done' => 'está hecho'],200,[]);
     }
 
+    //TODO: Agregar en jury el campo de jefe Inmediato
     #[Route('/create-new-call', name: 'app_create_new_call')]
-    public function createNewCall(ManagerRegistry $doctrine, SerializerInterface $serializer, Request $request): JsonResponse
+    public function createNewCall(ManagerRegistry $doctrine, SerializerInterface $serializer, Request $request, ValidateToken $vToken): JsonResponse
     {
+        $token = $request->query->get('token');
+        $user = $vToken->getUserIdFromToken($token);
+        // $cth = $doctrine->getRepository(User::class)->findOneBy(['userType' => , 'specialUser' => 'CTH'])
+        $specialUsersForJury = ['CTH', 'PSI'];
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select('u.id', 'u.names', 'u.lastNames', 'u.specialUser')
+            ->from('App\Entity\User', 'u')
+            ->where('u.specialUser IN (:specialUsersForJury) AND u.userType != 9')
+            ->setParameter('specialUsersForJury', $specialUsersForJury);
+        $jury = $query->getQuery()->getArrayResult();
+        foreach ($jury as &$person) {
+            $person['fullName'] = $person['names'] . ' ' . $person['lastNames'];
+            unset($person['names']);
+            unset($person['lastNames']);
+        }
+        if (!in_array($user->getSpecialUser(), $specialUsersForJury)) {
+            array_push($jury, ["id"=>$user->getId(), "fullName"=>$user->getNames()." ".$user->getLastNames(), "specialUser"=> $user->getSpecialUser()]);
+        }
         $data = $request->request->all();
         $area = $request->request->get('area');
         $isEdited = json_decode($request->request->get('editedProfile'),true);
@@ -268,6 +287,7 @@ class CallController extends AbstractController
                 }
             }
         }
+        $newCall->setJury(json_encode($jury));
         $newCall->setState(0);
         $entityManager = $doctrine->getManager();
         $requiredForPercentages = json_decode($data['requiredForPercentages'], true);
@@ -322,6 +342,13 @@ class CallController extends AbstractController
             ->leftJoin('c.specialProfile', 'spec')
             ->setParameter('id', $callId);
         $call = $query->getQuery()->getArrayResult();
+        $call = convertDateTimeToString2($call);
+        $call = $call[0];
+        $call['requiredForPercentages'] = json_decode($call['requiredForPercentages'], true);
+        $call['requiredForCurriculumVitae'] = json_decode($call['requiredForCurriculumVitae'], true);
+        $call['requiredToSignUp'] = json_decode($call['requiredToSignUp'], true);
+        $call['stepsOfCall'] = json_decode($call['stepsOfCall'], true);
+        $call['salary'] = json_decode($call['salary'], true);
         return new JsonResponse($call, 200,[]);
     }
 
@@ -583,7 +610,7 @@ class CallController extends AbstractController
         $expirationTime = $decodedToken->exp;
         $userType = $decodedToken->userType;
         $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
-        if( $userType !== 1 || !$isTokenValid)
+        if( $userType !== 8 || !$isTokenValid)
         {
             return new JsonResponse(['isValid' => $isTokenValid], 200, []);
         }
@@ -704,7 +731,7 @@ class CallController extends AbstractController
         $userType = $decodedToken->userType;
         $specialUser = $decodedToken->specialUser;
         $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
-        if( $userType !== 1 || !$isTokenValid || $specialUser !== 'CTH')
+        if( $userType !== 8 || !$isTokenValid || $specialUser !== 'CTH')
         {
             return new JsonResponse(['isValid' => $isTokenValid], 403, []);
         }
@@ -1032,22 +1059,69 @@ class CallController extends AbstractController
         $entityManager->flush();
         return new JsonResponse(['done' => 'hecho'], 200, []);
     }
-    #[Route('/get-one-call/{id}', name:'app_get_one_call')]
-    public function getOneCall(ManagerRegistry $doctrine,int $id) : JsonResponse
+
+    #[Route('/get-posible-users-for-jury', name: 'app_posible_users_for_jury')]
+    public function posibleUsersForJury(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer): JsonResponse
     {
-        $tblCall = $doctrine->getRepository(TblCall::class)->find($id);
-        $userInCall = $doctrine->getRepository(UsersInCall::class)->findOneBy(['call' => $tblCall]);
-    
-        if (!$userInCall) {
-            return new JsonResponse(['status' => false, 'message' => 'No se encontró convocatoria']);
+        //TODO: Add token
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select('u.id', 'u.names', 'u.lastNames')
+            ->from('App\Entity\User', 'u')
+            ->where('u.userType IN (:userType)')
+            ->setParameter('userType', [1,2,8]);
+        $array = $query->getQuery()->getArrayResult();
+        $usersForJury = array();
+        foreach ($array as $person) {
+            $fullName = $person["names"] . " " . $person["lastNames"];
+            $usersForJury[] = array("id" => $person["id"], "fullName" => $fullName);
         }
-    
-        $response = [
-            'id' => $userInCall->getId(),
-            'userId' => $userInCall->getUser()->getId(),
-            'stateUserInCall' => $userInCall->isStateUserCall()
-        ];
-    
-        return new JsonResponse($response);
+        return new JsonResponse($usersForJury, 200, []);
     }
+
+    #[Route('/reject-call', name: 'app_reject_call')]
+    public function rejectCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        $token= $request->query->get('token');
+        $callId = $request->query->get('callId');
+        $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        if($call === NULL) {
+            return new JsonResponse(['message' => 'No existe esta convocatoria.'], 400, []);
+        }
+        $call->setState(5);
+        $entityManager = $doctrine->getManager();
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'Se ha rechazado esta convocatoria con el id '.$callId], 200, []);
+    }
+    #[Route('/approve-call', name: 'app_approve_call')]
+    public function approveCall(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        $token= $request->query->get('token');
+        $user = $vToken->getUserIdFromToken($token);
+        $specialUser = $user->getSpecialUser();
+        $callId = $request->query->get('callId');
+        $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        if($call === NULL) {
+            return new JsonResponse(['message' => 'No existe esta convocatoria.'], 400, []);
+        }
+        $newStateForCall = 0;
+        switch ($specialUser) {
+            case 'VF':
+                $newStateForCall = 1;
+                break;
+            case 'REC':
+                $newStateForCall = 2;
+                break;
+            case 'CTH':
+                $newStateForCall = 3;
+                break;
+            
+            default:
+            return new JsonResponse(['message' => 'Usuario no autorizado.'], 403, []);
+        }
+        $call->setState($newStateForCall);
+        $entityManager = $doctrine->getManager();
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'Se ha aprobado esta convocatoria con el id '.$callId], 200, []);
+    }
+
 }
