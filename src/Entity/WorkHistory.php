@@ -39,13 +39,6 @@ class WorkHistory
     /**
      * @var string|null
      *
-     * @ORM\Column(name="other_document", type="string", length=255, nullable=true)
-     */
-    private $otherDocument;
-
-    /**
-     * @var string|null
-     *
      * @ORM\Column(name="description", type="text", length=0, nullable=true)
      */
     private $description;
@@ -99,18 +92,6 @@ class WorkHistory
     public function setDateDocument(\DateTimeInterface $dateDocument): self
     {
         $this->dateDocument = $dateDocument;
-
-        return $this;
-    }
-
-    public function getOtherDocument(): ?string
-    {
-        return $this->otherDocument;
-    }
-
-    public function setOtherDocument(?string $otherDocument): self
-    {
-        $this->otherDocument = $otherDocument;
 
         return $this;
     }

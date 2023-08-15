@@ -437,6 +437,10 @@ use App\Service\ValidateToken;
 				case isset($data['typeExamenMedico']):
 					$addToTypeDocument = $data['typeExamenMedico'];
 					break;
+				case isset($data['other_document']):
+					$addToTypeDocument = $data['other_document'];
+					$workHistory->setTypeDocument($addToTypeDocument);
+					break;
 			}
 
 			$addToNewValue = '';
@@ -462,7 +466,7 @@ use App\Service\ValidateToken;
 				$dateTimeDocument = new DateTime($dateDocument);
 				$workHistory->setDateDocument($dateTimeDocument);
 			}
-			$workHistory->setOtherDocument($data['other_document']);
+			//$workHistory->setOtherDocument($data['other_document']);
 			$workHistory->setDescription($data['description']);
 			$workHistory->setUser($user);
 
@@ -507,7 +511,6 @@ use App\Service\ValidateToken;
 				'id' => $workHistory->getId(),
 				'type_document' => $workHistory->getTypeDocument(),
 				'date_document' => $workHistory->getDateDocument()->format('Y-m-d'),
-				'other_document' => $workHistory->getOtherDocument(),
 				'description' => $workHistory->getDescription(),
 				'new_value' => $workHistory->getNewValue(),
 				'document_pdf' => $workHistory->getDocumentPdf()
