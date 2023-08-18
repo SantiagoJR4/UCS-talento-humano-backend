@@ -47,9 +47,9 @@ class TblCall
      * @var int
      *
      * @ORM\Column(name="state", type="smallint", nullable=false, options={"comment"="0->created,
-1->approvedVF,
-2->approvedRectory,
-3->approvedTH(wait-percentages),
+1->approvedTH,
+2->approvedVF,
+3->approvedRectory(wait-percentages),
 4->open,
 5->rejected,
 6->success,
@@ -164,16 +164,6 @@ class TblCall
     private $startOfContractDate;
 
     /**
-     * @var \Subprofile
-     *
-     * @ORM\ManyToOne(targetEntity="Subprofile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
-     * })
-     */
-    private $subprofile;
-
-    /**
      * @var \Profile
      *
      * @ORM\ManyToOne(targetEntity="Profile")
@@ -202,6 +192,16 @@ class TblCall
      * })
      */
     private $specialProfile;
+
+    /**
+     * @var \Subprofile
+     *
+     * @ORM\ManyToOne(targetEntity="Subprofile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
+     * })
+     */
+    private $subprofile;
 
     public function getId(): ?int
     {
@@ -436,18 +436,6 @@ class TblCall
         return $this;
     }
 
-    public function getSubprofile(): ?Subprofile
-    {
-        return $this->subprofile;
-    }
-
-    public function setSubprofile(?Subprofile $subprofile): self
-    {
-        $this->subprofile = $subprofile;
-
-        return $this;
-    }
-
     public function getProfile(): ?Profile
     {
         return $this->profile;
@@ -480,6 +468,18 @@ class TblCall
     public function setSpecialProfile(?SpecialProfile $specialProfile): self
     {
         $this->specialProfile = $specialProfile;
+
+        return $this;
+    }
+
+    public function getSubprofile(): ?Subprofile
+    {
+        return $this->subprofile;
+    }
+
+    public function setSubprofile(?Subprofile $subprofile): self
+    {
+        $this->subprofile = $subprofile;
 
         return $this;
     }

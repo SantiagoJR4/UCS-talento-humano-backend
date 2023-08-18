@@ -151,9 +151,9 @@ class PersonalData
     /**
      * @var string|null
      *
-     * @ORM\Column(name="severance_fund_pdf", type="text", length=65535, nullable=true)
+     * @ORM\Column(name="serverance_fund_pdf", type="text", length=65535, nullable=true)
      */
-    private $severanceFundPdf;
+    private $serveranceFundPdf;
 
     /**
      * @var string|null
@@ -400,14 +400,14 @@ class PersonalData
         return $this;
     }
 
-    public function getSeveranceFundPdf(): ?string
+    public function getServeranceFundPdf(): ?string
     {
-        return $this->severanceFundPdf;
+        return $this->serveranceFundPdf;
     }
 
-    public function setSeveranceFundPdf(?string $severanceFundPdf): self
+    public function setServeranceFundPdf(?string $serveranceFundPdf): self
     {
-        $this->severanceFundPdf = $severanceFundPdf;
+        $this->serveranceFundPdf = $serveranceFundPdf;
 
         return $this;
     }

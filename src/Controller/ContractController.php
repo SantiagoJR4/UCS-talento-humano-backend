@@ -410,7 +410,8 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
 		$data = $request->request->all();
 
-		$dateDocument = $data['dateDocument'];
+		$dateDocument = $data['dateDocumentInitial'];
+		$dateDocumentFinal = $data['dateDocumentFinal'];
 
 		if($isValidToken === false){
 			return new JsonResponse(['error' => 'Token no válido']);
@@ -436,35 +437,37 @@ class ContractController extends AbstractController
 					break;
 				case isset($data['other_document']):
 					$addToTypeDocument = $data['other_document'];
-					$workHistory->setTypeDocument($addToTypeDocument);
 					break;
 			}
 
-			$addToNewValue = '';
-			switch(true){
-				case isset($data['newCharge']):
-					$addToNewValue = $data['newCharge'];
-					$workHistory->setNewvalue($addToNewValue);
-					break;
-				case isset($data['newSalary']):
-					$addToNewValue = $data['newSalary'];
-					$workHistory->setNewvalue($addToNewValue);
-					break;
-				case isset($data['newWorkDedication']):
-					$addToNewValue = $data['newWorkDedication'];
-					$workHistory->setNewvalue($addToNewValue);
-					break;
+			if($addToTypeDocument !== '') {
+				$typeDocument = $data['typeDocument'] . '-' . $addToTypeDocument;
+			} else {
+				$typeDocument = $data['typeDocument'];
 			}
 
-			$typeDocument = $data['typeDocument'] . '-' . $addToTypeDocument;
 			$workHistory->setTypeDocument($typeDocument);
-			//$workHistory->setTypeDocument($data['type_document'].'-'.$data['type_otroSi'].'-'.$data['type_afiliaciones'].'-'.$data['type_examenMedico']);
 			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$dateDocument)){
 				$dateTimeDocument = new DateTime($dateDocument);
-				$workHistory->setDateDocument($dateTimeDocument);
+				$workHistory->setDateDocumentInitial($dateTimeDocument);
 			}
-			//$workHistory->setOtherDocument($data['other_document']);
-			$workHistory->setDescription($data['description']);
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$dateDocumentFinal)){
+				$dateTimeDocumentFinal = new DateTime($dateDocumentFinal);
+				$workHistory->setDateDocumentFinal($dateTimeDocumentFinal);
+			}
+
+			if(isset($data['description'])){
+				$workHistory->setDescription($data['description']);
+			}
+			$workHistory->setNewCharge($data['newCharge'] ?? NULL);
+			$workHistory->setNewProfile($data['newProfile']?? NULL);
+			$workHistory->setNewWorkDedication($data['newWorkDedication']?? NULL);
+			$workHistory->setNewDuration($data['newDuration']?? NULL);
+			$workHistory->setNewSalary($data['newSalary']?? NULL);
+			$workHistory->setNewWeeklyHours($data['newWeeklyHours']?? NULL);
+			$hourString = $data['newHourPermits'];
+			$hourDateTime = DateTime::createFromFormat('H:i', $hourString);
+			$workHistory->setHour($hourDateTime);
 			$workHistory->setUser($user);
 
 			$file = $request->files->get('documentPdf');
@@ -507,9 +510,16 @@ class ContractController extends AbstractController
 			$workHistoryData[] = [
 				'id' => $workHistory->getId(),
 				'type_document' => $workHistory->getTypeDocument(),
-				'date_document' => $workHistory->getDateDocument()->format('Y-m-d'),
+				'new_charge' => $workHistory->getNewCharge(),
+				'new_profile' => $workHistory->getNewProfile(),
+				'new_work_dedication' => $workHistory->getNewWorkDedication(),
+				'date_document_initial' => $workHistory->getDateDocumentInitial() ? $workHistory->getDateDocumentInitial()->format('Y-m-d') : NULL,
+				'date_document_final' => $workHistory->getDateDocumentFinal() ? $workHistory->getDateDocumentFinal()->format('Y-m-d') : NULL,
+				'new_duration' => $workHistory->getNewDuration(),
+				'new_salary' => $workHistory->getNewSalary(),
+				'new_weekly_hours' => $workHistory->getNewWeeklyHours(),
+				'hour' => $workHistory->getHour(),
 				'description' => $workHistory->getDescription(),
-				'new_value' => $workHistory->getNewValue(),
 				'document_pdf' => $workHistory->getDocumentPdf()
 			];
 		}
