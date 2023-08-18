@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Subjects
  *
- * @ORM\Table(name="subjects", indexes={@ORM\Index(name="fk_subjects_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_subjects_materia", columns={"materia_id"})})
+ * @ORM\Table(name="subjects", indexes={@ORM\Index(name="fk_subjects_materia", columns={"materia_id"}), @ORM\Index(name="fk_subjects_subprofile", columns={"subprofile_id"})})
  * @ORM\Entity
  */
 class Subjects
@@ -22,16 +22,6 @@ class Subjects
     private $id;
 
     /**
-     * @var \Subprofile
-     *
-     * @ORM\ManyToOne(targetEntity="Subprofile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
-     * })
-     */
-    private $subprofile;
-
-    /**
      * @var \Materias
      *
      * @ORM\ManyToOne(targetEntity="Materias")
@@ -41,21 +31,19 @@ class Subjects
      */
     private $materia;
 
+    /**
+     * @var \Subprofile
+     *
+     * @ORM\ManyToOne(targetEntity="Subprofile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
+     * })
+     */
+    private $subprofile;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getSubprofile(): ?Subprofile
-    {
-        return $this->subprofile;
-    }
-
-    public function setSubprofile(?Subprofile $subprofile): self
-    {
-        $this->subprofile = $subprofile;
-
-        return $this;
     }
 
     public function getMateria(): ?Materias
@@ -66,6 +54,18 @@ class Subjects
     public function setMateria(?Materias $materia): self
     {
         $this->materia = $materia;
+
+        return $this;
+    }
+
+    public function getSubprofile(): ?Subprofile
+    {
+        return $this->subprofile;
+    }
+
+    public function setSubprofile(?Subprofile $subprofile): self
+    {
+        $this->subprofile = $subprofile;
 
         return $this;
     }

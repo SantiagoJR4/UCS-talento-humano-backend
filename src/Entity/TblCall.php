@@ -32,7 +32,7 @@ class TblCall
     /**
      * @var string
      *
-     * @ORM\Column(name="description", type="string", length=100, nullable=false)
+     * @ORM\Column(name="description", type="text", length=0, nullable=false)
      */
     private $description;
 
@@ -47,9 +47,9 @@ class TblCall
      * @var int
      *
      * @ORM\Column(name="state", type="smallint", nullable=false, options={"comment"="0->created,
-1->approvedVF,
-2->approvedRectory,
-3->approvedTH(wait-percentages),
+1->approvedTH,
+2->approvedVF,
+3->approvedRectory(wait-percentages),
 4->open,
 5->rejected,
 6->success,
@@ -82,7 +82,14 @@ class TblCall
     /**
      * @var string|null
      *
-     * @ORM\Column(name="jury", type="text", length=0, nullable=true)
+     * @ORM\Column(name="knowledge_test_minimum_score", type="decimal", precision=4, scale=3, nullable=true)
+     */
+    private $knowledgeTestMinimumScore;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="jury", type="text", length=0, nullable=false)
      */
     private $jury;
 
@@ -292,12 +299,24 @@ class TblCall
         return $this;
     }
 
+    public function getKnowledgeTestMinimumScore(): ?string
+    {
+        return $this->knowledgeTestMinimumScore;
+    }
+
+    public function setKnowledgeTestMinimumScore(?string $knowledgeTestMinimumScore): self
+    {
+        $this->knowledgeTestMinimumScore = $knowledgeTestMinimumScore;
+
+        return $this;
+    }
+
     public function getJury(): ?string
     {
         return $this->jury;
     }
 
-    public function setJury(?string $jury): self
+    public function setJury(string $jury): self
     {
         $this->jury = $jury;
 

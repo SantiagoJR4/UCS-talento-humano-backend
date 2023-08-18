@@ -135,25 +135,25 @@ class PersonalData
     private $pensionPdf;
 
     /**
-     * @var string|null
+     * @var string
      *
-     * @ORM\Column(name="bank_account_pdf", type="text", length=65535, nullable=true)
+     * @ORM\Column(name="bank_account_pdf", type="text", length=65535, nullable=false)
      */
     private $bankAccountPdf;
 
     /**
-     * @var string|null
+     * @var string
      *
-     * @ORM\Column(name="rut_pdf", type="text", length=65535, nullable=true)
+     * @ORM\Column(name="rut_pdf", type="text", length=65535, nullable=false)
      */
     private $rutPdf;
 
     /**
-     * @var string|null
+     * @var string
      *
-     * @ORM\Column(name="severance_fund_pdf", type="text", length=65535, nullable=true)
+     * @ORM\Column(name="serverance_fund_pdf", type="text", length=65535, nullable=false)
      */
-    private $severanceFundPdf;
+    private $serveranceFundPdf;
 
     /**
      * @var string|null
@@ -381,7 +381,7 @@ class PersonalData
         return $this->bankAccountPdf;
     }
 
-    public function setBankAccountPdf(?string $bankAccountPdf): self
+    public function setBankAccountPdf(string $bankAccountPdf): self
     {
         $this->bankAccountPdf = $bankAccountPdf;
 
@@ -393,21 +393,21 @@ class PersonalData
         return $this->rutPdf;
     }
 
-    public function setRutPdf(?string $rutPdf): self
+    public function setRutPdf(string $rutPdf): self
     {
         $this->rutPdf = $rutPdf;
 
         return $this;
     }
 
-    public function getSeveranceFundPdf(): ?string
+    public function getServeranceFundPdf(): ?string
     {
-        return $this->severanceFundPdf;
+        return $this->serveranceFundPdf;
     }
 
-    public function setSeveranceFundPdf(?string $severanceFundPdf): self
+    public function setServeranceFundPdf(string $serveranceFundPdf): self
     {
-        $this->severanceFundPdf = $severanceFundPdf;
+        $this->serveranceFundPdf = $serveranceFundPdf;
 
         return $this;
     }

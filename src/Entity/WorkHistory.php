@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * WorkHistory
  *
- * @ORM\Table(name="work_history", indexes={@ORM\Index(name="fk_work_history_user", columns={"user_id"})})
+ * @ORM\Table(name="work_history", indexes={@ORM\Index(name="user_id", columns={"user_id"})})
  * @ORM\Entity
  */
 class WorkHistory

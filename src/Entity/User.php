@@ -107,18 +107,18 @@ class User
     private $specialUser;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="history", type="text", length=0, nullable=false)
-     */
-    private $history;
-
-    /**
      * @var int
      *
      * @ORM\Column(name="sub", type="integer", nullable=false, options={"unsigned"=true})
      */
     private $sub;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="history", type="text", length=0, nullable=true)
+     */
+    private $history;
 
     public function getId(): ?int
     {
@@ -269,18 +269,6 @@ class User
         return $this;
     }
 
-    public function getHistory(): ?string
-    {
-        return $this->history;
-    }
-
-    public function setHistory(string $history): self
-    {
-        $this->history = $history;
-
-        return $this;
-    }
-
     public function getSub(): ?int
     {
         return $this->sub;
@@ -289,6 +277,18 @@ class User
     public function setSub(int $sub): self
     {
         $this->sub = $sub;
+
+        return $this;
+    }
+
+    public function getHistory(): ?string
+    {
+        return $this->history;
+    }
+
+    public function setHistory(?string $history): self
+    {
+        $this->history = $history;
 
         return $this;
     }
