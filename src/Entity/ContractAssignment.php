@@ -22,16 +22,6 @@ class ContractAssignment
     private $id;
 
     /**
-     * @var \Contract
-     *
-     * @ORM\ManyToOne(targetEntity="Contract")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="contract_id", referencedColumnName="id")
-     * })
-     */
-    private $contract;
-
-    /**
      * @var \ContractCharges
      *
      * @ORM\ManyToOne(targetEntity="ContractCharges")
@@ -51,21 +41,19 @@ class ContractAssignment
      */
     private $profile;
 
+    /**
+     * @var \Contract
+     *
+     * @ORM\ManyToOne(targetEntity="Contract")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="contract_id", referencedColumnName="id")
+     * })
+     */
+    private $contract;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getContract(): ?Contract
-    {
-        return $this->contract;
-    }
-
-    public function setContract(?Contract $contract): self
-    {
-        $this->contract = $contract;
-
-        return $this;
     }
 
     public function getCharge(): ?ContractCharges
@@ -88,6 +76,18 @@ class ContractAssignment
     public function setProfile(?Profile $profile): self
     {
         $this->profile = $profile;
+
+        return $this;
+    }
+
+    public function getContract(): ?Contract
+    {
+        return $this->contract;
+    }
+
+    public function setContract(?Contract $contract): self
+    {
+        $this->contract = $contract;
 
         return $this;
     }

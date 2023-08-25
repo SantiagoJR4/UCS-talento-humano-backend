@@ -60,6 +60,40 @@ function checkProperties($obj) {
     return true;
 }
 
+function approvedUser($userInCall, $step, $allSteps){
+    $userInCallStatus[$step] = 1;
+    $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+    $currentUserStatus = end($arrayUserStatus);
+    $index = array_search($currentUserStatus, $allSteps);
+    array_push($arrayUserStatus, $allSteps[$index + 1]);
+    $userInCall->setUserStatus(json_encode($arrayUserStatus));
+}
+
+function setEmailInfo($nextStep){
+    switch ($nextStep) {
+        case 'KT':
+            return array(
+                'title' => 'Citación Prueba de conocimientos',
+                'template' => 'email/knowledgeTestCitationEmail.html.twig'
+            );
+        case 'PT':
+            return array(
+                'title' => 'Citación Prueba Psicotecnica',
+                'template' => 'email/psychoTestCitationEmail.html.twig'
+            );
+        case 'IN':
+            return array(
+                'title' => 'Citación Entrevista',
+                'template' => 'email/interviewCitationEmail.html.twig'
+            );
+        default:
+            return array(
+                'title' => 'Resultado de Convocatoria',
+                'template' => 'email/notSelectedForCall.html.twig'
+            );
+    }
+}
+
 function requirementsSignUpToCall($userId, $requiredToSignUp, $doctrine){
     $entities = [
         'personalData' => PersonalData::class,
@@ -825,8 +859,8 @@ class CallController extends AbstractController
     public function resultsCv(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
     {
         $data = json_decode( $request->request->get('data'), true);
-        $callName = $request->request->get('callName');
         $callId = $request->request->get('callId');
+        $callName = $request->request->get('callName');
         $date = $request->request->get('date');
         $hour = $request->request->get('hour');
         $step =  $request->request->get('step');
@@ -883,6 +917,91 @@ class CallController extends AbstractController
         $call->setStepsOfCall($stepsOfCall);
         $entityManager->flush();
         return new JsonResponse(['status'=>'Correo Enviado'],200,[]);
+    }
+
+    #[Route('/results-call', name:'app_results_call')]
+    public function resultsCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
+    {
+        // ------------
+        $data = json_decode( $request->request->get('data'), true);
+        $callId = $request->request->get('callId');
+        $callName = $request->request->get('callName');
+        $date = $request->request->get('date');
+        $hour = $request->request->get('hour');
+        $step = $request->request->get('step');
+        $entityManager = $doctrine->getManager();
+        $call = $entityManager->getRepository(TblCall::class)->find($callId);
+        $callSteps = json_decode($call->getStepsOfCall(), true);
+        $allSteps = $callSteps['allSteps'];
+        $currentStep = $callSteps['currentStep'];
+        $index = array_search($currentStep, $allSteps);
+        $nextStep = $allSteps[$index + 1];
+        $stepsOfCall = json_encode(['allSteps' => $allSteps, 'currentStep' => $nextStep]);
+        $call->setStepsOfCall($stepsOfCall);
+        $entityManager->flush();
+        foreach($data as $key => $value)
+        {
+            $user = $entityManager->getRepository(User::class)->find($value['id']);
+            $userInCall = $entityManager->getRepository(UsersInCall::class)->findOneBy(['user' => $value['id'], 'call' => $callId]);
+            $userInCallStatus = json_decode($userInCall->getStatus(), true);
+            $emailInfo =  setEmailInfo('NO');
+            switch ($step) {
+                case 'CVSTATUS':
+                    if($value['approved']) {
+                        $userInCallStatus[$step] = 1;
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    } else {
+                        $userInCallStatus[$step] = 2;
+                    }
+                    break;
+                case 'KTSTATUS':
+                    $knowledgeTestMinimumScore = $request->request->get('knowledgeTestMinimumScore');
+                    $call->setKnowledgeTestMinimumScore($knowledgeTestMinimumScore); 
+                    if($value['ktRating'] > $knowledgeTestMinimumScore){
+                        $userInCallStatus[$step] = 1;
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    } else {
+                        $userInCallStatus[$step] = 2;
+                    }
+                    $userInCall->setKnowledgeRating($value['ktRating']);
+                    break;
+                default:
+                    break;
+                }
+                $userInCall->setStatus(json_encode($userInCallStatus));
+                $entityManager->flush();
+                $userEmail = $user->getEmail();
+                $fullname = $user->getNames().' '.$user->getlastNames();
+                try {
+                $email = (new TemplatedEmail())
+                    ->from('convocatorias@unicatolicadelsur.edu.co')
+                    ->to($userEmail)
+                    ->subject($emailInfo['title'])
+                    ->htmlTemplate($emailInfo['template'])
+                    ->context([
+                        'fullname' => $fullname,
+                        'callName' => $callName,
+                        'date' => $date,
+                        'hour' => $hour,
+                    ]);         
+                $mailer->send($email);
+                $message = 'El correo fue enviado con éxito';
+            } catch (\Throwable $th) {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error','message'=>$message]);
+            }
+        }
+        return new JsonResponse(['status' => 'Correo Enviado'], 200, []);
     }
 
     #[Route('/not-selected-for-call', name:'app_not_selected_for_call')]

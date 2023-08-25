@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Citación Entrevista</title>
+    <title>Citación Prueba Psicotécnica</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -32,30 +32,29 @@
     <div class="container">
         <img src="{{asset('http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/uploads/imagenes/logo_institucional_UniCat%c3%b3lica-02.png')}}"
             alt="logo Institucional" style="display: block; margin: 0 auto; max-width: 100%;">
-        <h1>Citación a Entrevista</h1>
+        <h1>Citación Prueba Psicotécnica</h1>
         <p>
         <p>Señor(a)</p>
         <p>{{ fullname }}</p>
         <p>Cordial saludo,</p>
-        <p>Mediante el presente nos permitimos comunicarle que usted ha superado la segunda fase dentro del proceso de convocatoria N0. 032 de la Fundación Universitaria Católica del Sur.</p>
+        <p>Mediante la presente nos permitimos comunicarle que usted ha superado esta etapa dentro del proceso de la convocatoria N0. {{ callName }} de la Fundación Universitaria Católica del Sur.</p>
         <br>
-        <p>En virtud de lo anterior lo(a) citamos para que acuda a presentar la entrevista de acuerdo a lo planeado en cronograma:</p>
+        <p>En virtud de lo anterior lo(a) citamos para que acuda a presentar la prueba psicotécnica de acuerdo a lo planeado en cronograma:</p>
         <br>
-        <p><strong>FECHA:</strong> jueves 11 de julio de 2023.</p>
-        <p><strong>HORA:</strong> {{ startTime }}</p>
+        <p><strong>FECHA:</strong> {{ date }} </p>
+        <p><strong>HORA:</strong> {{ hour }} </p>
         <p><strong>LUGAR:</strong> Unicatólica del Sur - Calle 18 No. 56-02 Torobajo.</p>
         <br>
         <p><strong>TENGA EN CUENTA</strong></p>
         <p>
-            <p>1. Debe estar en las instalaciones con al menos con 10 minutos de anticipación, la prueba iniciará a las {{ startTime }} en punto, por lo cual no se permitirá el acceso posterior a dicha hora. </p>
+            <p>1. Debe estar en las instalaciones al menos con 10 minutos de anticipación, la prueba iniciará a las {{ hour }} en punto, por lo cual no se permitirá el acceso posterior a dicha hora. </p>
             <p>2. Debe presentarse con cedula de ciudadanía. </p>
-            <p>3. No se acepta el uso de celulares y otros medios tecnológicos durante la entrevista. </p>
+            <p>3. Debe escribir con letra legible so pena de que su punto no sea calificado. Igualmente no se aceptan tachones o enmendaduras. </p>
+            <p>4. No se acepta el uso de celulares y otros medios tecnológicos. </p>
         </p>
-        <p>¡Felicitaciones por superar esta etapa! ¡Te esperamos!</p>
-
+        <br>
         <p>Atentamente,</p>
         <p>Universidad Católica del Sur.</p>
-        <br>
     </div>
 </body>
 </html>
