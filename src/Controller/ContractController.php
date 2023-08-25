@@ -6,7 +6,8 @@
 	use App\Entity\ContractAssignment;
 	use App\Entity\ContractCharges;
 	use App\Entity\Medicaltest;
-	use App\Entity\Profile;
+use App\Entity\PermissionsAndLicences;
+use App\Entity\Profile;
 	use App\Entity\User;
 use App\Entity\WorkHistory;
 use App\Service\ValidateToken;
@@ -465,9 +466,14 @@ class ContractController extends AbstractController
 			$workHistory->setNewDuration($data['newDuration']?? NULL);
 			$workHistory->setNewSalary($data['newSalary']?? NULL);
 			$workHistory->setNewWeeklyHours($data['newWeeklyHours']?? NULL);
-			$hourString = $data['newHourPermits'];
-			$hourDateTime = DateTime::createFromFormat('H:i', $hourString);
-			$workHistory->setHour($hourDateTime);
+			if(isset($data['newHourPermits'])){
+				$hourString = $data['newHourPermits'];
+				$hourDateTime = DateTime::createFromFormat('H:i', $hourString);
+				$workHistory->setHour($hourDateTime);
+			}else{
+				$workHistory->setHour(NULL);
+			}
+
 			$workHistory->setUser($user);
 
 			$file = $request->files->get('documentPdf');
@@ -518,7 +524,7 @@ class ContractController extends AbstractController
 				'new_duration' => $workHistory->getNewDuration(),
 				'new_salary' => $workHistory->getNewSalary(),
 				'new_weekly_hours' => $workHistory->getNewWeeklyHours(),
-				'hour' => $workHistory->getHour(),
+				'hour' => $workHistory->getHour() ? $workHistory->getHour()->format('H:i') : NULL,
 				'description' => $workHistory->getDescription(),
 				'document_pdf' => $workHistory->getDocumentPdf()
 			];
@@ -547,5 +553,87 @@ class ContractController extends AbstractController
 		";
 		$results = $connection->executeQuery($sql, ['contractChargeId' => $contractChargeId])->fetchAllAssociative();
 		return new JsonResponse($results);
+	}
+	//--------------------------------------------------------------------------------------------
+	// PERMISOS Y LICENCIAS.
+	#[Route('/contract/permissions-licences', name:'app_contract_permissions_licences')]
+	public function createPermissionsLicences( ManagerRegistry $doctrine,Request $request, ValidateToken $vToken): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+		$user = $vToken->getUserIdFromToken($token);
+		$data = $request->request->all();
+
+		$solicitudeDate = $data['solicitude_date'];
+		$initialDate = $data['initial_date'] ?? NULL;
+		$finalDate = $data['final_date'] ?? NULL;
+
+
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$permissionsAndLicences = new PermissionsAndLicences();
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$solicitudeDate)){
+				$dateTimeSolicitudeDate = new DateTime($solicitudeDate);
+				$permissionsAndLicences -> setSolicitudeDate($dateTimeSolicitudeDate);
+			}
+
+			$permissionsAndLicences -> setTypeSolicitude($data['type_solicitude']);
+			$permissionsAndLicences -> setTypePermission($data['type_permission'] ?? NULL);
+			$permissionsAndLicences -> setTypeCompensation($data['type_compensation'] ?? NULL);
+			$permissionsAndLicences -> setTypeDatePermission($data['type_date_permission'] ?? NULL);
+			$permissionsAndLicences -> setReason($data['reason']);
+			
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$initialDate)){
+				$dateTimeInitial = new DateTime($initialDate);
+				$permissionsAndLicences -> setInitialDate($dateTimeInitial);
+			}
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$finalDate)){
+				$dateTimeFinal = new DateTime($finalDate);
+ 				$permissionsAndLicences -> setFinalDate($dateTimeFinal);
+			}
+			
+			if(isset($data['start_hour'])){
+				$startHourDateTime = DateTime::createFromFormat('H:i',$data['start_hour']);
+				$permissionsAndLicences -> setStartHour($startHourDateTime);
+			}else{
+				$permissionsAndLicences -> setStartHour(NULL);
+			}
+
+			if(isset($data['final_hour'])){
+				$finalHourDateTime = DateTime::createFromFormat('H:i', $data['final_hour']);
+				$permissionsAndLicences -> setFinalHour($finalHourDateTime);
+
+			}else{
+				$permissionsAndLicences -> setFinalHour(NULL);
+			}
+			
+			$permissionsAndLicences -> setTypeLicense($data['type_license'] ?? NULL);
+			$permissionsAndLicences -> setLicense($data['license'] ?? NULL);
+			$permissionsAndLicences -> setUser($user);
+
+			$file = $request->files->get('support_pdf');
+			$nameFile = $data['fileName'];
+			$identificationUser = $data['identificationUser'];
+
+			if($file instanceof UploadedFile){
+				$folderDestination = $this->getParameter('contract').'/'.$identificationUser;
+				$fileName = $identificationUser.'_'.$nameFile;
+
+				try{
+					$file->move($folderDestination,$fileName);
+					$permissionsAndLicences->setSupportPdf($fileName);
+				}catch(\Exception $e){
+					return new JsonResponse(['error' => 'Error al crear el permiso o la licencia']);
+				}
+			}
+
+			$entityManager->persist($permissionsAndLicences);
+			$entityManager->flush();
+		}
+
+		return new JsonResponse(['status'=>'Success','message'=>'Permiso o licencia creada con éxito']);
 	}
 }

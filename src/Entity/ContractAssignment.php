@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * ContractAssignment
  *
- * @ORM\Table(name="contract_assignment", indexes={@ORM\Index(name="fk_contract_assignment_contract_charges", columns={"charge_id"}), @ORM\Index(name="fk_contract_assignment_profile", columns={"profile_id"}), @ORM\Index(name="fk_contract_assignment_contract", columns={"contract_id"})})
+ * @ORM\Table(name="contract_assignment", indexes={@ORM\Index(name="fk_contract_assignment_profile", columns={"profile_id"}), @ORM\Index(name="fk_contract_assignment_contract", columns={"contract_id"}), @ORM\Index(name="fk_contract_assignment_contract_charges", columns={"charge_id"})})
  * @ORM\Entity
  */
 class ContractAssignment
@@ -20,16 +20,6 @@ class ContractAssignment
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
-
-    /**
-     * @var \ContractCharges
-     *
-     * @ORM\ManyToOne(targetEntity="ContractCharges")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="charge_id", referencedColumnName="id")
-     * })
-     */
-    private $charge;
 
     /**
      * @var \Profile
@@ -51,21 +41,19 @@ class ContractAssignment
      */
     private $contract;
 
+    /**
+     * @var \ContractCharges
+     *
+     * @ORM\ManyToOne(targetEntity="ContractCharges")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="charge_id", referencedColumnName="id")
+     * })
+     */
+    private $charge;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getCharge(): ?ContractCharges
-    {
-        return $this->charge;
-    }
-
-    public function setCharge(?ContractCharges $charge): self
-    {
-        $this->charge = $charge;
-
-        return $this;
     }
 
     public function getProfile(): ?Profile
@@ -88,6 +76,18 @@ class ContractAssignment
     public function setContract(?Contract $contract): self
     {
         $this->contract = $contract;
+
+        return $this;
+    }
+
+    public function getCharge(): ?ContractCharges
+    {
+        return $this->charge;
+    }
+
+    public function setCharge(?ContractCharges $charge): self
+    {
+        $this->charge = $charge;
 
         return $this;
     }
