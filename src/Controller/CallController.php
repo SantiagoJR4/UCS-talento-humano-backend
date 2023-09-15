@@ -34,6 +34,7 @@ use Firebase\JWT\Key;
 use Lcobucci\JWT\Validation\Validator;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Mailer\MailerInterface;
@@ -741,7 +742,7 @@ class CallController extends AbstractController
             'uc.id', 'uc.userStatus', 'u.id as userId', 'u.names', 'u.lastNames',
             'u.identification', 'u.email', 'u.urlPhoto', 'uc.qualifyCv', 'uc.status',
             'uc.hvRating','uc.knowledgeRating', 'uc.psychoRating','uc.interviewRating',
-            'uc.classRating', 'uc.finalRating', 'u.phone')
+            'uc.classRating', 'uc.finalRating', 'u.phone', 'uc.knowledgeTestFile')
             ->from('App\Entity\UsersInCall', 'uc')
             ->join('uc.user', 'u')
             ->where('uc.call = :callId')
@@ -938,7 +939,7 @@ class CallController extends AbstractController
         $nextStep = $allSteps[$index + 1];
         $stepsOfCall = json_encode(['allSteps' => $allSteps, 'currentStep' => $nextStep]);
         $call->setStepsOfCall($stepsOfCall);
-        $entityManager->flush();
+        // $entityManager->flush();
         foreach($data as $key => $value)
         {
             $user = $entityManager->getRepository(User::class)->find($value['id']);
@@ -962,7 +963,7 @@ class CallController extends AbstractController
                 case 'KTSTATUS':
                     $knowledgeTestMinimumScore = $request->request->get('knowledgeTestMinimumScore');
                     $call->setKnowledgeTestMinimumScore($knowledgeTestMinimumScore); 
-                    if($value['ktRating'] > $knowledgeTestMinimumScore){
+                    if($value['ktRating'] >= $knowledgeTestMinimumScore){
                         $userInCallStatus[$step] = 1;
                         $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
                         $currentUserStatus = end($arrayUserStatus);
@@ -974,6 +975,62 @@ class CallController extends AbstractController
                         $userInCallStatus[$step] = 2;
                     }
                     $userInCall->setKnowledgeRating($value['ktRating']);
+                    $fileKT = $request->files->get('knowledgeTestFile'.$value['id']);
+                    if ( $fileKT instanceof UploadedFile){
+                        $directory = $this->getParameter('hv')
+                        . '/'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification();
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0777, true);
+                        }
+                        $fileName =
+                        'Call' . '-'
+                        . 'knowledgeTestFile' . '-'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification() . '-'
+                        . time() . '.'
+                        . $fileKT->guessExtension();
+                        $fileKT->move( $directory, $fileName);
+                        $fileKT = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
+                        $userInCall->setKnowledgeTestFile($fileKT);
+                    }
+                    break;
+                case 'PTSTATUS':
+                    // $knowledgeTestMinimumScore = $request->request->get('knowledgeTestMinimumScore');
+                    // $call->setKnowledgeTestMinimumScore($knowledgeTestMinimumScore); 
+                    if($value['ptRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
+                        $userInCallStatus[$step] = 1;
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    } else {
+                        $userInCallStatus[$step] = 2;
+                    }
+                    $userInCall->setpsychoRating($value['ptRating']);
+                    $filePT = $request->files->get('psychoTestFile'.$value['id']);
+                    if ( $filePT instanceof UploadedFile){
+                        $directory = $this->getParameter('hv')
+                        . '/'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification();
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0777, true);
+                        }
+                        $fileName =
+                        'Call' . '-'
+                        . 'psychoTestFile' . '-'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification() . '-'
+                        . time() . '.'
+                        . $filePT->guessExtension();
+                        $filePT->move( $directory, $fileName);
+                        $filePT = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
+                        $userInCall->setpsychoTestFile($filePT);
+                    }
                     break;
                 default:
                     break;
@@ -1001,6 +1058,7 @@ class CallController extends AbstractController
                 return new JsonResponse(['status'=>'Error','message'=>$message]);
             }
         }
+        $entityManager->flush();
         return new JsonResponse(['status' => 'Correo Enviado'], 200, []);
     }
 

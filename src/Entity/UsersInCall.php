@@ -67,6 +67,13 @@ class UsersInCall
     /**
      * @var string|null
      *
+     * @ORM\Column(name="knowledge_test_file", type="text", length=65535, nullable=true)
+     */
+    private $knowledgeTestFile;
+
+    /**
+     * @var string|null
+     *
      * @ORM\Column(name="psycho_rating", type="text", length=0, nullable=true)
      */
     private $psychoRating;
@@ -185,6 +192,18 @@ class UsersInCall
     public function setKnowledgeRating(?string $knowledgeRating): self
     {
         $this->knowledgeRating = $knowledgeRating;
+
+        return $this;
+    }
+
+    public function getKnowledgeTestFile(): ?string
+    {
+        return $this->knowledgeTestFile;
+    }
+
+    public function setKnowledgeTestFile(?string $knowledgeTestFile): self
+    {
+        $this->knowledgeTestFile = $knowledgeTestFile;
 
         return $this;
     }
