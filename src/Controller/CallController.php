@@ -734,21 +734,44 @@ class CallController extends AbstractController
     }
 
     #[Route('/get-users-from-call', name: 'app_get_users_from_call')]
-    public function getUsersFromCall(ManagerRegistry $doctrine, Request $request): JsonResponse
+    public function getUsersFromCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
     {
+        
         $callId = $request->query->get('callId');
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        $specialUser =  $user->getSpecialUser();
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select(
             'uc.id', 'uc.userStatus', 'u.id as userId', 'u.names', 'u.lastNames',
             'u.identification', 'u.email', 'u.urlPhoto', 'uc.qualifyCv', 'uc.status',
             'uc.hvRating','uc.knowledgeRating', 'uc.psychoRating','uc.interviewRating',
-            'uc.classRating', 'uc.finalRating', 'u.phone', 'uc.knowledgeTestFile')
+            'uc.classRating', 'uc.finalRating', 'u.phone', 'uc.knowledgeTestFile',
+            'uc.psychoTestFile', 'uc.psychoTestReport','uc.interviewFile')
             ->from('App\Entity\UsersInCall', 'uc')
             ->join('uc.user', 'u')
             ->where('uc.call = :callId')
             ->setParameter('callId', $callId);
         $usersInCall = $query->getQuery()->getArrayResult();
-        return new JsonResponse($usersInCall, 200, []);
+        foreach ($usersInCall as &$value) {
+            $value['status'] = json_decode($value['status'], true);
+            $value['userStatus'] = json_decode($value['userStatus'], true);
+            $value['hvRating'] = json_decode($value['hvRating'], true);
+            $value['qualifyCv'] = json_decode($value['qualifyCv'], true);
+            $value['names'] = $value['names'] . ' ' . $value['lastNames'];
+            unset($value['lastNames']);
+        }
+        switch ($specialUser) {
+            case 'CTH':
+                return new JsonResponse($usersInCall, 200, []);
+            case 'PSI':
+                $usersInCall = array_filter($usersInCall, function($item){
+                    return array_search('PT', $item['userStatus']);
+                });
+                return new JsonResponse($usersInCall, 200, []);
+            default:
+                return new JsonResponse(['message'=>'No tienes autorización'], 200, []);
+        }
     }
 
     #[Route('/test-email-call', name: 'app_test_email_call')]
@@ -932,6 +955,7 @@ class CallController extends AbstractController
         $step = $request->request->get('step');
         $entityManager = $doctrine->getManager();
         $call = $entityManager->getRepository(TblCall::class)->find($callId);
+        $callPercentage = $entityManager->getRepository(CallPercentage::class)->findOneBy(['call'=>$callId]);
         $callSteps = json_decode($call->getStepsOfCall(), true);
         $allSteps = $callSteps['allSteps'];
         $currentStep = $callSteps['currentStep'];
@@ -963,7 +987,7 @@ class CallController extends AbstractController
                 case 'KTSTATUS':
                     $knowledgeTestMinimumScore = $request->request->get('knowledgeTestMinimumScore');
                     $call->setKnowledgeTestMinimumScore($knowledgeTestMinimumScore); 
-                    if($value['ktRating'] >= $knowledgeTestMinimumScore){
+                    if($value['knowledgeRating'] >= $knowledgeTestMinimumScore){
                         $userInCallStatus[$step] = 1;
                         $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
                         $currentUserStatus = end($arrayUserStatus);
@@ -974,7 +998,7 @@ class CallController extends AbstractController
                     } else {
                         $userInCallStatus[$step] = 2;
                     }
-                    $userInCall->setKnowledgeRating($value['ktRating']);
+                    $userInCall->setKnowledgeRating(number_format($value['knowledgeRating'], 3));
                     $fileKT = $request->files->get('knowledgeTestFile'.$value['id']);
                     if ( $fileKT instanceof UploadedFile){
                         $directory = $this->getParameter('hv')
@@ -997,9 +1021,7 @@ class CallController extends AbstractController
                     }
                     break;
                 case 'PTSTATUS':
-                    // $knowledgeTestMinimumScore = $request->request->get('knowledgeTestMinimumScore');
-                    // $call->setKnowledgeTestMinimumScore($knowledgeTestMinimumScore); 
-                    if($value['ptRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
+                    if($value['psychoRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
                         $userInCallStatus[$step] = 1;
                         $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
                         $currentUserStatus = end($arrayUserStatus);
@@ -1010,8 +1032,9 @@ class CallController extends AbstractController
                     } else {
                         $userInCallStatus[$step] = 2;
                     }
-                    $userInCall->setpsychoRating($value['ptRating']);
+                    $userInCall->setpsychoRating(number_format($value['psychoRating'],3));
                     $filePT = $request->files->get('psychoTestFile'.$value['id']);
+                    $reportPT = $request->files->get('psychoTestReport'.$value['id']);
                     if ( $filePT instanceof UploadedFile){
                         $directory = $this->getParameter('hv')
                         . '/'
@@ -1029,33 +1052,113 @@ class CallController extends AbstractController
                         . $filePT->guessExtension();
                         $filePT->move( $directory, $fileName);
                         $filePT = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
-                        $userInCall->setpsychoTestFile($filePT);
+                        $userInCall->setPsychoTestFile($filePT);
                     }
+                    if ( $reportPT instanceof UploadedFile){
+                        $directory = $this->getParameter('hv')
+                        . '/'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification();
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0777, true);
+                        }
+                        $fileName =
+                        'Call' . '-'
+                        . 'psychoTestReport' . '-'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification() . '-'
+                        . time() . '.'
+                        . $reportPT->guessExtension();
+                        $reportPT->move( $directory, $fileName);
+                        $reportPT = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
+                        $userInCall->setPsychoTestReport($reportPT);
+                    }
+                    break;
+                case 'INSTATUS':
+                    if($value['interviewRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
+                        $userInCallStatus[$step] = 1;
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    } else {
+                        $userInCallStatus[$step] = 2;
+                    }
+                    $userInCall->setInterviewRating(number_format($value['interviewRating'], 3));
+                    $fileIN = $request->files->get('interviewFile'.$value['id']);
+                    if ( $fileIN instanceof UploadedFile){
+                        $directory = $this->getParameter('hv')
+                        . '/'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification();
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0777, true);
+                        }
+                        $fileName =
+                        'Call' . '-'
+                        . 'interviewFile' . '-'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification() . '-'
+                        . time() . '.'
+                        . $fileIN->guessExtension();
+                        $fileIN->move( $directory, $fileName);
+                        $fileIN = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
+                        $userInCall->setInterviewFile($fileIN);
+                    }
+                    break;
+                case 'CLSTATUS':
+                    if($value['classRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
+                        $userInCallStatus[$step] = 1;
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    } else {
+                        $userInCallStatus[$step] = 2;
+                    }
+                    $userInCall->setClassRating(number_format($value['classRating'],3));
                     break;
                 default:
                     break;
-                }
-                $userInCall->setStatus(json_encode($userInCallStatus));
-                $entityManager->flush();
-                $userEmail = $user->getEmail();
-                $fullname = $user->getNames().' '.$user->getlastNames();
+            }
+            $userInCall->setStatus(json_encode($userInCallStatus));
+            $entityManager->flush();
+            $userEmail = $user->getEmail();
+            $fullname = $user->getNames().' '.$user->getlastNames();
+            if ($nextStep !== 'FI'){
                 try {
-                $email = (new TemplatedEmail())
-                    ->from('convocatorias@unicatolicadelsur.edu.co')
-                    ->to($userEmail)
-                    ->subject($emailInfo['title'])
-                    ->htmlTemplate($emailInfo['template'])
-                    ->context([
-                        'fullname' => $fullname,
-                        'callName' => $callName,
-                        'date' => $date,
-                        'hour' => $hour,
-                    ]);         
-                $mailer->send($email);
-                $message = 'El correo fue enviado con éxito';
-            } catch (\Throwable $th) {
-                $message = 'Error al enviar el correo:'.$th->getMessage();
-                return new JsonResponse(['status'=>'Error','message'=>$message]);
+                    $email = (new TemplatedEmail())
+                        ->from('convocatorias@unicatolicadelsur.edu.co')
+                        ->to($userEmail)
+                        ->subject($emailInfo['title'])
+                        ->htmlTemplate($emailInfo['template'])
+                        ->context([
+                            'fullname' => $fullname,
+                            'callName' => $callName,
+                            'date' => $date,
+                            'hour' => $hour,
+                        ]);         
+                    $mailer->send($email);
+                    $message = 'El correo fue enviado con éxito';
+                } catch (\Throwable $th) {
+                    $message = 'Error al enviar el correo:'.$th->getMessage();
+                    // return new JsonResponse(['status'=>'Error','message'=>$message]);
+                }
+            }
+            if(end($arrayUserStatus) === 'FI') {
+                
+                $hvRating = json_decode($userInCall->getHvRating(), true);
+                $weigthedCV = $hvRating['total'] ? $hvRating['total']*$callPercentage->getCurriculumVitae()/100 : 0;
+                $weigthedKT = $userInCall->getKnowledgeRating()*$callPercentage->getKnowledgeTest()/100;
+                $weigthedPT = $userInCall->getPsychoRating()*$callPercentage->getpsychoTest()/100;
+                $weigthedIN = $userInCall->getInterviewRating()*$callPercentage->getInterview()/100;
+                $weigthedCL = $userInCall->getClassRating()*$callPercentage->getClass()/100;
+                $finalRating = $weigthedCV + $weigthedKT + $weigthedPT + $weigthedIN + $weigthedCL;
+                $userInCall->setFinalRating(number_format($finalRating, 3));
             }
         }
         $entityManager->flush();

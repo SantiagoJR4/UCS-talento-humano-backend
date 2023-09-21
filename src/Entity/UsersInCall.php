@@ -81,9 +81,30 @@ class UsersInCall
     /**
      * @var string|null
      *
+     * @ORM\Column(name="psycho_test_file", type="text", length=65535, nullable=true)
+     */
+    private $psychoTestFile;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="psycho_test_report", type="text", length=65535, nullable=true)
+     */
+    private $psychoTestReport;
+
+    /**
+     * @var string|null
+     *
      * @ORM\Column(name="interview_rating", type="text", length=0, nullable=true)
      */
     private $interviewRating;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="interview_file", type="text", length=65535, nullable=true)
+     */
+    private $interviewFile;
 
     /**
      * @var string|null
@@ -220,6 +241,30 @@ class UsersInCall
         return $this;
     }
 
+    public function getPsychoTestFile(): ?string
+    {
+        return $this->psychoTestFile;
+    }
+
+    public function setPsychoTestFile(?string $psychoTestFile): self
+    {
+        $this->psychoTestFile = $psychoTestFile;
+
+        return $this;
+    }
+
+    public function getPsychoTestReport(): ?string
+    {
+        return $this->psychoTestReport;
+    }
+
+    public function setPsychoTestReport(?string $psychoTestReport): self
+    {
+        $this->psychoTestReport = $psychoTestReport;
+
+        return $this;
+    }
+
     public function getInterviewRating(): ?string
     {
         return $this->interviewRating;
@@ -228,6 +273,18 @@ class UsersInCall
     public function setInterviewRating(?string $interviewRating): self
     {
         $this->interviewRating = $interviewRating;
+
+        return $this;
+    }
+
+    public function getInterviewFile(): ?string
+    {
+        return $this->interviewFile;
+    }
+
+    public function setInterviewFile(?string $interviewFile): self
+    {
+        $this->interviewFile = $interviewFile;
 
         return $this;
     }
