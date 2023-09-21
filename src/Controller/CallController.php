@@ -1404,4 +1404,17 @@ class CallController extends AbstractController
         return new JsonResponse(['message' => 'Se ha aprobado esta convocatoria con el id '.$callId], 200, []);
     }
 
+    #[Route('/get-references-from-candidate', name: 'app_get_references_from_candidate')]
+    public function getReferencesFromCandidate(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        $userId = $request->query->get('userId');
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select('r.typeReferences', 'r.names', 'r.relationship', 'r.occupation', 'r.phone')
+            ->from('App\Entity\ReferencesData', 'r')
+            ->where('r.user = :user')
+            ->setParameter('user', $userId);
+        $array = $query->getQuery()->getArrayResult();
+        return new JsonResponse($array, 200, []);
+    }
+
 }
