@@ -32,14 +32,23 @@ class PermissionsAndLicences
     /**
      * @var string|null
      *
-     * @ORM\Column(name="type_permission", type="string", length=1, nullable=true, options={"fixed"=true,"comment"="P: personal, L:laboral"})
+     * @ORM\Column(name="type_permission", type="string", length=1, nullable=true, options={"fixed"=true,"comment"="P: personal, L:laboral, F: flexibilización de jornada"})
      */
     private $typePermission;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="type_compensation", type="string", length=2, nullable=true, options={"fixed"=true,"comment"="R: remunerado, NR: no remunerado, C: compensado"})
+     * @ORM\Column(name="type_flexibility", type="string", length=2, nullable=true, options={"fixed"=true,"comment"="JC: Jornada continua,
+C: Compensada,
+TC: Trabajo desde casa"})
+     */
+    private $typeFlexibility;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="type_compensation", type="string", length=2, nullable=true, options={"fixed"=true,"comment"="R: remunerado, NR: no remunerado"})
      */
     private $typeCompensation;
 
@@ -148,6 +157,18 @@ class PermissionsAndLicences
     public function setTypePermission(?string $typePermission): self
     {
         $this->typePermission = $typePermission;
+
+        return $this;
+    }
+
+    public function getTypeFlexibility(): ?string
+    {
+        return $this->typeFlexibility;
+    }
+
+    public function setTypeFlexibility(?string $typeFlexibility): self
+    {
+        $this->typeFlexibility = $typeFlexibility;
 
         return $this;
     }

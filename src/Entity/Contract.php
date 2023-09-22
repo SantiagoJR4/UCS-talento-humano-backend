@@ -93,6 +93,13 @@ class Contract
     private $contractFile;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="workload", type="text", length=0, nullable=true)
+     */
+    private $workload;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -223,6 +230,18 @@ class Contract
     public function setContractFile(string $contractFile): self
     {
         $this->contractFile = $contractFile;
+
+        return $this;
+    }
+
+    public function getWorkload(): ?string
+    {
+        return $this->workload;
+    }
+
+    public function setWorkload(?string $workload): self
+    {
+        $this->workload = $workload;
 
         return $this;
     }

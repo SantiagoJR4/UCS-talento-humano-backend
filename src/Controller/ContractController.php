@@ -8,7 +8,8 @@
 	use App\Entity\Medicaltest;
 use App\Entity\PermissionsAndLicences;
 use App\Entity\Profile;
-	use App\Entity\User;
+use App\Entity\Requisition;
+use App\Entity\User;
 use App\Entity\WorkHistory;
 use App\Service\ValidateToken;
 	use DateTime;
@@ -278,6 +279,7 @@ class ContractController extends AbstractController
 			$contract->setWeeklyHours($data['weekly_hours']);
 			$contract->setFunctions($data['functions']);
 			$contract->setSpecificfunctions($data['specific_functions']);
+			$contract->setWorkload($data['workload']);
 			$contract->setUser($user);
 
 			$file = $request->files->get('file');
@@ -581,6 +583,7 @@ class ContractController extends AbstractController
 
 			$permissionsAndLicences -> setTypeSolicitude($data['type_solicitude']);
 			$permissionsAndLicences -> setTypePermission($data['type_permission'] ?? NULL);
+			$permissionsAndLicences -> setTypeFlexibility($data['type_flexibility'] ?? NULL);
 			$permissionsAndLicences -> setTypeCompensation($data['type_compensation'] ?? NULL);
 			$permissionsAndLicences -> setTypeDatePermission($data['type_date_permission'] ?? NULL);
 			$permissionsAndLicences -> setReason($data['reason']);
@@ -635,5 +638,40 @@ class ContractController extends AbstractController
 		}
 
 		return new JsonResponse(['status'=>'Success','message'=>'Permiso o licencia creada con éxito']);
+	}
+	///------------------------------------------------------------------------------------------
+	//---- REQUISITON
+	#[Route('contract/create-requisiton', name:'app_contract_create_requisition')]
+	public function createRequisition(ManagerRegistry $doctrine, Request $request): JsonResponse
+	{
+		$isTokenValid = $this->validateTokenSuper($request)->getContent();
+		$entityManager = $doctrine->getManager();
+		$data = json_decode($request->getContent(),true);
+
+		if($isTokenValid === false){
+			return new JsonResponse(['error' => 'Token no válido']);
+		}else{
+			$user = $entityManager->getRepository(User::class)->find($data['user']);
+			if(!$user){
+				throw $this->createNotFoundException('No user found for id' . $data['id']);
+			}
+			$profileId = $data['profile'];
+			$profile = $entityManager->getRepository(Profile::class)->find($profileId);
+
+			$requisition = new Requisition();
+			$requisition->setTypeRequisition($data['type_requisition']);
+			$requisition->setObjectContract($data['object_contract']);
+			$requisition->setWorkDedication($data['work_dedication']);
+			$requisition->setInitialContract($data['initial_contract']);
+			$requisition->setSpecificFunctions($data['specific_functions']);
+			$requisition->setSalary($data['salary']);
+			$requisition->setProfile($profile);
+			$requisition->setUser($user);
+			
+			$entityManager->persist($requisition);
+			$entityManager->flush();
+		}
+
+		return new JsonResponse(['status'=>'Success','message'=>'Requisición creada con éxito']);
 	}
 }
