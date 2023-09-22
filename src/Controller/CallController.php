@@ -1417,4 +1417,17 @@ class CallController extends AbstractController
         return new JsonResponse($array, 200, []);
     }
 
+    #[Route('/select-candidate', name: 'app_select_candidate')]
+    public function selectCandidate(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        $userId = $request->query->get('userId');
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select('r.typeReferences', 'r.names', 'r.relationship', 'r.occupation', 'r.phone')
+            ->from('App\Entity\ReferencesData', 'r')
+            ->where('r.user = :user')
+            ->setParameter('user', $userId);
+        $array = $query->getQuery()->getArrayResult();
+        return new JsonResponse($array, 200, []);
+    }
+
 }
