@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * MessengerMessages
  *
- * @ORM\Table(name="messenger_messages", indexes={@ORM\Index(name="IDX_75EA56E0FB7336F0", columns={"queue_name"}), @ORM\Index(name="IDX_75EA56E0E3BD61CE", columns={"available_at"}), @ORM\Index(name="IDX_75EA56E016BA31DB", columns={"delivered_at"})})
+ * @ORM\Table(name="messenger_messages", indexes={@ORM\Index(name="IDX_75EA56E016BA31DB", columns={"delivered_at"}), @ORM\Index(name="IDX_75EA56E0FB7336F0", columns={"queue_name"}), @ORM\Index(name="IDX_75EA56E0E3BD61CE", columns={"available_at"})})
  * @ORM\Entity
  */
 class MessengerMessages
@@ -74,7 +74,7 @@ class MessengerMessages
         return $this->body;
     }
 
-    public function setBody(string $body): static
+    public function setBody(string $body): self
     {
         $this->body = $body;
 
@@ -86,7 +86,7 @@ class MessengerMessages
         return $this->headers;
     }
 
-    public function setHeaders(string $headers): static
+    public function setHeaders(string $headers): self
     {
         $this->headers = $headers;
 
@@ -98,7 +98,7 @@ class MessengerMessages
         return $this->queueName;
     }
 
-    public function setQueueName(string $queueName): static
+    public function setQueueName(string $queueName): self
     {
         $this->queueName = $queueName;
 
@@ -110,7 +110,7 @@ class MessengerMessages
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
 
@@ -122,7 +122,7 @@ class MessengerMessages
         return $this->availableAt;
     }
 
-    public function setAvailableAt(\DateTimeInterface $availableAt): static
+    public function setAvailableAt(\DateTimeInterface $availableAt): self
     {
         $this->availableAt = $availableAt;
 
@@ -134,7 +134,7 @@ class MessengerMessages
         return $this->deliveredAt;
     }
 
-    public function setDeliveredAt(?\DateTimeInterface $deliveredAt): static
+    public function setDeliveredAt(?\DateTimeInterface $deliveredAt): self
     {
         $this->deliveredAt = $deliveredAt;
 

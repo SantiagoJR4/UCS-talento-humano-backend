@@ -51,7 +51,7 @@ class CompetenceProfile
         return $this->profile;
     }
 
-    public function setProfile(?Profile $profile): static
+    public function setProfile(?Profile $profile): self
     {
         $this->profile = $profile;
 
@@ -63,7 +63,7 @@ class CompetenceProfile
         return $this->competence;
     }
 
-    public function setCompetence(?Competence $competence): static
+    public function setCompetence(?Competence $competence): self
     {
         $this->competence = $competence;
 

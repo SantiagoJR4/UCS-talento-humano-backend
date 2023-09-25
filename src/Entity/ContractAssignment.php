@@ -61,7 +61,7 @@ class ContractAssignment
         return $this->charge;
     }
 
-    public function setCharge(?ContractCharges $charge): static
+    public function setCharge(?ContractCharges $charge): self
     {
         $this->charge = $charge;
 
@@ -73,7 +73,7 @@ class ContractAssignment
         return $this->profile;
     }
 
-    public function setProfile(?Profile $profile): static
+    public function setProfile(?Profile $profile): self
     {
         $this->profile = $profile;
 
@@ -85,7 +85,7 @@ class ContractAssignment
         return $this->contract;
     }
 
-    public function setContract(?Contract $contract): static
+    public function setContract(?Contract $contract): self
     {
         $this->contract = $contract;
 

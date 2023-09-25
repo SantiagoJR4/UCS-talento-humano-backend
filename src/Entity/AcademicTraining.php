@@ -119,7 +119,7 @@ class AcademicTraining
         return $this->academicModality;
     }
 
-    public function setAcademicModality(string $academicModality): static
+    public function setAcademicModality(string $academicModality): self
     {
         $this->academicModality = $academicModality;
 
@@ -131,7 +131,7 @@ class AcademicTraining
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): static
+    public function setDate(\DateTimeInterface $date): self
     {
         $this->date = $date;
 
@@ -143,7 +143,7 @@ class AcademicTraining
         return $this->programMethodology;
     }
 
-    public function setProgramMethodology(string $programMethodology): static
+    public function setProgramMethodology(string $programMethodology): self
     {
         $this->programMethodology = $programMethodology;
 
@@ -155,7 +155,7 @@ class AcademicTraining
         return $this->titleName;
     }
 
-    public function setTitleName(string $titleName): static
+    public function setTitleName(string $titleName): self
     {
         $this->titleName = $titleName;
 
@@ -167,7 +167,7 @@ class AcademicTraining
         return $this->snies;
     }
 
-    public function setSnies(?string $snies): static
+    public function setSnies(?string $snies): self
     {
         $this->snies = $snies;
 
@@ -179,7 +179,7 @@ class AcademicTraining
         return $this->isForeignUniversity;
     }
 
-    public function setIsForeignUniversity(bool $isForeignUniversity): static
+    public function setIsForeignUniversity(bool $isForeignUniversity): self
     {
         $this->isForeignUniversity = $isForeignUniversity;
 
@@ -191,7 +191,7 @@ class AcademicTraining
         return $this->nameUniversity;
     }
 
-    public function setNameUniversity(string $nameUniversity): static
+    public function setNameUniversity(string $nameUniversity): self
     {
         $this->nameUniversity = $nameUniversity;
 
@@ -203,7 +203,7 @@ class AcademicTraining
         return $this->degreePdf;
     }
 
-    public function setDegreePdf(?string $degreePdf): static
+    public function setDegreePdf(?string $degreePdf): self
     {
         $this->degreePdf = $degreePdf;
 
@@ -215,7 +215,7 @@ class AcademicTraining
         return $this->diplomaPdf;
     }
 
-    public function setDiplomaPdf(string $diplomaPdf): static
+    public function setDiplomaPdf(string $diplomaPdf): self
     {
         $this->diplomaPdf = $diplomaPdf;
 
@@ -227,7 +227,7 @@ class AcademicTraining
         return $this->certifiedTitlePdf;
     }
 
-    public function setCertifiedTitlePdf(?string $certifiedTitlePdf): static
+    public function setCertifiedTitlePdf(?string $certifiedTitlePdf): self
     {
         $this->certifiedTitlePdf = $certifiedTitlePdf;
 
@@ -239,7 +239,7 @@ class AcademicTraining
         return $this->history;
     }
 
-    public function setHistory(?string $history): static
+    public function setHistory(?string $history): self
     {
         $this->history = $history;
 
@@ -251,7 +251,7 @@ class AcademicTraining
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 

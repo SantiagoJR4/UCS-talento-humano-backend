@@ -326,6 +326,15 @@ class CallController extends AbstractController
         }
         $newCall->setJury(json_encode($jury));
         $newCall->setState(0);
+        date_default_timezone_set('America/Bogota');
+        $addToHistory = json_encode(array(array(
+            'user' => $user->getId(),
+            'responsible' => $user->getSpecialUser(),
+            'state' => 0,
+            'message' => 'La convocatoria fue creada por '.$user->getNames()." ".$user->getLastNames(),
+            'date' => date('Y-m-d H:i:s'),
+        )));
+        $newCall->setHistory($addToHistory);
         $entityManager = $doctrine->getManager();
         $requiredForPercentages = json_decode($data['requiredForPercentages'], true);
         $stepsOfCall = [];
@@ -1374,15 +1383,30 @@ class CallController extends AbstractController
     }
 
     #[Route('/reject-call', name: 'app_reject_call')]
-    public function rejectCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer): JsonResponse
+    public function rejectCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, ValidateToken $vToken): JsonResponse
     {
         $token= $request->query->get('token');
         $callId = $request->query->get('callId');
+        $rejectText = $request->request->get('rejectText');
+        $user = $vToken->getUserIdFromToken($token);
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
-        if($call === NULL) {
+        if($call === NULL)
+        {
             return new JsonResponse(['message' => 'No existe esta convocatoria.'], 400, []);
         }
         $call->setState(5);
+        $history = $call->getHistory();
+        date_default_timezone_set('America/Bogota');
+        $addToHistory = json_encode(array(
+            'user' => $user->getId(),
+            'responsible' => $user->getSpecialUser(),
+            'state' => 5,
+            'message' => 'La convocatoria fue rechazada por '.$user->getNames()." ".$user->getLastNames(),
+            'userInput' => $rejectText,
+            'date' => date('Y-m-d H:i:s'),
+        ));
+        $newHistory= rtrim($history, ']').','.$addToHistory.']';
+        $call->setHistory($newHistory);
         $entityManager = $doctrine->getManager();
         $entityManager->flush();
         return new JsonResponse(['message' => 'Se ha rechazado esta convocatoria con el id '.$callId], 200, []);
@@ -1391,20 +1415,36 @@ class CallController extends AbstractController
     public function approveCall(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, SerializerInterface $serializer): JsonResponse
     {
         $token= $request->query->get('token');
+        $callId = $request->query->get('callId');
+        $notificationId = $request->query->get('notificationId');
+        $applicant = $request->query->get('applicant');
         $user = $vToken->getUserIdFromToken($token);
         $specialUser = $user->getSpecialUser();
-        $callId = $request->query->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         if($call === NULL) {
             return new JsonResponse(['message' => 'No existe esta convocatoria.'], 400, []);
         }
         $newStateForCall = 0;
+        $newNotification = new Notification();
+        $newNotification->setSeen(0);
+        $relatedEntity = array(
+            'id'=>$callId,
+            'applicant'=>$applicant,
+            'entity'=>'call'
+        );
+        $newNotification->setRelatedEntity(json_encode($relatedEntity));
         switch ($specialUser) {
             case 'VF':
                 $newStateForCall = 1;
+                $userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'REC','userType' => 1]);
+                $newNotification->setUser($userForNotification);
+                $newNotification->setMessage('solicita la aprobación de una convocatoria.');
                 break;
             case 'REC':
                 $newStateForCall = 2;
+                $userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
+                $newNotification->setUser($userForNotification);
+                $newNotification->setMessage('solicita la aprobación de una convocatoria.');
                 break;
             case 'CTH':
                 $newStateForCall = 3;
@@ -1413,8 +1453,22 @@ class CallController extends AbstractController
             default:
             return new JsonResponse(['message' => 'Usuario no autorizado.'], 403, []);
         }
+        $notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+        $notification->setSeen(1);
         $call->setState($newStateForCall);
+        $history = $call->getHistory();
+        date_default_timezone_set('America/Bogota');
+        $addToHistory = json_encode(array(
+            'user' => $user->getId(),
+            'responsible' => $user->getSpecialUser(),
+            'state' => $newStateForCall,
+            'message' => 'La convocatoria fue aprobada por '.$user->getNames()." ".$user->getLastNames(),
+            'date' => date('Y-m-d H:i:s'),
+        ));
+        $newHistory= rtrim($history, ']').','.$addToHistory.']';
+        $call->setHistory($newHistory);
         $entityManager = $doctrine->getManager();
+        $entityManager->persist($newNotification);
         $entityManager->flush();
         return new JsonResponse(['message' => 'Se ha aprobado esta convocatoria con el id '.$callId], 200, []);
     }
