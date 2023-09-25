@@ -13,6 +13,7 @@ use App\Entity\FurtherTraining;
 use App\Entity\IntellectualProduction;
 use App\Entity\Language;
 use App\Entity\Materias;
+use App\Entity\Notification;
 use App\Entity\PersonalData;
 use App\Entity\Profile;
 use App\Entity\Record;
@@ -296,6 +297,7 @@ class CallController extends AbstractController
             ->from('App\Entity\User', 'u')
             ->where('u.specialUser IN (:specialUsersForJury) AND u.userType != 9')
             ->setParameter('specialUsersForJury', $specialUsersForJury);
+        //TODO: arrayfilter just one Camila CTH 
         $jury = $query->getQuery()->getArrayResult();
         foreach ($jury as &$person) {
             $person['fullName'] = $person['names'] . ' ' . $person['lastNames'];
@@ -361,7 +363,20 @@ class CallController extends AbstractController
         }
         $entityManager->persist($newCall);
         $entityManager->flush();
-        return new JsonResponse(['legend' => 'call has been created.'],200,[]);
+        $newNotification = new Notification();
+        $newNotification->setSeen(0);
+        $userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
+        $newNotification->setUser($userForNotification);
+        $newNotification->setMessage('solicita la aprobación de una convocatoria.');
+        $relatedEntity = array(
+            'id'=>$newCall->getId(),
+            'applicant'=>$user->getNames()." ".$user->getLastNames(),
+            'entity'=>'call'
+        );
+        $newNotification->setRelatedEntity(json_encode($relatedEntity));
+        $entityManager->persist($newNotification);
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'call has been created.'],200,[]);
     }
 
     #[Route('/get-call', name: 'app_get_call')]

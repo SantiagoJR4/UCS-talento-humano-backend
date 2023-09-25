@@ -72,7 +72,7 @@ class CompetencePercentage
         return $this->psychoPercentage;
     }
 
-    public function setPsychoPercentage(?int $psychoPercentage): self
+    public function setPsychoPercentage(?int $psychoPercentage): static
     {
         $this->psychoPercentage = $psychoPercentage;
 
@@ -84,7 +84,7 @@ class CompetencePercentage
         return $this->interviewPercentage;
     }
 
-    public function setInterviewPercentage(?int $interviewPercentage): self
+    public function setInterviewPercentage(?int $interviewPercentage): static
     {
         $this->interviewPercentage = $interviewPercentage;
 
@@ -96,7 +96,7 @@ class CompetencePercentage
         return $this->extraCompetence;
     }
 
-    public function setExtraCompetence(?string $extraCompetence): self
+    public function setExtraCompetence(?string $extraCompetence): static
     {
         $this->extraCompetence = $extraCompetence;
 
@@ -108,7 +108,7 @@ class CompetencePercentage
         return $this->call;
     }
 
-    public function setCall(?TblCall $call): self
+    public function setCall(?TblCall $call): static
     {
         $this->call = $call;
 
@@ -120,7 +120,7 @@ class CompetencePercentage
         return $this->competenceProfile;
     }
 
-    public function setCompetenceProfile(?CompetenceProfile $competenceProfile): self
+    public function setCompetenceProfile(?CompetenceProfile $competenceProfile): static
     {
         $this->competenceProfile = $competenceProfile;
 

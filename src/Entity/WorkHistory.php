@@ -77,7 +77,7 @@ class WorkHistory
         return $this->typeDocument;
     }
 
-    public function setTypeDocument(string $typeDocument): self
+    public function setTypeDocument(string $typeDocument): static
     {
         $this->typeDocument = $typeDocument;
 
@@ -89,7 +89,7 @@ class WorkHistory
         return $this->dateDocument;
     }
 
-    public function setDateDocument(\DateTimeInterface $dateDocument): self
+    public function setDateDocument(\DateTimeInterface $dateDocument): static
     {
         $this->dateDocument = $dateDocument;
 
@@ -101,7 +101,7 @@ class WorkHistory
         return $this->description;
     }
 
-    public function setDescription(?string $description): self
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
 
@@ -113,7 +113,7 @@ class WorkHistory
         return $this->newvalue;
     }
 
-    public function setNewvalue(?string $newvalue): self
+    public function setNewvalue(?string $newvalue): static
     {
         $this->newvalue = $newvalue;
 
@@ -125,7 +125,7 @@ class WorkHistory
         return $this->documentPdf;
     }
 
-    public function setDocumentPdf(string $documentPdf): self
+    public function setDocumentPdf(string $documentPdf): static
     {
         $this->documentPdf = $documentPdf;
 
@@ -137,7 +137,7 @@ class WorkHistory
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

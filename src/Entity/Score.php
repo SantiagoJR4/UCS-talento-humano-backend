@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Score
  *
- * @ORM\Table(name="score", indexes={@ORM\Index(name="fk_score_factor_profile", columns={"factor_profile_id"}), @ORM\Index(name="fk_score_competence_profile", columns={"competence_percentage_id"})})
+ * @ORM\Table(name="score", indexes={@ORM\Index(name="fk_score_competence_profile", columns={"competence_percentage_id"}), @ORM\Index(name="fk_score_factor_profile", columns={"factor_profile_id"})})
  * @ORM\Entity
  */
 class Score
@@ -51,7 +51,7 @@ class Score
         return $this->factorProfile;
     }
 
-    public function setFactorProfile(?FactorProfile $factorProfile): self
+    public function setFactorProfile(?FactorProfile $factorProfile): static
     {
         $this->factorProfile = $factorProfile;
 
@@ -63,7 +63,7 @@ class Score
         return $this->competencePercentage;
     }
 
-    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): self
+    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): static
     {
         $this->competencePercentage = $competencePercentage;
 

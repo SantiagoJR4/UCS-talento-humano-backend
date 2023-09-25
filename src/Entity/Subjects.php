@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Subjects
  *
- * @ORM\Table(name="subjects", indexes={@ORM\Index(name="fk_subjects_materia", columns={"materia_id"}), @ORM\Index(name="fk_subjects_subprofile", columns={"subprofile_id"})})
+ * @ORM\Table(name="subjects", indexes={@ORM\Index(name="fk_subjects_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_subjects_materia", columns={"materia_id"})})
  * @ORM\Entity
  */
 class Subjects
@@ -51,7 +51,7 @@ class Subjects
         return $this->materia;
     }
 
-    public function setMateria(?Materias $materia): self
+    public function setMateria(?Materias $materia): static
     {
         $this->materia = $materia;
 
@@ -63,7 +63,7 @@ class Subjects
         return $this->subprofile;
     }
 
-    public function setSubprofile(?Subprofile $subprofile): self
+    public function setSubprofile(?Subprofile $subprofile): static
     {
         $this->subprofile = $subprofile;
 

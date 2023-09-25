@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * FactorProfile
  *
- * @ORM\Table(name="factor_profile", indexes={@ORM\Index(name="fk_factor", columns={"factor_id"}), @ORM\Index(name="fk_factor_profile", columns={"call_id"})})
+ * @ORM\Table(name="factor_profile", indexes={@ORM\Index(name="fk_factor_profile", columns={"call_id"}), @ORM\Index(name="fk_factor", columns={"factor_id"})})
  * @ORM\Entity
  */
 class FactorProfile
@@ -58,7 +58,7 @@ class FactorProfile
         return $this->crest;
     }
 
-    public function setCrest(int $crest): self
+    public function setCrest(int $crest): static
     {
         $this->crest = $crest;
 
@@ -70,7 +70,7 @@ class FactorProfile
         return $this->call;
     }
 
-    public function setCall(?TblCall $call): self
+    public function setCall(?TblCall $call): static
     {
         $this->call = $call;
 
@@ -82,7 +82,7 @@ class FactorProfile
         return $this->factor;
     }
 
-    public function setFactor(?Factor $factor): self
+    public function setFactor(?Factor $factor): static
     {
         $this->factor = $factor;
 
