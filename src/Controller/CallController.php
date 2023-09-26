@@ -13,6 +13,7 @@ use App\Entity\FurtherTraining;
 use App\Entity\IntellectualProduction;
 use App\Entity\Language;
 use App\Entity\Materias;
+use App\Entity\Notification;
 use App\Entity\PersonalData;
 use App\Entity\Profile;
 use App\Entity\Record;
@@ -34,6 +35,7 @@ use Firebase\JWT\Key;
 use Lcobucci\JWT\Validation\Validator;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Mailer\MailerInterface;
@@ -58,6 +60,40 @@ function checkProperties($obj) {
         }
     }
     return true;
+}
+
+function approvedUser($userInCall, $step, $allSteps){
+    $userInCallStatus[$step] = 1;
+    $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+    $currentUserStatus = end($arrayUserStatus);
+    $index = array_search($currentUserStatus, $allSteps);
+    array_push($arrayUserStatus, $allSteps[$index + 1]);
+    $userInCall->setUserStatus(json_encode($arrayUserStatus));
+}
+
+function setEmailInfo($nextStep){
+    switch ($nextStep) {
+        case 'KT':
+            return array(
+                'title' => 'Citación Prueba de conocimientos',
+                'template' => 'email/knowledgeTestCitationEmail.html.twig'
+            );
+        case 'PT':
+            return array(
+                'title' => 'Citación Prueba Psicotecnica',
+                'template' => 'email/psychoTestCitationEmail.html.twig'
+            );
+        case 'IN':
+            return array(
+                'title' => 'Citación Entrevista',
+                'template' => 'email/interviewCitationEmail.html.twig'
+            );
+        default:
+            return array(
+                'title' => 'Resultado de Convocatoria',
+                'template' => 'email/notSelectedForCall.html.twig'
+            );
+    }
 }
 
 function requirementsSignUpToCall($userId, $requiredToSignUp, $doctrine){
@@ -261,6 +297,7 @@ class CallController extends AbstractController
             ->from('App\Entity\User', 'u')
             ->where('u.specialUser IN (:specialUsersForJury) AND u.userType != 9')
             ->setParameter('specialUsersForJury', $specialUsersForJury);
+        //TODO: arrayfilter just one Camila CTH 
         $jury = $query->getQuery()->getArrayResult();
         foreach ($jury as &$person) {
             $person['fullName'] = $person['names'] . ' ' . $person['lastNames'];
@@ -289,6 +326,15 @@ class CallController extends AbstractController
         }
         $newCall->setJury(json_encode($jury));
         $newCall->setState(0);
+date_default_timezone_set('America/Bogota');
+        $addToHistory = json_encode(array(array(
+            'user' => $user->getId(),
+            'responsible' => $user->getSpecialUser(),
+            'state' => 0,
+            'message' => 'La convocatoria fue creada por '.$user->getNames()." ".$user->getLastNames(),
+            'date' => date('Y-m-d H:i:s'),
+        )));
+        $newCall->setHistory($addToHistory);
         $entityManager = $doctrine->getManager();
         $requiredForPercentages = json_decode($data['requiredForPercentages'], true);
         $stepsOfCall = [];
@@ -326,7 +372,20 @@ class CallController extends AbstractController
         }
         $entityManager->persist($newCall);
         $entityManager->flush();
-        return new JsonResponse(['legend' => 'call has been created.'],200,[]);
+        $newNotification = new Notification();
+        $newNotification->setSeen(0);
+        $userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
+        $newNotification->setUser($userForNotification);
+        $newNotification->setMessage('solicita la aprobación de una convocatoria.');
+        $relatedEntity = array(
+            'id'=>$newCall->getId(),
+            'applicant'=>$user->getNames()." ".$user->getLastNames(),
+            'entity'=>'call'
+        );
+        $newNotification->setRelatedEntity(json_encode($relatedEntity));
+        $entityManager->persist($newNotification);
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'call has been created.'],200,[]);
     }
 
     #[Route('/get-call', name: 'app_get_call')]
@@ -342,13 +401,14 @@ class CallController extends AbstractController
             ->leftJoin('c.specialProfile', 'spec')
             ->setParameter('id', $callId);
         $call = $query->getQuery()->getArrayResult();
-        $call = convertDateTimeToString2($call);
         $call = $call[0];
+        $call = convertDateTimeToString2($call);
         $call['requiredForPercentages'] = json_decode($call['requiredForPercentages'], true);
         $call['requiredForCurriculumVitae'] = json_decode($call['requiredForCurriculumVitae'], true);
         $call['requiredToSignUp'] = json_decode($call['requiredToSignUp'], true);
         $call['stepsOfCall'] = json_decode($call['stepsOfCall'], true);
         $call['salary'] = json_decode($call['salary'], true);
+        $call['history'] = json_decode($call['history'], true);
         return new JsonResponse($call, 200,[]);
     }
 
@@ -699,21 +759,44 @@ class CallController extends AbstractController
     }
 
     #[Route('/get-users-from-call', name: 'app_get_users_from_call')]
-    public function getUsersFromCall(ManagerRegistry $doctrine, Request $request): JsonResponse
+    public function getUsersFromCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
     {
+        
         $callId = $request->query->get('callId');
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        $specialUser =  $user->getSpecialUser();
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select(
             'uc.id', 'uc.userStatus', 'u.id as userId', 'u.names', 'u.lastNames',
             'u.identification', 'u.email', 'u.urlPhoto', 'uc.qualifyCv', 'uc.status',
             'uc.hvRating','uc.knowledgeRating', 'uc.psychoRating','uc.interviewRating',
-            'uc.classRating', 'uc.finalRating', 'u.phone')
+            'uc.classRating', 'uc.finalRating', 'u.phone', 'uc.knowledgeTestFile',
+            'uc.psychoTestFile', 'uc.psychoTestReport','uc.interviewFile')
             ->from('App\Entity\UsersInCall', 'uc')
             ->join('uc.user', 'u')
             ->where('uc.call = :callId')
             ->setParameter('callId', $callId);
         $usersInCall = $query->getQuery()->getArrayResult();
-        return new JsonResponse($usersInCall, 200, []);
+        foreach ($usersInCall as &$value) {
+            $value['status'] = json_decode($value['status'], true);
+            $value['userStatus'] = json_decode($value['userStatus'], true);
+            $value['hvRating'] = json_decode($value['hvRating'], true);
+            $value['qualifyCv'] = json_decode($value['qualifyCv'], true);
+            $value['names'] = $value['names'] . ' ' . $value['lastNames'];
+            unset($value['lastNames']);
+        }
+        switch ($specialUser) {
+            case 'CTH':
+                return new JsonResponse($usersInCall, 200, []);
+            case 'PSI':
+                $usersInCall = array_filter($usersInCall, function($item){
+                    return array_search('PT', $item['userStatus']);
+                });
+                return new JsonResponse($usersInCall, 200, []);
+            default:
+                return new JsonResponse(['message'=>'No tienes autorización'], 200, []);
+        }
     }
 
     #[Route('/test-email-call', name: 'app_test_email_call')]
@@ -825,8 +908,8 @@ class CallController extends AbstractController
     public function resultsCv(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
     {
         $data = json_decode( $request->request->get('data'), true);
-        $callName = $request->request->get('callName');
         $callId = $request->request->get('callId');
+        $callName = $request->request->get('callName');
         $date = $request->request->get('date');
         $hour = $request->request->get('hour');
         $step =  $request->request->get('step');
@@ -883,6 +966,228 @@ class CallController extends AbstractController
         $call->setStepsOfCall($stepsOfCall);
         $entityManager->flush();
         return new JsonResponse(['status'=>'Correo Enviado'],200,[]);
+    }
+
+    #[Route('/results-call', name:'app_results_call')]
+    public function resultsCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
+    {
+        // ------------
+        $data = json_decode( $request->request->get('data'), true);
+        $callId = $request->request->get('callId');
+        $callName = $request->request->get('callName');
+        $date = $request->request->get('date');
+        $hour = $request->request->get('hour');
+        $step = $request->request->get('step');
+        $entityManager = $doctrine->getManager();
+        $call = $entityManager->getRepository(TblCall::class)->find($callId);
+        $callPercentage = $entityManager->getRepository(CallPercentage::class)->findOneBy(['call'=>$callId]);
+        $callSteps = json_decode($call->getStepsOfCall(), true);
+        $allSteps = $callSteps['allSteps'];
+        $currentStep = $callSteps['currentStep'];
+        $index = array_search($currentStep, $allSteps);
+        $nextStep = $allSteps[$index + 1];
+        $stepsOfCall = json_encode(['allSteps' => $allSteps, 'currentStep' => $nextStep]);
+        $call->setStepsOfCall($stepsOfCall);
+        // $entityManager->flush();
+        foreach($data as $key => $value)
+        {
+            $user = $entityManager->getRepository(User::class)->find($value['id']);
+            $userInCall = $entityManager->getRepository(UsersInCall::class)->findOneBy(['user' => $value['id'], 'call' => $callId]);
+            $userInCallStatus = json_decode($userInCall->getStatus(), true);
+            $emailInfo =  setEmailInfo('NO');
+            switch ($step) {
+                case 'CVSTATUS':
+                    if($value['approved']) {
+                        $userInCallStatus[$step] = 1;
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    } else {
+                        $userInCallStatus[$step] = 2;
+                    }
+                    break;
+                case 'KTSTATUS':
+                    $knowledgeTestMinimumScore = $request->request->get('knowledgeTestMinimumScore');
+                    $call->setKnowledgeTestMinimumScore($knowledgeTestMinimumScore); 
+                    if($value['knowledgeRating'] >= $knowledgeTestMinimumScore){
+                        $userInCallStatus[$step] = 1;
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    } else {
+                        $userInCallStatus[$step] = 2;
+                    }
+                    $userInCall->setKnowledgeRating(number_format($value['knowledgeRating'], 3));
+                    $fileKT = $request->files->get('knowledgeTestFile'.$value['id']);
+                    if ( $fileKT instanceof UploadedFile){
+                        $directory = $this->getParameter('hv')
+                        . '/'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification();
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0777, true);
+                        }
+                        $fileName =
+                        'Call' . '-'
+                        . 'knowledgeTestFile' . '-'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification() . '-'
+                        . time() . '.'
+                        . $fileKT->guessExtension();
+                        $fileKT->move( $directory, $fileName);
+                        $fileKT = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
+                        $userInCall->setKnowledgeTestFile($fileKT);
+                    }
+                    break;
+                case 'PTSTATUS':
+                    if($value['psychoRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
+                        $userInCallStatus[$step] = 1;
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    } else {
+                        $userInCallStatus[$step] = 2;
+                    }
+                    $userInCall->setpsychoRating(number_format($value['psychoRating'],3));
+                    $filePT = $request->files->get('psychoTestFile'.$value['id']);
+                    $reportPT = $request->files->get('psychoTestReport'.$value['id']);
+                    if ( $filePT instanceof UploadedFile){
+                        $directory = $this->getParameter('hv')
+                        . '/'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification();
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0777, true);
+                        }
+                        $fileName =
+                        'Call' . '-'
+                        . 'psychoTestFile' . '-'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification() . '-'
+                        . time() . '.'
+                        . $filePT->guessExtension();
+                        $filePT->move( $directory, $fileName);
+                        $filePT = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
+                        $userInCall->setPsychoTestFile($filePT);
+                    }
+                    if ( $reportPT instanceof UploadedFile){
+                        $directory = $this->getParameter('hv')
+                        . '/'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification();
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0777, true);
+                        }
+                        $fileName =
+                        'Call' . '-'
+                        . 'psychoTestReport' . '-'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification() . '-'
+                        . time() . '.'
+                        . $reportPT->guessExtension();
+                        $reportPT->move( $directory, $fileName);
+                        $reportPT = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
+                        $userInCall->setPsychoTestReport($reportPT);
+                    }
+                    break;
+                case 'INSTATUS':
+                    if($value['interviewRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
+                        $userInCallStatus[$step] = 1;
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    } else {
+                        $userInCallStatus[$step] = 2;
+                    }
+                    $userInCall->setInterviewRating(number_format($value['interviewRating'], 3));
+                    $fileIN = $request->files->get('interviewFile'.$value['id']);
+                    if ( $fileIN instanceof UploadedFile){
+                        $directory = $this->getParameter('hv')
+                        . '/'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification();
+                        if (!is_dir($directory)) {
+                            mkdir($directory, 0777, true);
+                        }
+                        $fileName =
+                        'Call' . '-'
+                        . 'interviewFile' . '-'
+                        . $user->getTypeIdentification()
+                        . $user->getIdentification() . '-'
+                        . time() . '.'
+                        . $fileIN->guessExtension();
+                        $fileIN->move( $directory, $fileName);
+                        $fileIN = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
+                        $userInCall->setInterviewFile($fileIN);
+                    }
+                    break;
+                case 'CLSTATUS':
+                    if($value['classRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
+                        $userInCallStatus[$step] = 1;
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    } else {
+                        $userInCallStatus[$step] = 2;
+                    }
+                    $userInCall->setClassRating(number_format($value['classRating'],3));
+                    break;
+                default:
+                    break;
+            }
+            $userInCall->setStatus(json_encode($userInCallStatus));
+            $entityManager->flush();
+            $userEmail = $user->getEmail();
+            $fullname = $user->getNames().' '.$user->getlastNames();
+            if ($nextStep !== 'FI'){
+                try {
+                    $email = (new TemplatedEmail())
+                        ->from('convocatorias@unicatolicadelsur.edu.co')
+                        ->to($userEmail)
+                        ->subject($emailInfo['title'])
+                        ->htmlTemplate($emailInfo['template'])
+                        ->context([
+                            'fullname' => $fullname,
+                            'callName' => $callName,
+                            'date' => $date,
+                            'hour' => $hour,
+                        ]);         
+                    $mailer->send($email);
+                    $message = 'El correo fue enviado con éxito';
+                } catch (\Throwable $th) {
+                    $message = 'Error al enviar el correo:'.$th->getMessage();
+                    // return new JsonResponse(['status'=>'Error','message'=>$message]);
+                }
+            }
+            if(end($arrayUserStatus) === 'FI') {
+                
+                $hvRating = json_decode($userInCall->getHvRating(), true);
+                $weigthedCV = $hvRating['total'] ? $hvRating['total']*$callPercentage->getCurriculumVitae()/100 : 0;
+                $weigthedKT = $userInCall->getKnowledgeRating()*$callPercentage->getKnowledgeTest()/100;
+                $weigthedPT = $userInCall->getPsychoRating()*$callPercentage->getpsychoTest()/100;
+                $weigthedIN = $userInCall->getInterviewRating()*$callPercentage->getInterview()/100;
+                $weigthedCL = $userInCall->getClassRating()*$callPercentage->getClass()/100;
+                $finalRating = $weigthedCV + $weigthedKT + $weigthedPT + $weigthedIN + $weigthedCL;
+                $userInCall->setFinalRating(number_format($finalRating, 3));
+            }
+        }
+        $entityManager->flush();
+        return new JsonResponse(['status' => 'Correo Enviado'], 200, []);
     }
 
     #[Route('/not-selected-for-call', name:'app_not_selected_for_call')]
@@ -1079,15 +1384,30 @@ class CallController extends AbstractController
     }
 
     #[Route('/reject-call', name: 'app_reject_call')]
-    public function rejectCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer): JsonResponse
+    public function rejectCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, ValidateToken $vToken): JsonResponse
     {
         $token= $request->query->get('token');
         $callId = $request->query->get('callId');
+        $rejectText = $request->request->get('rejectText');
+        $user = $vToken->getUserIdFromToken($token);
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
-        if($call === NULL) {
+        if($call === NULL)
+        {
             return new JsonResponse(['message' => 'No existe esta convocatoria.'], 400, []);
         }
         $call->setState(5);
+        $history = $call->getHistory();
+        date_default_timezone_set('America/Bogota');
+        $addToHistory = json_encode(array(
+            'user' => $user->getId(),
+            'responsible' => $user->getSpecialUser(),
+            'state' => 5,
+            'message' => 'La convocatoria fue rechazada por '.$user->getNames()." ".$user->getLastNames(),
+            'userInput' => $rejectText,
+            'date' => date('Y-m-d H:i:s'),
+        ));
+        $newHistory= rtrim($history, ']').','.$addToHistory.']';
+        $call->setHistory($newHistory);
         $entityManager = $doctrine->getManager();
         $entityManager->flush();
         return new JsonResponse(['message' => 'Se ha rechazado esta convocatoria con el id '.$callId], 200, []);
@@ -1096,20 +1416,36 @@ class CallController extends AbstractController
     public function approveCall(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, SerializerInterface $serializer): JsonResponse
     {
         $token= $request->query->get('token');
+        $callId = $request->query->get('callId');
+        $notificationId = $request->query->get('notificationId');
+        $applicant = $request->query->get('applicant');
         $user = $vToken->getUserIdFromToken($token);
         $specialUser = $user->getSpecialUser();
-        $callId = $request->query->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         if($call === NULL) {
             return new JsonResponse(['message' => 'No existe esta convocatoria.'], 400, []);
         }
         $newStateForCall = 0;
+        $newNotification = new Notification();
+        $newNotification->setSeen(0);
+        $relatedEntity = array(
+            'id'=>$callId,
+            'applicant'=>$applicant,
+            'entity'=>'call'
+        );
+        $newNotification->setRelatedEntity(json_encode($relatedEntity));
         switch ($specialUser) {
             case 'VF':
                 $newStateForCall = 1;
+                $userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'REC','userType' => 1]);
+                $newNotification->setUser($userForNotification);
+                $newNotification->setMessage('solicita la aprobación de una convocatoria.');
                 break;
             case 'REC':
                 $newStateForCall = 2;
+                $userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
+                $newNotification->setUser($userForNotification);
+                $newNotification->setMessage('solicita la aprobación de una convocatoria.');
                 break;
             case 'CTH':
                 $newStateForCall = 3;
@@ -1118,10 +1454,50 @@ class CallController extends AbstractController
             default:
             return new JsonResponse(['message' => 'Usuario no autorizado.'], 403, []);
         }
+        $notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+        $notification->setSeen(1);
         $call->setState($newStateForCall);
+        $history = $call->getHistory();
+        date_default_timezone_set('America/Bogota');
+        $addToHistory = json_encode(array(
+            'user' => $user->getId(),
+            'responsible' => $user->getSpecialUser(),
+            'state' => $newStateForCall,
+            'message' => 'La convocatoria fue aprobada por '.$user->getNames()." ".$user->getLastNames(),
+            'date' => date('Y-m-d H:i:s'),
+        ));
+        $newHistory= rtrim($history, ']').','.$addToHistory.']';
+        $call->setHistory($newHistory);
         $entityManager = $doctrine->getManager();
+        $entityManager->persist($newNotification);
         $entityManager->flush();
         return new JsonResponse(['message' => 'Se ha aprobado esta convocatoria con el id '.$callId], 200, []);
+    }
+
+    #[Route('/get-references-from-candidate', name: 'app_get_references_from_candidate')]
+    public function getReferencesFromCandidate(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        $userId = $request->query->get('userId');
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select('r.typeReferences', 'r.names', 'r.relationship', 'r.occupation', 'r.phone')
+            ->from('App\Entity\ReferencesData', 'r')
+            ->where('r.user = :user')
+            ->setParameter('user', $userId);
+        $array = $query->getQuery()->getArrayResult();
+        return new JsonResponse($array, 200, []);
+    }
+
+    #[Route('/select-candidate', name: 'app_select_candidate')]
+    public function selectCandidate(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, SerializerInterface $serializer): JsonResponse
+    {
+        $userId = $request->query->get('userId');
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select('r.typeReferences', 'r.names', 'r.relationship', 'r.occupation', 'r.phone')
+            ->from('App\Entity\ReferencesData', 'r')
+            ->where('r.user = :user')
+            ->setParameter('user', $userId);
+        $array = $query->getQuery()->getArrayResult();
+        return new JsonResponse($array, 200, []);
     }
 
 }

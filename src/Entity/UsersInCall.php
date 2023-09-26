@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * UsersInCall
  *
- * @ORM\Table(name="users_in_call", indexes={@ORM\Index(name="fk_users_in_call_call", columns={"call_id"}), @ORM\Index(name="fk_users_in_call_user", columns={"user_id"})})
+ * @ORM\Table(name="users_in_call", indexes={@ORM\Index(name="fk_users_in_call_user", columns={"user_id"}), @ORM\Index(name="fk_users_in_call_call", columns={"call_id"})})
  * @ORM\Entity
  */
 class UsersInCall
@@ -67,40 +67,58 @@ class UsersInCall
     /**
      * @var string|null
      *
-     * @ORM\Column(name="psycho_rating", type="text", length=0, nullable=true)
+     * @ORM\Column(name="knowledge_test_file", type="text", length=65535, nullable=true)
+     */
+    private $knowledgeTestFile;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="psycho_rating", type="decimal", precision=4, scale=3, nullable=true)
      */
     private $psychoRating;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="interview_rating", type="text", length=0, nullable=true)
+     * @ORM\Column(name="psycho_test_file", type="text", length=65535, nullable=true)
+     */
+    private $psychoTestFile;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="psycho_test_report", type="text", length=65535, nullable=true)
+     */
+    private $psychoTestReport;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="interview_rating", type="decimal", precision=4, scale=3, nullable=true)
      */
     private $interviewRating;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="class_rating", type="text", length=0, nullable=true)
+     * @ORM\Column(name="interview_file", type="text", length=65535, nullable=true)
+     */
+    private $interviewFile;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="class_rating", type="decimal", precision=4, scale=3, nullable=true)
      */
     private $classRating;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="final_rating", type="text", length=0, nullable=true)
+     * @ORM\Column(name="final_rating", type="decimal", precision=4, scale=3, nullable=true)
      */
     private $finalRating;
-
-    /**
-     * @var \User
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     * })
-     */
-    private $user;
 
     /**
      * @var \TblCall
@@ -111,6 +129,16 @@ class UsersInCall
      * })
      */
     private $call;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * })
+     */
+    private $user;
 
     public function getId(): ?int
     {
@@ -189,6 +217,18 @@ class UsersInCall
         return $this;
     }
 
+    public function getKnowledgeTestFile(): ?string
+    {
+        return $this->knowledgeTestFile;
+    }
+
+    public function setKnowledgeTestFile(?string $knowledgeTestFile): self
+    {
+        $this->knowledgeTestFile = $knowledgeTestFile;
+
+        return $this;
+    }
+
     public function getPsychoRating(): ?string
     {
         return $this->psychoRating;
@@ -201,6 +241,30 @@ class UsersInCall
         return $this;
     }
 
+    public function getPsychoTestFile(): ?string
+    {
+        return $this->psychoTestFile;
+    }
+
+    public function setPsychoTestFile(?string $psychoTestFile): self
+    {
+        $this->psychoTestFile = $psychoTestFile;
+
+        return $this;
+    }
+
+    public function getPsychoTestReport(): ?string
+    {
+        return $this->psychoTestReport;
+    }
+
+    public function setPsychoTestReport(?string $psychoTestReport): self
+    {
+        $this->psychoTestReport = $psychoTestReport;
+
+        return $this;
+    }
+
     public function getInterviewRating(): ?string
     {
         return $this->interviewRating;
@@ -209,6 +273,18 @@ class UsersInCall
     public function setInterviewRating(?string $interviewRating): self
     {
         $this->interviewRating = $interviewRating;
+
+        return $this;
+    }
+
+    public function getInterviewFile(): ?string
+    {
+        return $this->interviewFile;
+    }
+
+    public function setInterviewFile(?string $interviewFile): self
+    {
+        $this->interviewFile = $interviewFile;
 
         return $this;
     }
@@ -237,18 +313,6 @@ class UsersInCall
         return $this;
     }
 
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
     public function getCall(): ?TblCall
     {
         return $this->call;
@@ -257,6 +321,18 @@ class UsersInCall
     public function setCall(?TblCall $call): self
     {
         $this->call = $call;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

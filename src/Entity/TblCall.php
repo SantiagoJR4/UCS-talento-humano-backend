@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TblCall
  *
- * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"})})
+ * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"})})
  * @ORM\Entity
  */
 class TblCall
@@ -82,6 +82,13 @@ class TblCall
     /**
      * @var string|null
      *
+     * @ORM\Column(name="knowledge_test_minimum_score", type="decimal", precision=4, scale=3, nullable=true)
+     */
+    private $knowledgeTestMinimumScore;
+
+    /**
+     * @var string|null
+     *
      * @ORM\Column(name="jury", type="text", length=0, nullable=true)
      */
     private $jury;
@@ -92,6 +99,13 @@ class TblCall
      * @ORM\Column(name="salary", type="text", length=0, nullable=true)
      */
     private $salary;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="history", type="text", length=0, nullable=true)
+     */
+    private $history;
 
     /**
      * @var \DateTime|null
@@ -164,6 +178,16 @@ class TblCall
     private $startOfContractDate;
 
     /**
+     * @var \Subprofile
+     *
+     * @ORM\ManyToOne(targetEntity="Subprofile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
+     * })
+     */
+    private $subprofile;
+
+    /**
      * @var \Profile
      *
      * @ORM\ManyToOne(targetEntity="Profile")
@@ -192,16 +216,6 @@ class TblCall
      * })
      */
     private $specialProfile;
-
-    /**
-     * @var \Subprofile
-     *
-     * @ORM\ManyToOne(targetEntity="Subprofile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
-     * })
-     */
-    private $subprofile;
 
     public function getId(): ?int
     {
@@ -292,6 +306,18 @@ class TblCall
         return $this;
     }
 
+    public function getKnowledgeTestMinimumScore(): ?string
+    {
+        return $this->knowledgeTestMinimumScore;
+    }
+
+    public function setKnowledgeTestMinimumScore(?string $knowledgeTestMinimumScore): self
+    {
+        $this->knowledgeTestMinimumScore = $knowledgeTestMinimumScore;
+
+        return $this;
+    }
+
     public function getJury(): ?string
     {
         return $this->jury;
@@ -312,6 +338,18 @@ class TblCall
     public function setSalary(?string $salary): self
     {
         $this->salary = $salary;
+
+        return $this;
+    }
+
+    public function getHistory(): ?string
+    {
+        return $this->history;
+    }
+
+    public function setHistory(?string $history): self
+    {
+        $this->history = $history;
 
         return $this;
     }
@@ -436,6 +474,18 @@ class TblCall
         return $this;
     }
 
+    public function getSubprofile(): ?Subprofile
+    {
+        return $this->subprofile;
+    }
+
+    public function setSubprofile(?Subprofile $subprofile): self
+    {
+        $this->subprofile = $subprofile;
+
+        return $this;
+    }
+
     public function getProfile(): ?Profile
     {
         return $this->profile;
@@ -468,18 +518,6 @@ class TblCall
     public function setSpecialProfile(?SpecialProfile $specialProfile): self
     {
         $this->specialProfile = $specialProfile;
-
-        return $this;
-    }
-
-    public function getSubprofile(): ?Subprofile
-    {
-        return $this->subprofile;
-    }
-
-    public function setSubprofile(?Subprofile $subprofile): self
-    {
-        $this->subprofile = $subprofile;
 
         return $this;
     }
