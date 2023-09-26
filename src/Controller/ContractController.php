@@ -641,12 +641,12 @@ class ContractController extends AbstractController
 	}
 	///------------------------------------------------------------------------------------------
 	//---- REQUISITON
-	#[Route('contract/create-requisiton', name:'app_contract_create_requisition')]
+	#[Route('contract/create-requisition', name:'app_contract_create_requisition')]
 	public function createRequisition(ManagerRegistry $doctrine, Request $request): JsonResponse
 	{
 		$isTokenValid = $this->validateTokenSuper($request)->getContent();
 		$entityManager = $doctrine->getManager();
-		$data = json_decode($request->getContent(),true);
+		$data = $request->request->all();
 
 		if($isTokenValid === false){
 			return new JsonResponse(['error' => 'Token no válido']);
