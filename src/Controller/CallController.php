@@ -326,7 +326,7 @@ class CallController extends AbstractController
         }
         $newCall->setJury(json_encode($jury));
         $newCall->setState(0);
-        date_default_timezone_set('America/Bogota');
+date_default_timezone_set('America/Bogota');
         $addToHistory = json_encode(array(array(
             'user' => $user->getId(),
             'responsible' => $user->getSpecialUser(),
@@ -401,13 +401,14 @@ class CallController extends AbstractController
             ->leftJoin('c.specialProfile', 'spec')
             ->setParameter('id', $callId);
         $call = $query->getQuery()->getArrayResult();
-        $call = convertDateTimeToString2($call);
         $call = $call[0];
+        $call = convertDateTimeToString2($call);
         $call['requiredForPercentages'] = json_decode($call['requiredForPercentages'], true);
         $call['requiredForCurriculumVitae'] = json_decode($call['requiredForCurriculumVitae'], true);
         $call['requiredToSignUp'] = json_decode($call['requiredToSignUp'], true);
         $call['stepsOfCall'] = json_decode($call['stepsOfCall'], true);
         $call['salary'] = json_decode($call['salary'], true);
+        $call['history'] = json_decode($call['history'], true);
         return new JsonResponse($call, 200,[]);
     }
 
