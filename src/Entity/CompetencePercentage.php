@@ -103,6 +103,21 @@ class CompetencePercentage
         return $this;
     }
 
+<<<<<<< HEAD
+=======
+    public function getCompetenceProfile(): ?CompetenceProfile
+    {
+        return $this->competenceProfile;
+    }
+
+    public function setCompetenceProfile(?CompetenceProfile $competenceProfile): self
+    {
+        $this->competenceProfile = $competenceProfile;
+
+        return $this;
+    }
+
+>>>>>>> d3380203620501b3756662959676da6bfe4c8764
     public function getCall(): ?TblCall
     {
         return $this->call;

@@ -7,7 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * ContractAssignment
  *
- * @ORM\Table(name="contract_assignment", indexes={@ORM\Index(name="contract_id", columns={"contract_id"}), @ORM\Index(name="profile_id", columns={"profile_id"}), @ORM\Index(name="charge_id", columns={"charge_id"})})
+ * @ORM\Table(name="contract_assignment", indexes={@ORM\Index(name="fk_contract_assignment_contract", columns={"contract_id"}), @ORM\Index(name="fk_contract_assignment_contract_charges", columns={"charge_id"}), @ORM\Index(name="fk_contract_assignment_profile", columns={"profile_id"})})
  * @ORM\Entity
  */
 class ContractAssignment
@@ -56,6 +56,21 @@ class ContractAssignment
         return $this->id;
     }
 
+<<<<<<< HEAD
+=======
+    public function getProfile(): ?Profile
+    {
+        return $this->profile;
+    }
+
+    public function setProfile(?Profile $profile): self
+    {
+        $this->profile = $profile;
+
+        return $this;
+    }
+
+>>>>>>> d3380203620501b3756662959676da6bfe4c8764
     public function getContract(): ?Contract
     {
         return $this->contract;

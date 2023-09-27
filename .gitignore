@@ -21,3 +21,4 @@
 ###< symfony/phpunit-bridge ###
 /public/uploads
 /public/hv
+/public/contracts

@@ -25,28 +25,28 @@ class SpecialProfile
     /**
      * @var string
      *
-     * @ORM\Column(name="under_graduate_training", type="text", length=0, nullable=false)
+     * @ORM\Column(name="under_graduate_training", type="text", length=65535, nullable=false)
      */
     private $underGraduateTraining;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="post_graduate_training", type="text", length=0, nullable=false)
+     * @ORM\Column(name="post_graduate_training", type="text", length=65535, nullable=false)
      */
     private $postGraduateTraining;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="previous_experience", type="text", length=0, nullable=false)
+     * @ORM\Column(name="previous_experience", type="text", length=65535, nullable=false)
      */
     private $previousExperience;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="further_training", type="text", length=0, nullable=false)
+     * @ORM\Column(name="further_training", type="text", length=65535, nullable=false)
      */
     private $furtherTraining;
 

@@ -6,8 +6,10 @@
 	use App\Entity\ContractAssignment;
 	use App\Entity\ContractCharges;
 	use App\Entity\Medicaltest;
-	use App\Entity\Profile;
-	use App\Entity\User;
+use App\Entity\PermissionsAndLicences;
+use App\Entity\Profile;
+use App\Entity\Requisition;
+use App\Entity\User;
 use App\Entity\WorkHistory;
 use App\Service\ValidateToken;
 	use DateTime;
@@ -277,6 +279,7 @@ class ContractController extends AbstractController
 			$contract->setWeeklyHours($data['weekly_hours']);
 			$contract->setFunctions($data['functions']);
 			$contract->setSpecificfunctions($data['specific_functions']);
+			$contract->setWorkload($data['workload']);
 			$contract->setUser($user);
 
 			$file = $request->files->get('file');
@@ -410,7 +413,8 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
 		$data = $request->request->all();
 
-		$dateDocument = $data['dateDocument'];
+		$dateDocument = $data['dateDocumentInitial'];
+		$dateDocumentFinal = $data['dateDocumentFinal'];
 
 		if($isValidToken === false){
 			return new JsonResponse(['error' => 'Token no válido']);
@@ -436,35 +440,42 @@ class ContractController extends AbstractController
 					break;
 				case isset($data['other_document']):
 					$addToTypeDocument = $data['other_document'];
-					$workHistory->setTypeDocument($addToTypeDocument);
 					break;
 			}
 
-			$addToNewValue = '';
-			switch(true){
-				case isset($data['newCharge']):
-					$addToNewValue = $data['newCharge'];
-					$workHistory->setNewvalue($addToNewValue);
-					break;
-				case isset($data['newSalary']):
-					$addToNewValue = $data['newSalary'];
-					$workHistory->setNewvalue($addToNewValue);
-					break;
-				case isset($data['newWorkDedication']):
-					$addToNewValue = $data['newWorkDedication'];
-					$workHistory->setNewvalue($addToNewValue);
-					break;
+			if($addToTypeDocument !== '') {
+				$typeDocument = $data['typeDocument'] . '-' . $addToTypeDocument;
+			} else {
+				$typeDocument = $data['typeDocument'];
 			}
 
-			$typeDocument = $data['typeDocument'] . '-' . $addToTypeDocument;
 			$workHistory->setTypeDocument($typeDocument);
-			//$workHistory->setTypeDocument($data['type_document'].'-'.$data['type_otroSi'].'-'.$data['type_afiliaciones'].'-'.$data['type_examenMedico']);
 			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$dateDocument)){
 				$dateTimeDocument = new DateTime($dateDocument);
-				$workHistory->setDateDocument($dateTimeDocument);
+				$workHistory->setDateDocumentInitial($dateTimeDocument);
 			}
-			//$workHistory->setOtherDocument($data['other_document']);
-			$workHistory->setDescription($data['description']);
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$dateDocumentFinal)){
+				$dateTimeDocumentFinal = new DateTime($dateDocumentFinal);
+				$workHistory->setDateDocumentFinal($dateTimeDocumentFinal);
+			}
+
+			if(isset($data['description'])){
+				$workHistory->setDescription($data['description']);
+			}
+			$workHistory->setNewCharge($data['newCharge'] ?? NULL);
+			$workHistory->setNewProfile($data['newProfile']?? NULL);
+			$workHistory->setNewWorkDedication($data['newWorkDedication']?? NULL);
+			$workHistory->setNewDuration($data['newDuration']?? NULL);
+			$workHistory->setNewSalary($data['newSalary']?? NULL);
+			$workHistory->setNewWeeklyHours($data['newWeeklyHours']?? NULL);
+			if(isset($data['newHourPermits'])){
+				$hourString = $data['newHourPermits'];
+				$hourDateTime = DateTime::createFromFormat('H:i', $hourString);
+				$workHistory->setHour($hourDateTime);
+			}else{
+				$workHistory->setHour(NULL);
+			}
+
 			$workHistory->setUser($user);
 
 			$file = $request->files->get('documentPdf');
@@ -507,9 +518,16 @@ class ContractController extends AbstractController
 			$workHistoryData[] = [
 				'id' => $workHistory->getId(),
 				'type_document' => $workHistory->getTypeDocument(),
-				'date_document' => $workHistory->getDateDocument()->format('Y-m-d'),
+				'new_charge' => $workHistory->getNewCharge(),
+				'new_profile' => $workHistory->getNewProfile(),
+				'new_work_dedication' => $workHistory->getNewWorkDedication(),
+				'date_document_initial' => $workHistory->getDateDocumentInitial() ? $workHistory->getDateDocumentInitial()->format('Y-m-d') : NULL,
+				'date_document_final' => $workHistory->getDateDocumentFinal() ? $workHistory->getDateDocumentFinal()->format('Y-m-d') : NULL,
+				'new_duration' => $workHistory->getNewDuration(),
+				'new_salary' => $workHistory->getNewSalary(),
+				'new_weekly_hours' => $workHistory->getNewWeeklyHours(),
+				'hour' => $workHistory->getHour() ? $workHistory->getHour()->format('H:i') : NULL,
 				'description' => $workHistory->getDescription(),
-				'new_value' => $workHistory->getNewValue(),
 				'document_pdf' => $workHistory->getDocumentPdf()
 			];
 		}
@@ -537,5 +555,123 @@ class ContractController extends AbstractController
 		";
 		$results = $connection->executeQuery($sql, ['contractChargeId' => $contractChargeId])->fetchAllAssociative();
 		return new JsonResponse($results);
+	}
+	//--------------------------------------------------------------------------------------------
+	// PERMISOS Y LICENCIAS.
+	#[Route('/contract/permissions-licences', name:'app_contract_permissions_licences')]
+	public function createPermissionsLicences( ManagerRegistry $doctrine,Request $request, ValidateToken $vToken): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+		$user = $vToken->getUserIdFromToken($token);
+		$data = $request->request->all();
+
+		$solicitudeDate = $data['solicitude_date'];
+		$initialDate = $data['initial_date'] ?? NULL;
+		$finalDate = $data['final_date'] ?? NULL;
+
+
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$permissionsAndLicences = new PermissionsAndLicences();
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$solicitudeDate)){
+				$dateTimeSolicitudeDate = new DateTime($solicitudeDate);
+				$permissionsAndLicences -> setSolicitudeDate($dateTimeSolicitudeDate);
+			}
+
+			$permissionsAndLicences -> setTypeSolicitude($data['type_solicitude']);
+			$permissionsAndLicences -> setTypePermission($data['type_permission'] ?? NULL);
+			$permissionsAndLicences -> setTypeFlexibility($data['type_flexibility'] ?? NULL);
+			$permissionsAndLicences -> setTypeCompensation($data['type_compensation'] ?? NULL);
+			$permissionsAndLicences -> setTypeDatePermission($data['type_date_permission'] ?? NULL);
+			$permissionsAndLicences -> setReason($data['reason']);
+			
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$initialDate)){
+				$dateTimeInitial = new DateTime($initialDate);
+				$permissionsAndLicences -> setInitialDate($dateTimeInitial);
+			}
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$finalDate)){
+				$dateTimeFinal = new DateTime($finalDate);
+ 				$permissionsAndLicences -> setFinalDate($dateTimeFinal);
+			}
+			
+			if(isset($data['start_hour'])){
+				$startHourDateTime = DateTime::createFromFormat('H:i',$data['start_hour']);
+				$permissionsAndLicences -> setStartHour($startHourDateTime);
+			}else{
+				$permissionsAndLicences -> setStartHour(NULL);
+			}
+
+			if(isset($data['final_hour'])){
+				$finalHourDateTime = DateTime::createFromFormat('H:i', $data['final_hour']);
+				$permissionsAndLicences -> setFinalHour($finalHourDateTime);
+
+			}else{
+				$permissionsAndLicences -> setFinalHour(NULL);
+			}
+			
+			$permissionsAndLicences -> setTypeLicense($data['type_license'] ?? NULL);
+			$permissionsAndLicences -> setLicense($data['license'] ?? NULL);
+			$permissionsAndLicences -> setUser($user);
+
+			$file = $request->files->get('support_pdf');
+			$nameFile = $data['fileName'];
+			$identificationUser = $data['identificationUser'];
+
+			if($file instanceof UploadedFile){
+				$folderDestination = $this->getParameter('contract').'/'.$identificationUser;
+				$fileName = $identificationUser.'_'.$nameFile;
+
+				try{
+					$file->move($folderDestination,$fileName);
+					$permissionsAndLicences->setSupportPdf($fileName);
+				}catch(\Exception $e){
+					return new JsonResponse(['error' => 'Error al crear el permiso o la licencia']);
+				}
+			}
+
+			$entityManager->persist($permissionsAndLicences);
+			$entityManager->flush();
+		}
+
+		return new JsonResponse(['status'=>'Success','message'=>'Permiso o licencia creada con éxito']);
+	}
+	///------------------------------------------------------------------------------------------
+	//---- REQUISITON
+	#[Route('contract/create-requisition', name:'app_contract_create_requisition')]
+	public function createRequisition(ManagerRegistry $doctrine, Request $request): JsonResponse
+	{
+		$isTokenValid = $this->validateTokenSuper($request)->getContent();
+		$entityManager = $doctrine->getManager();
+		$data = $request->request->all();
+
+		if($isTokenValid === false){
+			return new JsonResponse(['error' => 'Token no válido']);
+		}else{
+			$user = $entityManager->getRepository(User::class)->find($data['user']);
+			if(!$user){
+				throw $this->createNotFoundException('No user found for id' . $data['id']);
+			}
+			$profileId = $data['profile'];
+			$profile = $entityManager->getRepository(Profile::class)->find($profileId);
+
+			$requisition = new Requisition();
+			$requisition->setTypeRequisition($data['type_requisition']);
+			$requisition->setObjectContract($data['object_contract']);
+			$requisition->setWorkDedication($data['work_dedication']);
+			$requisition->setInitialContract($data['initial_contract']);
+			$requisition->setSpecificFunctions($data['specific_functions']);
+			$requisition->setSalary($data['salary']);
+			$requisition->setProfile($profile);
+			$requisition->setUser($user);
+			
+			$entityManager->persist($requisition);
+			$entityManager->flush();
+		}
+
+		return new JsonResponse(['status'=>'Success','message'=>'Requisición creada con éxito']);
 	}
 }

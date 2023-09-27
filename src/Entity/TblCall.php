@@ -8,7 +8,11 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TblCall
  *
+<<<<<<< HEAD
  * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"}), @ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"})})
+=======
+ * @ORM\Table(name="tbl_call", indexes={@ORM\Index(name="fk_tbl_call_special_profile", columns={"special_profile_id"}), @ORM\Index(name="fk_tbl_call_profile", columns={"profile_id"}), @ORM\Index(name="fk_tbl_call_user", columns={"selected_user_id"}), @ORM\Index(name="fk_tbl_call_subprofile", columns={"subprofile_id"})})
+>>>>>>> d3380203620501b3756662959676da6bfe4c8764
  * @ORM\Entity
  */
 class TblCall
@@ -32,7 +36,7 @@ class TblCall
     /**
      * @var string
      *
-     * @ORM\Column(name="description", type="text", length=0, nullable=false)
+     * @ORM\Column(name="description", type="string", length=100, nullable=false)
      */
     private $description;
 
@@ -87,9 +91,9 @@ class TblCall
     private $knowledgeTestMinimumScore;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="jury", type="text", length=0, nullable=false)
+     * @ORM\Column(name="jury", type="text", length=0, nullable=true)
      */
     private $jury;
 
@@ -323,7 +327,11 @@ class TblCall
         return $this->jury;
     }
 
+<<<<<<< HEAD
     public function setJury(string $jury): self
+=======
+    public function setJury(?string $jury): self
+>>>>>>> d3380203620501b3756662959676da6bfe4c8764
     {
         $this->jury = $jury;
 

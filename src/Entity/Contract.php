@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Contract
  *
- * @ORM\Table(name="contract", indexes={@ORM\Index(name="user_id", columns={"user_id"})})
+ * @ORM\Table(name="contract", indexes={@ORM\Index(name="fk_contract_user", columns={"user_id"})})
  * @ORM\Entity
  */
 class Contract
@@ -91,6 +91,13 @@ class Contract
      * @ORM\Column(name="contract_file", type="text", length=0, nullable=false)
      */
     private $contractFile;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="workload", type="text", length=0, nullable=true)
+     */
+    private $workload;
 
     /**
      * @var \User
@@ -223,6 +230,18 @@ class Contract
     public function setContractFile(string $contractFile): self
     {
         $this->contractFile = $contractFile;
+
+        return $this;
+    }
+
+    public function getWorkload(): ?string
+    {
+        return $this->workload;
+    }
+
+    public function setWorkload(?string $workload): self
+    {
+        $this->workload = $workload;
 
         return $this;
     }
