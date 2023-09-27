@@ -326,7 +326,7 @@ class CallController extends AbstractController
         }
         $newCall->setJury(json_encode($jury));
         $newCall->setState(0);
-date_default_timezone_set('America/Bogota');
+        date_default_timezone_set('America/Bogota');
         $addToHistory = json_encode(array(array(
             'user' => $user->getId(),
             'responsible' => $user->getSpecialUser(),
@@ -403,12 +403,8 @@ date_default_timezone_set('America/Bogota');
         $call = $query->getQuery()->getArrayResult();
         $call = $call[0];
         $call = convertDateTimeToString2($call);
-        $call['requiredForPercentages'] = json_decode($call['requiredForPercentages'], true);
-        $call['requiredForCurriculumVitae'] = json_decode($call['requiredForCurriculumVitae'], true);
-        $call['requiredToSignUp'] = json_decode($call['requiredToSignUp'], true);
-        $call['stepsOfCall'] = json_decode($call['stepsOfCall'], true);
-        $call['salary'] = json_decode($call['salary'], true);
-        $call['history'] = json_decode($call['history'], true);
+        $fieldsToDecode = ['requiredForPercentages', 'requiredForCurriculumVitae', 'requiredToSignUp', 'stepsOfCall', 'salary', 'history', 'jury' ];
+        foreach ($fieldsToDecode as $field) { $call[$field] = json_decode($call[$field], true); }
         return new JsonResponse($call, 200,[]);
     }
 

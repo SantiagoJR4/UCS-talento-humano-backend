@@ -63,7 +63,7 @@ class Notification
         return $this->message;
     }
 
-    public function setMessage(string $message): static
+    public function setMessage(string $message): self
     {
         $this->message = $message;
 
@@ -75,7 +75,7 @@ class Notification
         return $this->seen;
     }
 
-    public function setSeen(bool $seen): static
+    public function setSeen(bool $seen): self
     {
         $this->seen = $seen;
 
@@ -87,7 +87,7 @@ class Notification
         return $this->relatedEntity;
     }
 
-    public function setRelatedEntity(string $relatedEntity): static
+    public function setRelatedEntity(string $relatedEntity): self
     {
         $this->relatedEntity = $relatedEntity;
 
@@ -99,7 +99,7 @@ class Notification
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 
