@@ -44,6 +44,13 @@ class Profile
     private $charge;
 
     /**
+     * @var int|null
+     *
+     * @ORM\Column(name="immediate_boss", type="integer", nullable=true, options={"unsigned"=true})
+     */
+    private $immediateBoss;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="under_graduate_training", type="string", length=255, nullable=false)
@@ -122,6 +129,18 @@ class Profile
     public function setCharge(string $charge): self
     {
         $this->charge = $charge;
+
+        return $this;
+    }
+
+    public function getImmediateBoss(): ?int
+    {
+        return $this->immediateBoss;
+    }
+
+    public function setImmediateBoss(?int $immediateBoss): self
+    {
+        $this->immediateBoss = $immediateBoss;
 
         return $this;
     }

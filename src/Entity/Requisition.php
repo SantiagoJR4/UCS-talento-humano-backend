@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Requisition
  *
- * @ORM\Table(name="requisition", indexes={@ORM\Index(name="fk_requisition_profile", columns={"profile_id"}), @ORM\Index(name="fk_requisition_user", columns={"user_id"})})
+ * @ORM\Table(name="requisition", indexes={@ORM\Index(name="fk_requisition_user", columns={"user_id"}), @ORM\Index(name="fk_requisition_profile", columns={"profile_id"})})
  * @ORM\Entity
  */
 class Requisition
@@ -21,6 +21,13 @@ class Requisition
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
     private $id;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="currentDate", type="date", nullable=false)
+     */
+    private $currentdate;
 
     /**
      * @var string
@@ -65,6 +72,25 @@ class Requisition
     private $salary;
 
     /**
+     * @var int
+     *
+     * @ORM\Column(name="state", type="smallint", nullable=false, options={"comment"="0:creada
+1:aprobada JI
+2:aprobada VF
+3:aprobada R
+4:rechazada
+5:aceptada"})
+     */
+    private $state;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="history", type="text", length=0, nullable=true)
+     */
+    private $history;
+
+    /**
      * @var \Profile
      *
      * @ORM\ManyToOne(targetEntity="Profile")
@@ -87,6 +113,18 @@ class Requisition
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getCurrentdate(): ?\DateTimeInterface
+    {
+        return $this->currentdate;
+    }
+
+    public function setCurrentdate(\DateTimeInterface $currentdate): self
+    {
+        $this->currentdate = $currentdate;
+
+        return $this;
     }
 
     public function getTypeRequisition(): ?string
@@ -157,6 +195,30 @@ class Requisition
     public function setSalary(int $salary): self
     {
         $this->salary = $salary;
+
+        return $this;
+    }
+
+    public function getState(): ?int
+    {
+        return $this->state;
+    }
+
+    public function setState(int $state): self
+    {
+        $this->state = $state;
+
+        return $this;
+    }
+
+    public function getHistory(): ?string
+    {
+        return $this->history;
+    }
+
+    public function setHistory(?string $history): self
+    {
+        $this->history = $history;
 
         return $this;
     }

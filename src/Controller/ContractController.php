@@ -6,6 +6,7 @@
 	use App\Entity\ContractAssignment;
 	use App\Entity\ContractCharges;
 	use App\Entity\Medicaltest;
+use App\Entity\Notification;
 use App\Entity\PermissionsAndLicences;
 use App\Entity\Profile;
 use App\Entity\Requisition;
@@ -26,7 +27,8 @@ use App\Service\ValidateToken;
 	use Symfony\Component\Routing\Annotation\Route;
 	use Symfony\Component\Serializer\SerializerInterface;
 	use Doctrine\DBAL\Connection;
-	use Symfony\Component\HttpFoundation\File\UploadedFile;
+use PhpParser\Node\Expr\Cast\Array_;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class ContractController extends AbstractController
 {
@@ -478,14 +480,13 @@ class ContractController extends AbstractController
 
 			$workHistory->setUser($user);
 
-			$file = $request->files->get('documentPdf');
+			$file = $request->files->get('file');
 			$nameFile = $data['fileName'];
 			$identificationUser = $data['identificationUser'];
 
 			if($file instanceof UploadedFile){
 				$folderDestination = $this->getParameter('contract').'/'.$identificationUser;
 				$fileName = $identificationUser.'_'.$nameFile;
-
 				try{
 					$file->move($folderDestination,$fileName);
 					$workHistory->setDocumentPdf($fileName);
@@ -659,6 +660,10 @@ class ContractController extends AbstractController
 			$profile = $entityManager->getRepository(Profile::class)->find($profileId);
 
 			$requisition = new Requisition();
+			
+			$currentDate= new DateTime();
+			$requisition->setCurrentdate($currentDate);
+
 			$requisition->setTypeRequisition($data['type_requisition']);
 			$requisition->setObjectContract($data['object_contract']);
 			$requisition->setWorkDedication($data['work_dedication']);
@@ -670,8 +675,147 @@ class ContractController extends AbstractController
 			
 			$entityManager->persist($requisition);
 			$entityManager->flush();
+			$newNotification = new Notification();
+			$newNotification->setSeen(0);
+			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType'=>1]);
+			$newNotification->setUser($userForNotification);
+			$newNotification->setMessage('Solicita la aprobación de una requisición');
+			$relatedEntity = array(
+				'id'=>$newNotification->getId(),
+				'applicant'=>$user->getNames()." ".$user->getLastNames(),
+				'entity' => 'requisition'
+			);
+			$newNotification->setRelatedEntity(json_encode($relatedEntity));
+			$entityManager->persist($newNotification);
+			$entityManager->flush();
 		}
 
 		return new JsonResponse(['status'=>'Success','message'=>'Requisición creada con éxito']);
 	}
+	
+	#[Route('contract/list-requisition/{id}', name:'app_contract_list_requisition')]
+	public function listRequisition(ManagerRegistry $doctrine, int $id): JsonResponse
+	{
+		$user = $doctrine->getRepository(User::class)->find($id);
+		if (!$user) {
+            return new JsonResponse(['status' => false, 'message' => 'No se encontró el usuario']);
+        }
+		$requisitions = $doctrine->getRepository(Requisition::class)->findBy(['user'=>$user]);
+		if(empty($requisitions)){
+			return new JsonResponse(['status'=>false,'message'=>'No se encontró una solicitud de requisición solicitada.']);
+		}
+
+		$requisitionData = [];
+		foreach($requisitions as $requisition){
+			$profile = $requisition->getProfile();
+			$user = $requisition->getUser();
+
+			$requisitionData[] = [
+				'id' => $requisition->getId(),
+				'currentDate' => $requisition->getCurrentdate() ? $requisition->getCurrentdate()->format('Y-m-d') : NULL,
+				'type_requisition' => $requisition->getTypeRequisition(),
+				'object_contract' => $requisition->getObjectContract(),
+				'work_dedication' => $requisition->getWorkDedication(),
+				'initial_contract' => $requisition->getInitialContract(),
+				'specific_functions' => $requisition->getSpecificFunctions(),
+				'salary' => $requisition->getSalary(),
+				'profileName' => $profile->getName(),
+				'username' => $user->getNames().' '.$user->getLastNames(),
+				'userIdentification' => $user->getIdentification()
+			];
+		}
+
+		return new JsonResponse(['status' => true, 'requisition_data' => $requisitionData]);
+	}
+
+	#[Route('contract/approve-requisition', name:'app_approve_requisition')]
+	public function approveRequisition(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request) : JsonResponse
+	{
+		$token = $request->query->get('token');
+		$requisitionId = $request->query->get('requisitionId');
+		$notificationId = $request->query->get('notificationId');
+		$applicant = $request->query->get('applicant');
+		$user = $vToken->getUserIdFromToken($token);
+		$specialUser = $user->getSpecialUser();
+		$requisition = $doctrine->getRepository(Requisition::class)->find($requisitionId);
+		if($requisition === NULL){
+			return new JsonResponse(['message'=>'No existe una requisición'],400,[]);
+		}
+		$newStateForRequisition = 0;
+		$newNotification = new Notification();
+		$newNotification->setSeen(0);
+		$relatedEntity = array(
+			'id'=>$requisitionId,
+			'applicant'=>$applicant,
+			'entity'=>'requisition'
+		);
+		$newNotification->setRelatedEntity(json_encode($relatedEntity));
+		switch($specialUser){
+			case 'JI':
+				$newStateForRequisition = 1;
+				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
+                $newNotification->setUser($userForNotification);
+                $newNotification->setMessage('solicita la aprobación de una requisición.');
+			case 'VF':
+				$newStateForRequisition = 2;
+				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'REC','userType' => 1]);
+                $newNotification->setUser($userForNotification);
+                $newNotification->setMessage('solicita la aprobación de una requisición.');
+			case 'REC':
+				$newStateForRequisition = 3;
+			case 'A':
+				$newStateForRequisition = 5;
+			default:
+			return new JsonResponse(['message'=>'Usuario no autorizado'],403,[]);
+		}
+		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+		$notification->setSeen(1);
+		$requisition->setState($newStateForRequisition);
+		$history = $requisition->getHistory();
+		date_default_timezone_set('America/Bogota');
+		$addToHistory = json_encode(array(
+			'user' => $user->getId(),
+			'responsible' => $user->getSpecialUser(),
+			'state' => $newStateForRequisition,
+			'message' => 'La requisición fue aprobada por '.$user->getNames()." ".$user->getLastNames(),
+			'date' => date('Y-m-d H:i:s'),
+		));
+		$newHistory = rtrim($history, ']').','.$addToHistory.']';
+		$requisition->setHistory($newHistory);
+		$entityManager = $doctrine->getManager();
+		$entityManager->persist($newNotification);
+		$entityManager->flush();
+		return new JsonResponse(['message'=> 'Se ha aprobado la requisición con el id'. $requisitionId]);
+		
+	}
+
+	#[Route('contract/reject-call', name:'app_reject_requisition')]
+	public function rejectRequisition(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$requisitionId= $request->query->get('requisitionId');
+		$rejectText = $request->request->get('rejectText');
+		$user = $vToken->getUserIdFromToken($token);
+		$requisition = $doctrine->getRepository(Requisition::class)->find($requisitionId);
+		if($requisition === NULL){
+			return new JsonResponse(['message' => 'No existe ninguna requisición solicitada'], 400, []);
+		}
+		$requisition->setState(4);
+		$history = $requisition->getHistory();
+		date_default_timezone_set('America/Bogota');
+		$addToHistory = json_encode(array(
+			'user' => $user->getId(),
+			'responsible' => $user->getSpecialUser(),
+			'state' => 4,
+			'message' => 'La requisición fue rechazada por'.$user->getNames()." ".$user->getLastNames(),
+			'userInput' => $rejectText,
+            'date' => date('Y-m-d H:i:s'),
+		));
+		$newHistory= rtrim($history, ']').','.$addToHistory.']';
+		$requisition->setHistory($newHistory);
+		$entityManager = $doctrine->getManager();
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'Se ha rechazado esta requisición con el id '.$requisitionId], 200, []);
+	}
+
 }
