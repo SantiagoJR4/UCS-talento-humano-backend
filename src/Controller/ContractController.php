@@ -480,7 +480,7 @@ class ContractController extends AbstractController
 
 			$workHistory->setUser($user);
 
-			$file = $request->files->get('file');
+			$file = $request->files->get('documentPdf');
 			$nameFile = $data['fileName'];
 			$identificationUser = $data['identificationUser'];
 
