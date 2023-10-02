@@ -1330,23 +1330,35 @@ class CallController extends AbstractController
     {
         $callId = $request->query->get('callId');
         $query = $doctrine->getManager()->createQueryBuilder();
+        $queryComp = $doctrine->getManager()->createQueryBuilder();
+        $queryFP = $doctrine->getManager()->createQueryBuilder();
         $query->select('cp.id','cp.curriculumVitae','cp.knowledgeTest','cp.psychoTest',
         'cp.interview','cp.class','cp.underGraduateTraining','cp.postGraduateTraining',
         'cp.previousExperience','cp.furtherTraining','cp.hvScore')
-            ->from('App\Entity\CallPercentage', 'cp')
+            ->from('App\Entity\CallPercentage ', 'cp')
             ->where('cp.call = :callId')
             ->setParameter('callId', $callId);
         $callPercentages = $query->getQuery()->getArrayResult();
-        $query->select('comp.id','comp.psychoPercentage','comp.interviewPercentage','comppercomp.name',
+        $queryComp->select('comp.id','comp.psychoPercentage','comp.interviewPercentage','comppercomp.name',
         'comp.extraCompetence')
             ->from('App\Entity\CompetencePercentage', 'comp')
             ->leftJoin('comp.competenceProfile', 'compper')
             ->leftJoin('compper.competence','comppercomp')
             ->where('comp.call = :callId')
             ->setParameter('callId', $callId);
-        $competencePercentages = $query->getQuery()->getArrayResult();
+        $competencePercentages = $queryComp->getQuery()->getArrayResult();
+        $queryFP->select('fp.crest','f.name','f.letter','f.description')
+            ->from('App\Entity\FactorProfile', 'fp')
+            ->leftJoin('fp.factor','f')
+            ->where('fp.call = :callId')
+            ->setParameter('callId', $callId);
+        $factorsProfile = $queryFP->getQuery()->getArrayResult();
         // TODO: Aqui va el score -> aplicable a la prueba psicotecnica.
-        return new JsonResponse(['callPercentages' => $callPercentages, 'competencePercentages' => $competencePercentages], 200, []);
+        return new JsonResponse([
+            'callPercentages' => $callPercentages,
+            'competencePercentages' => $competencePercentages,
+            'factors' => $factorsProfile
+        ], 200, []);
     }
 
     #[Route('/set-hv-rating', name: 'app_set_hv_rating')]
