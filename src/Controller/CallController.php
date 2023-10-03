@@ -73,6 +73,11 @@ function approvedUser($userInCall, $step, $allSteps){
 
 function setEmailInfo($nextStep){
     switch ($nextStep) {
+        case 'NS':
+            return array(
+                'title' => 'Resultado de Convocatoria',
+                'template' => 'email/notSelectedForCall.html.twig'
+            );
         case 'KT':
             return array(
                 'title' => 'Citación Prueba de conocimientos',
@@ -87,6 +92,13 @@ function setEmailInfo($nextStep){
             return array(
                 'title' => 'Citación Entrevista',
                 'template' => 'email/interviewCitationEmail.html.twig'
+            );
+        case 'FI':
+            return false;
+        case 'SE':
+            return array(
+                'title' => 'Resultado de Convocatoria',
+                'template' => 'email/selectedForCall.html.twig'
             );
         default:
             return array(
@@ -1003,6 +1015,7 @@ class CallController extends AbstractController
                         $emailInfo = setEmailInfo($nextStep);
                     } else {
                         $userInCallStatus[$step] = 2;
+                        $emailInfo = setEmailInfo('NS');
                     }
                     break;
                 case 'KTSTATUS':
@@ -1018,6 +1031,7 @@ class CallController extends AbstractController
                         $emailInfo = setEmailInfo($nextStep);
                     } else {
                         $userInCallStatus[$step] = 2;
+                        $emailInfo = setEmailInfo('NS');
                     }
                     $userInCall->setKnowledgeRating(number_format($value['knowledgeRating'], 3));
                     $fileKT = $request->files->get('knowledgeTestFile'.$value['id']);
@@ -1052,6 +1066,7 @@ class CallController extends AbstractController
                         $emailInfo = setEmailInfo($nextStep);
                     } else {
                         $userInCallStatus[$step] = 2;
+                        $emailInfo = setEmailInfo('NS');
                     }
                     $userInCall->setpsychoRating(number_format($value['psychoRating'],3));
                     $filePT = $request->files->get('psychoTestFile'.$value['id']);
@@ -1106,6 +1121,7 @@ class CallController extends AbstractController
                         $emailInfo = setEmailInfo($nextStep);
                     } else {
                         $userInCallStatus[$step] = 2;
+                        $emailInfo = setEmailInfo('NS');
                     }
                     $userInCall->setInterviewRating(number_format($value['interviewRating'], 3));
                     $fileIN = $request->files->get('interviewFile'.$value['id']);
@@ -1140,8 +1156,23 @@ class CallController extends AbstractController
                         $emailInfo = setEmailInfo($nextStep);
                     } else {
                         $userInCallStatus[$step] = 2;
+                        $emailInfo = setEmailInfo('NS');
                     }
                     $userInCall->setClassRating(number_format($value['classRating'],3));
+                    break;
+                case 'FISTATUS':
+                    if($value['selected']){
+                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
+                        $currentUserStatus = end($arrayUserStatus);
+                        $index = array_search($currentUserStatus, $allSteps);
+                        array_push($arrayUserStatus, $allSteps[$index + 1]);
+                        $userInCall->setUserStatus(json_encode($arrayUserStatus));
+                        $emailInfo = setEmailInfo($nextStep);
+                    }
+                    else {
+                        $userInCallStatus[$step] = 2;
+                        $emailInfo = setEmailInfo('NS');
+                    }
                     break;
                 default:
                     break;
@@ -1150,7 +1181,7 @@ class CallController extends AbstractController
             $entityManager->flush();
             $userEmail = $user->getEmail();
             $fullname = $user->getNames().' '.$user->getlastNames();
-            if ($nextStep !== 'FI'){
+            if ($emailInfo){
                 try {
                     $email = (new TemplatedEmail())
                         ->from('convocatorias@unicatolicadelsur.edu.co')
