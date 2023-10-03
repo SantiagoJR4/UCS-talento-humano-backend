@@ -291,13 +291,12 @@ class ContractController extends AbstractController
 				$folderDestination = $this->getParameter('contract')
 											.'/'
 											.$identificationUser;
-				$fileName = 'contrato_' . preg_replace('/[^A-Za-z0-9\-_]+/', '_', $identificationUser) . '.docx';
-									
+				$fileName = 'contrato_'.$identificationUser.'_'.time().'.docx';
 				try {
-					$file->move($folderDestination, $fileName);
-							$contract->setContractFile($fileName);
+						$file->move($folderDestination, $fileName);
+						$contract->setContractFile($fileName);
 					} catch (\Exception $e) {
-							return new JsonResponse(['error' => 'Error al guardar el archivo en el servidor.']);
+						return new JsonResponse(['error' => 'Error al guardar el archivo en el servidor.']);
 					}
 			}
 
@@ -486,7 +485,7 @@ class ContractController extends AbstractController
 
 			if($file instanceof UploadedFile){
 				$folderDestination = $this->getParameter('contract').'/'.$identificationUser;
-				$fileName = $identificationUser.'_'.$nameFile;
+				$fileName = $identificationUser.'_'.$nameFile.'_'.time();
 				try{
 					$file->move($folderDestination,$fileName);
 					$workHistory->setDocumentPdf($fileName);
