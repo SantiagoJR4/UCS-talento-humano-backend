@@ -671,9 +671,21 @@ class ContractController extends AbstractController
 			$requisition->setSalary($data['salary']);
 			$requisition->setProfile($profile);
 			$requisition->setUser($user);
+			$requisition->setState(0);
 			
+			date_default_timezone_set('America/Bogota');
+			$addToHistory = json_encode(array(array(
+				'user' => $user->getId(),
+				'responsible' => $user->getSpecialUser(),
+				'state' => 0,
+				'message' => 'La requisición fue solicitada por '.$user->getNames()." ".$user->getLastNames(),
+				'date' => date('Y-m-d H:i:s'),
+			)));
+			$requisition->setHistory($addToHistory);
+
 			$entityManager->persist($requisition);
 			$entityManager->flush();
+
 			$newNotification = new Notification();
 			$newNotification->setSeen(0);
 			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType'=>1]);
