@@ -996,6 +996,7 @@ class CallController extends AbstractController
         $nextStep = $allSteps[$index + 1];
         $stepsOfCall = json_encode(['allSteps' => $allSteps, 'currentStep' => $nextStep]);
         $call->setStepsOfCall($stepsOfCall);
+        if($nextStep === 'SE'){ $call->setState(6); }
         // $entityManager->flush();
         foreach($data as $key => $value)
         {
