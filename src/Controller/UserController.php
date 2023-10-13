@@ -207,13 +207,7 @@ class UserController extends AbstractController
             'specialUser' => $decodedToken->specialUser]);
     }
 
-    #[Route('/saludo', name: 'saludo')]
-    public function saludo(Request $request): JsonResponse
-    {
-        return new JsonResponse(['Hola que dice']);
-    }
-    
- 
+     
     //TODO : HACER VERIFICACIÓN DE CORREO
 
     // #[Route('/verifyEmail', name:'user_verifyemail')]

@@ -11,6 +11,7 @@ use App\Entity\PermissionsAndLicences;
 use App\Entity\Profile;
 use App\Entity\Requisition;
 use App\Entity\User;
+use App\Entity\UsersInRequisition;
 use App\Entity\WorkHistory;
 use App\Service\ValidateToken;
 	use DateTime;
@@ -692,12 +693,26 @@ class ContractController extends AbstractController
 			$newNotification->setUser($userForNotification);
 			$newNotification->setMessage('Solicita la aprobación de una requisición');
 			$relatedEntity = array(
-				'id'=>$newNotification->getId(),
+				'id'=>$requisition->getId(),
 				'applicant'=>$user->getNames()." ".$user->getLastNames(),
 				'entity' => 'requisition'
 			);
 			$newNotification->setRelatedEntity(json_encode($relatedEntity));
 			$entityManager->persist($newNotification);
+			$entityManager->flush();
+
+			//--------------------------------------------------------------------------------
+			//----------------------- USERS IN REQUISITION
+			$requisitionId = $requisition->getId();
+			$requisitionEntity = $entityManager->getRepository(Requisition::class)->find($requisitionId);
+
+			$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user_requisition']);
+			
+			$userInRequisition = new UsersInRequisition();
+			$userInRequisition->setRequisition($requisitionEntity);
+			$userInRequisition->setUser($dataUserRequisition);
+			
+			$entityManager->persist($userInRequisition);
 			$entityManager->flush();
 		}
 
@@ -717,26 +732,90 @@ class ContractController extends AbstractController
 		}
 
 		$requisitionData = [];
+		$requisitionUser = [];
 		foreach($requisitions as $requisition){
+			$userInRequisitions = $doctrine->getRepository(UsersInRequisition::class)->findBy(['requisition'=>$requisition->getId()]);
+			foreach($userInRequisitions as $userInRequisition){
+				$userName = $userInRequisition->getUser();
+				if($userName){
+					$requisitionUser[] = [
+						'names' => $userName->getNames(),
+						'lastNames' => $userName->getLastNames()
+					];
+				}
+			}
+
 			$profile = $requisition->getProfile();
 			$user = $requisition->getUser();
 
 			$requisitionData[] = [
+				'requisition'=>[
+					'id' => $requisition->getId(),
+					'currentDate' => $requisition->getCurrentdate() ? $requisition->getCurrentdate()->format('Y-m-d') : NULL,
+					'type_requisition' => $requisition->getTypeRequisition(),
+					'object_contract' => $requisition->getObjectContract(),
+					'work_dedication' => $requisition->getWorkDedication(),
+					'initial_contract' => $requisition->getInitialContract(),
+					'specific_functions' => $requisition->getSpecificFunctions(),
+					'state' => $requisition->getState(),
+					'history' => $requisition->getHistory(),
+					'salary' => $requisition->getSalary(),
+					'profileName' => $profile->getName(),
+					'username' => $user->getNames().' '.$user->getLastNames(),
+					'userIdentification' => $user->getIdentification()
+				],
+				'requisitionUser' => $requisitionUser
+			];
+		}
+
+		return new JsonResponse(['status' => true, 'requisition_data' => $requisitionData]);
+	}
+	#[Route('contract/get-requisition/{id}', name:'app_contract_get_requisition')]
+	public function getRequisition(ManagerRegistry $doctrine, int $id): JsonResponse
+	{
+		$requisition = $doctrine->getRepository(Requisition::class)->find($id);
+
+		if (!$requisition) {
+			return new JsonResponse(['status' => false, 'message' => 'No se encontró la requisición']);
+		}
+
+		$userInRequisitions = $doctrine->getRepository(UsersInRequisition::class)->findBy(['requisition' => $requisition]);
+
+		$requisitionUser = [];
+
+		foreach ($userInRequisitions as $userInRequisition) {
+			$userName = $userInRequisition->getUser();
+			if ($userName) {
+				$requisitionUser[] = [
+					'names' => $userName->getNames(),
+					'lastNames' => $userName->getLastNames()
+				];
+			}
+		}
+
+		$profile = $requisition->getProfile();
+		$user = $requisition->getUser();
+
+		$requisitionData = [
+			'requisition' => [
 				'id' => $requisition->getId(),
-				'currentDate' => $requisition->getCurrentdate() ? $requisition->getCurrentdate()->format('Y-m-d') : NULL,
+				'currentDate' => $requisition->getCurrentdate() ? $requisition->getCurrentdate()->format('Y-m-d') : null,
 				'type_requisition' => $requisition->getTypeRequisition(),
 				'object_contract' => $requisition->getObjectContract(),
 				'work_dedication' => $requisition->getWorkDedication(),
 				'initial_contract' => $requisition->getInitialContract(),
 				'specific_functions' => $requisition->getSpecificFunctions(),
+				'state' => $requisition->getState(),
+				'history' => $requisition->getHistory(),
 				'salary' => $requisition->getSalary(),
 				'profileName' => $profile->getName(),
-				'username' => $user->getNames().' '.$user->getLastNames(),
+				'username' => $user->getNames() . ' ' . $user->getLastNames(),
 				'userIdentification' => $user->getIdentification()
-			];
-		}
+			],
+			'requisitionUser' => $requisitionUser
+		];
 
-		return new JsonResponse(['status' => true, 'requisition_data' => $requisitionData]);
+    	return new JsonResponse(['status' => true, 'requisition_data' => $requisitionData]);
 	}
 
 	#[Route('contract/approve-requisition', name:'app_approve_requisition')]
@@ -766,16 +845,26 @@ class ContractController extends AbstractController
 				$newStateForRequisition = 1;
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
                 $newNotification->setUser($userForNotification);
-                $newNotification->setMessage('solicita la aprobación de una requisición.');
+                $newNotification->setMessage('solicita la aprobación de una requisición por parte de Vicerrectoria Financiera');
+				break;
 			case 'VF':
 				$newStateForRequisition = 2;
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'REC','userType' => 1]);
                 $newNotification->setUser($userForNotification);
-                $newNotification->setMessage('solicita la aprobación de una requisición.');
+                $newNotification->setMessage('solicita la aprobación de una requisición por parte de Rectoría');
+				break;
 			case 'REC':
 				$newStateForRequisition = 3;
-			case 'A':
+				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
+                $newNotification->setUser($userForNotification);
+                $newNotification->setMessage('Finalización de requisición exitosa.');
+				break;
+			case 'CTH':
 				$newStateForRequisition = 5;
+				$userWhoMadeRequisition = $requisition->getUser();
+				$newNotification->setUser($userWhoMadeRequisition);
+				$newNotification->setMessage('Revisión de requisición finalizada.');
+				break;
 			default:
 			return new JsonResponse(['message'=>'Usuario no autorizado'],403,[]);
 		}
@@ -800,7 +889,7 @@ class ContractController extends AbstractController
 		
 	}
 
-	#[Route('contract/reject-call', name:'app_reject_requisition')]
+	#[Route('contract/reject-requisition', name:'app_reject_requisition')]
 	public function rejectRequisition(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
 	{
 		$token = $request->query->get('token');
@@ -828,5 +917,5 @@ class ContractController extends AbstractController
         $entityManager->flush();
         return new JsonResponse(['message' => 'Se ha rechazado esta requisición con el id '.$requisitionId], 200, []);
 	}
-
 }
+
