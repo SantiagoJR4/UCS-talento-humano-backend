@@ -17,6 +17,7 @@ use DateInterval;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -36,6 +37,21 @@ function convertDateTimeToString($data) {
         }
     }
     return $data;
+}
+
+function filesToChangeOrDelete($table) {
+    switch ($table) {
+        case 'AcademicTraining':
+            return ['degreePdf', 'diplomaPdf', 'certifiedTitlePdf'];
+        case 'FurtherTraining':
+        case 'WorkExperience':
+        case 'TeachingExperience':
+        case 'language':
+            return ['certifiedPdf'];
+        
+        default:
+            return [];
+    }
 }
 
 function formatTimeWorked($timeWorked): string {
@@ -104,7 +120,7 @@ class CurriculumVitaeController extends AbstractController
     }
 
     #[Route('/curriculum-vitae/delete-cv', name: 'app_curriculum_vitae_delete')]
-    public function delete(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    public function delete(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken, Filesystem $filesystem): JsonResponse
     {
         // TODO: delete also files
         $token = $request->query->get('token');
@@ -114,6 +130,14 @@ class CurriculumVitaeController extends AbstractController
         if(isSet($user)){
             $entityManager = $doctrine->getManager();
             $objectToDelete = $entityManager->getRepository('App\\Entity\\'.$table)->find($id);
+            $filesToDelete = filesToChangeOrDelete($table);
+            $filesystem = new Filesystem();
+            foreach ($filesToDelete as $key => $value) {
+                $fileToDelete = $objectToDelete->{'get' . ucfirst($value)}();
+                if( $filesystem->exists($this->getParameter('hv') . '/' . $fileToDelete)){
+                    $filesystem->remove($this->getParameter('hv') . '/' . $fileToDelete);
+                }
+            }
             $entityManager->remove($objectToDelete);
             $entityManager->flush();
             return new JsonResponse(['response'=>'deleted '.$table.' with ID '.$id]);
@@ -121,7 +145,7 @@ class CurriculumVitaeController extends AbstractController
     }
 
     #[Route('/curriculum-vitae/update-cv', name: 'app_curriculum_vitae_update')]
-    public function update(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    public function update(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken, Filesystem $filesystem): JsonResponse
     {
         $token = $request->query->get('token');
         $user =  $vToken->getUserIdFromToken($token);
@@ -143,6 +167,11 @@ class CurriculumVitaeController extends AbstractController
                     $entityObj->{'set' . $fieldName}($dateTime);
                 }
                 elseif ($fieldValue instanceof UploadedFile) {
+                    $filesystem = new Filesystem();
+                    $fileToDelete = $entityObj->{'get' . ucfirst($fieldName)}();
+                    if( $filesystem->exists($this->getParameter('hv') . '/' . $fileToDelete)){
+                        $filesystem->remove($this->getParameter('hv') . '/' . $fileToDelete);
+                    }
                     $directory = $this->getParameter('hv')
                         . '/'
                         . $user->getTypeIdentification()
