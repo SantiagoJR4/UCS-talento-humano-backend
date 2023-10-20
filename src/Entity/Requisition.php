@@ -91,16 +91,6 @@ class Requisition
     private $history;
 
     /**
-     * @var \User
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     * })
-     */
-    private $user;
-
-    /**
      * @var \Profile
      *
      * @ORM\ManyToOne(targetEntity="Profile")
@@ -109,6 +99,16 @@ class Requisition
      * })
      */
     private $profile;
+
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * })
+     */
+    private $user;
 
     public function getId(): ?int
     {
@@ -223,18 +223,6 @@ class Requisition
         return $this;
     }
 
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
-
-        return $this;
-    }
-
     public function getProfile(): ?Profile
     {
         return $this->profile;
@@ -243,6 +231,18 @@ class Requisition
     public function setProfile(?Profile $profile): self
     {
         $this->profile = $profile;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }
