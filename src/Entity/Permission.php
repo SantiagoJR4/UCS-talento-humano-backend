@@ -37,16 +37,16 @@ class Permission
     private $typePermission;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="type_flexibility", type="string", length=2, nullable=false, options={"fixed"=true,"comment"="JC: Jornada continua, C: Compensada, TC: Trabajo desde casa	"})
+     * @ORM\Column(name="type_flexibility", type="string", length=2, nullable=true, options={"fixed"=true,"comment"="JC: Jornada continua, C: Compensada, TC: Trabajo desde casa	"})
      */
     private $typeFlexibility;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="type_compensation", type="string", length=2, nullable=false, options={"fixed"=true,"comment"="R: remunerado, NR: no remunerado	"})
+     * @ORM\Column(name="type_compensation", type="string", length=2, nullable=true, options={"fixed"=true,"comment"="R: remunerado, NR: no remunerado	"})
      */
     private $typeCompensation;
 
@@ -65,39 +65,25 @@ class Permission
     private $reason;
 
     /**
-     * @var \DateTime|null
+     * @var string
      *
-     * @ORM\Column(name="initial_date", type="date", nullable=true)
+     * @ORM\Column(name="support_pdf", type="text", length=0, nullable=false)
      */
-    private $initialDate;
-
-    /**
-     * @var \DateTime|null
-     *
-     * @ORM\Column(name="final_date", type="date", nullable=true)
-     */
-    private $finalDate;
-
-    /**
-     * @var \DateTime|null
-     *
-     * @ORM\Column(name="start_hour", type="time", nullable=true)
-     */
-    private $startHour;
-
-    /**
-     * @var \DateTime|null
-     *
-     * @ORM\Column(name="final_hour", type="time", nullable=true)
-     */
-    private $finalHour;
+    private $supportPdf;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="support_pdf", type="text", length=0, nullable=true)
+     * @ORM\Column(name="dates_array", type="text", length=0, nullable=true)
      */
-    private $supportPdf;
+    private $datesArray;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="dates_compensation", type="text", length=0, nullable=true)
+     */
+    private $datesCompensation;
 
     /**
      * @var int
@@ -161,7 +147,7 @@ class Permission
         return $this->typeFlexibility;
     }
 
-    public function setTypeFlexibility(string $typeFlexibility): self
+    public function setTypeFlexibility(?string $typeFlexibility): self
     {
         $this->typeFlexibility = $typeFlexibility;
 
@@ -173,7 +159,7 @@ class Permission
         return $this->typeCompensation;
     }
 
-    public function setTypeCompensation(string $typeCompensation): self
+    public function setTypeCompensation(?string $typeCompensation): self
     {
         $this->typeCompensation = $typeCompensation;
 
@@ -204,62 +190,38 @@ class Permission
         return $this;
     }
 
-    public function getInitialDate(): ?\DateTimeInterface
-    {
-        return $this->initialDate;
-    }
-
-    public function setInitialDate(?\DateTimeInterface $initialDate): self
-    {
-        $this->initialDate = $initialDate;
-
-        return $this;
-    }
-
-    public function getFinalDate(): ?\DateTimeInterface
-    {
-        return $this->finalDate;
-    }
-
-    public function setFinalDate(?\DateTimeInterface $finalDate): self
-    {
-        $this->finalDate = $finalDate;
-
-        return $this;
-    }
-
-    public function getStartHour(): ?\DateTimeInterface
-    {
-        return $this->startHour;
-    }
-
-    public function setStartHour(?\DateTimeInterface $startHour): self
-    {
-        $this->startHour = $startHour;
-
-        return $this;
-    }
-
-    public function getFinalHour(): ?\DateTimeInterface
-    {
-        return $this->finalHour;
-    }
-
-    public function setFinalHour(?\DateTimeInterface $finalHour): self
-    {
-        $this->finalHour = $finalHour;
-
-        return $this;
-    }
-
     public function getSupportPdf(): ?string
     {
         return $this->supportPdf;
     }
 
-    public function setSupportPdf(?string $supportPdf): self
+    public function setSupportPdf(string $supportPdf): self
     {
         $this->supportPdf = $supportPdf;
+
+        return $this;
+    }
+
+    public function getDatesArray(): ?string
+    {
+        return $this->datesArray;
+    }
+
+    public function setDatesArray(?string $datesArray): self
+    {
+        $this->datesArray = $datesArray;
+
+        return $this;
+    }
+
+    public function getDatesCompensation(): ?string
+    {
+        return $this->datesCompensation;
+    }
+
+    public function setDatesCompensation(?string $datesCompensation): self
+    {
+        $this->datesCompensation = $datesCompensation;
 
         return $this;
     }

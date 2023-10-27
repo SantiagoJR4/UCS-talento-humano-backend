@@ -46,6 +46,13 @@ class License
     /**
      * @var string|null
      *
+     * @ORM\Column(name="license", type="string", length=3, nullable=true, options={"fixed"=true})
+     */
+    private $license;
+
+    /**
+     * @var string|null
+     *
      * @ORM\Column(name="othertype_license", type="string", length=255, nullable=true)
      */
     private $othertypeLicense;
@@ -139,6 +146,18 @@ class License
     public function setTypeLicense(string $typeLicense): self
     {
         $this->typeLicense = $typeLicense;
+
+        return $this;
+    }
+
+    public function getLicense(): ?string
+    {
+        return $this->license;
+    }
+
+    public function setLicense(?string $license): self
+    {
+        $this->license = $license;
 
         return $this;
     }
