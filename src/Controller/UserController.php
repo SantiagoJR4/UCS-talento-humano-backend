@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-function createJwtResponse($user) {
+function createJwtResponse($user, $isUserInOpenCall) {
     $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
     $resp = [
         'names' => $user->getNames(),
@@ -33,6 +33,7 @@ function createJwtResponse($user) {
         'sub' => $user->getSub(),
         'userType' => $user->getUserType(),
         'specialUser' => $user->getSpecialUser(),
+        'isUserInOpenCall' => $isUserInOpenCall,
         'iat' => time(),
         'exp' => time() + 604800
     ];
@@ -166,9 +167,22 @@ class UserController extends AbstractController
             'identification' => $data['numero'],
             'password' => $passHash
         ]);
-
+        $callOpenState = 4;
+        $queryBuilder = $doctrine->getManager()->createQueryBuilder();
+        $query = $queryBuilder
+            ->select('c.id')
+            ->from('App\Entity\UsersInCall', 'uc')
+            ->join('uc.call', 'c')
+            ->where($queryBuilder->expr()->andX(
+                $queryBuilder->expr()->eq('c.state',':callOpenState'),
+                $queryBuilder->expr()->eq('uc.user',':user'),
+            ))
+            ->setParameter('user', $user)
+            ->setParameter('callOpenState', $callOpenState);
+        $array = $query->getQuery()->getArrayResult();
+        $isUserInOpenCall = !empty($array) ? true : false;
         if ($user !== NULL) {
-            return createJwtResponse($user);
+            return createJwtResponse($user, $isUserInOpenCall);
         }
         $client = HttpClient::create();
         $responseIctus = $client->request('POST', 'https://ictus.unicatolicadelsur.edu.co/unicat/web/login', [
@@ -185,11 +199,11 @@ class UserController extends AbstractController
             $json = json_encode($decodedToken);
             $array = json_decode($json, true);
             $registerUser = $userService->createUser($array);
-            return createJwtResponse($registerUser);
+            return createJwtResponse($registerUser, $isUserInOpenCall);
         }
     }
 
-    #[Route('/validate-token', name: 'validate-token')]
+    #[Route('/validate-token', name: 'app_validate_token')]
     public function validateToken(Request $request): JsonResponse
     {
         $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
@@ -204,7 +218,9 @@ class UserController extends AbstractController
         return new JsonResponse([
             'isValid' => $isTokenValid,
             'userType' => $decodedToken->userType,
-            'specialUser' => $decodedToken->specialUser]);
+            'specialUser' => $decodedToken->specialUser,
+            'isUserInOpenCall' => $decodedToken->isUserInOpenCall
+        ]);
     }
 
     #[Route('/saludo', name: 'saludo')]

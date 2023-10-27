@@ -31,6 +31,10 @@ function convertDateTimeToString($data) {
             $data[$key] = convertDateTimeToString($value);
         } elseif ($value instanceof \DateTime) {
             $data[$key] = $value->format('Y-m-d H:i:s');
+        } else if($key === 'history'){
+            $decodedValue = json_decode($value, true);
+            $data[$key] = end($decodedValue);
+            $data['tag'] = setTag(end($decodedValue)['state']);
         } elseif($key === 'timeWorked'){
             $decodedValue = json_decode($value, true);
             $data[$key] = formatTimeWorked($decodedValue);
@@ -52,6 +56,18 @@ function filesToChangeOrDelete($table) {
         default:
             return [];
     }
+}
+
+function setTag($status){
+    $statusMap = array(
+        0 => array('severity' => 'info', 'icon' => 'upload', 'value' => 'Subido'),
+        1 => array('severity' => 'info', 'icon' => 'edit', 'value' => 'Editado'),
+        2 => array('severity' => '', 'icon' => 'check', 'value' => 'Aprobado'),
+        3 => array('severity' => 'warning', 'icon' => 'hourglass_top', 'value' => 'Pendiente'),
+    );
+    return isset($statusMap[$status])
+        ? $statusMap[$status]
+        : array('severity' => 'info', 'icon' => 'upload', 'value' => 'Subido');
 }
 
 function formatTimeWorked($timeWorked): string {

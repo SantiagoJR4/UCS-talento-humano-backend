@@ -66,7 +66,7 @@ class NotificationController extends AbstractController
             unset($notification['lastNames']);
             return new JsonResponse($notification, 200, []);
         } catch (NoResultException $e) {
-            return new JsonResponse(['error' => 'Petición Fallida'], 400, []);
+            return new JsonResponse(['message' => 'Esta notificación no corresponde o no existe'], 400, []);
         }
        
     }

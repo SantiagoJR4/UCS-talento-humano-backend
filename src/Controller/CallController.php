@@ -391,7 +391,8 @@ class CallController extends AbstractController
         $newNotification->setMessage('solicita la aprobación de una convocatoria.');
         $relatedEntity = array(
             'id'=>$newCall->getId(),
-            'applicant'=>$user->getNames()." ".$user->getLastNames(),
+            'applicantId'=>$user->getId(),
+            'applicantName'=>$user->getNames()." ".$user->getLastNames(),
             'entity'=>'call'
         );
         $newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1452,13 +1453,68 @@ class CallController extends AbstractController
         $entityManager->flush();
         return new JsonResponse(['message' => 'Se ha rechazado esta convocatoria con el id '.$callId], 200, []);
     }
+
+    #[Route('/modify-call', name: 'app_modify_call')]
+    public function modifyCall(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, SerializerInterface $serializer){
+        $token = $request->query->get('token');
+        $callId = $request->request->get('callId');
+        $notificationId = $request->request->get('notificationId');
+        $applicantId = $request->request->get('applicantId');
+        $applicantName = $request->request->get('applicantName');
+        $dates = json_decode($request->request->get('dates'), true);
+        $salary = $request->request->get('salary');
+        $user = $vToken->getUserIdFromToken($token);
+        $specialUser = $user->getSpecialUser();
+        $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        if($call === NULL) {
+            return new JsonResponse(['message' => 'No existe esta convocatoria.'], 400, []);
+        }
+        $call->setState(0);
+        $call->setSalary($salary);
+        foreach ($dates as $key => $value) {
+            $dateTime = new DateTime($value);
+            $call->{'set'.$key}($dateTime);
+        }
+        $history = $call->getHistory();
+        date_default_timezone_set('America/Bogota');
+        $addToHistory = json_encode(array(
+            'user' => $user->getId(),
+            'responsible' => $user->getSpecialUser(),
+            'state' => 0,
+            'message' => 'La convocatoria fue modificada por '.$user->getNames()." ".$user->getLastNames(),
+            'date' => date('Y-m-d H:i:s'),
+        ));
+        $newHistory= rtrim($history, ']').','.$addToHistory.']';
+        $call->setHistory($newHistory);
+        $entityManager = $doctrine->getManager();
+        $entityManager->flush();
+        $previewNotification = $doctrine->getRepository(Notification::class)->find($notificationId);
+        $previewNotification->setSeen(1);
+        $newNotification = new Notification();
+        $userForNotification = $doctrine->getRepository(User::class)->find($applicantId);
+        $newNotification->setUser($userForNotification);
+        $newNotification->setSeen(0);
+        $relatedEntity = array(
+            'id'=>$callId,
+            'applicantId'=>$user->getId(),
+            'applicantName'=>$user->getNames()." ".$user->getLastNames(),
+            'entity'=>'call'
+        );
+        $newNotification->setRelatedEntity(json_encode($relatedEntity));
+        $newNotification->setMessage('ha realizado cambios a la convocatoria.');
+        $entityManager->persist($newNotification);
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'Se ha modificado esta convocatoria con el id '.$callId], 200, []);
+    }
+
     #[Route('/approve-call', name: 'app_approve_call')]
     public function approveCall(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, SerializerInterface $serializer): JsonResponse
     {
         $token= $request->query->get('token');
-        $callId = $request->query->get('callId');
-        $notificationId = $request->query->get('notificationId');
-        $applicant = $request->query->get('applicant');
+        $callId = $request->request->get('callId');
+        $notificationId = $request->request->get('notificationId');
+        $applicantId = $request->request->get('applicantId');
+        $applicantName = $request->request->get('applicantName');
         $user = $vToken->getUserIdFromToken($token);
         $specialUser = $user->getSpecialUser();
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
@@ -1470,7 +1526,8 @@ class CallController extends AbstractController
         $newNotification->setSeen(0);
         $relatedEntity = array(
             'id'=>$callId,
-            'applicant'=>$applicant,
+            'applicantId'=>$applicantId,
+            'applicantName'=>$applicantName,
             'entity'=>'call'
         );
         $newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1492,6 +1549,7 @@ class CallController extends AbstractController
                 break;
             
             default:
+                
             return new JsonResponse(['message' => 'Usuario no autorizado.'], 403, []);
         }
         $notification = $doctrine->getRepository(Notification::class)->find($notificationId);
@@ -1539,5 +1597,4 @@ class CallController extends AbstractController
         $array = $query->getQuery()->getArrayResult();
         return new JsonResponse($array, 200, []);
     }
-
 }
