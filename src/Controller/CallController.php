@@ -305,7 +305,7 @@ class CallController extends AbstractController
         // $cth = $doctrine->getRepository(User::class)->findOneBy(['userType' => , 'specialUser' => 'CTH'])
         $specialUsersForJury = ['CTH', 'PSI'];
         $query = $doctrine->getManager()->createQueryBuilder();
-        $query->select('u.id', 'u.names', 'u.lastNames', 'u.specialUser')
+        $query->select('u.id', 'u.names', 'u.lastNames', 'u.userType', 'u.specialUser')
             ->from('App\Entity\User', 'u')
             ->where('u.specialUser IN (:specialUsersForJury) AND u.userType != 9')
             ->setParameter('specialUsersForJury', $specialUsersForJury);
@@ -316,8 +316,20 @@ class CallController extends AbstractController
             unset($person['names']);
             unset($person['lastNames']);
         }
-        if (!in_array($user->getSpecialUser(), $specialUsersForJury)) {
-            array_push($jury, ["id"=>$user->getId(), "fullName"=>$user->getNames()." ".$user->getLastNames(), "specialUser"=> $user->getSpecialUser()]);
+        $found = false;
+        foreach($jury as &$person) {
+            if ($person['id'] === $user->getId()) {
+                $found = true;
+                break; // If found, exit the loop early
+            }
+        }
+        if(!$found){
+            $jury[] = [
+                'id'=>$user->getId(),
+                'fullName'=>$user->getNames().' '.$user->getLastNames(),
+                'userType'=>$user->getUserType(),
+                'specialUser'=> $user->getSpecialUser()
+            ];
         }
         $data = $request->request->all();
         $area = $request->request->get('area');
@@ -1411,17 +1423,51 @@ class CallController extends AbstractController
     {
         //TODO: Add token
         $query = $doctrine->getManager()->createQueryBuilder();
-        $query->select('u.id', 'u.names', 'u.lastNames')
+        $query->select('u.id', 'u.names', 'u.lastNames', 'u.userType', 'u.specialUser')
             ->from('App\Entity\User', 'u')
             ->where('u.userType IN (:userType)')
-            ->setParameter('userType', [1,2,8]);
-        $array = $query->getQuery()->getArrayResult();
-        $usersForJury = array();
-        foreach ($array as $person) {
-            $fullName = $person["names"] . " " . $person["lastNames"];
-            $usersForJury[] = array("id" => $person["id"], "fullName" => $fullName);
+            ->setParameter('userType', [1, 2, 8]);
+        $jury = $query->getQuery()->getArrayResult();
+        foreach ($jury as &$person) {
+            $person['fullName'] = $person['names'] . ' ' . $person['lastNames'];
+            unset($person['names']);
+            unset($person['lastNames']);
         }
-        return new JsonResponse($usersForJury, 200, []);
+        return new JsonResponse($jury, 200, []);
+    }
+
+    #[Route('/assign-jury-for-call', name: 'app_assign_jury_for_call')]
+    public function assignJuryForCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(!$user) {
+            throw $this->createAccessDeniedException();   
+        }
+        $jury = $request->request->get('jury');
+        $callId = $request->request->get('callId');
+        $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        $call->setJury($jury);
+        $entityManager = $doctrine->getManager();
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'Se han asignado los jurados'], 200, []);
+    }
+
+    #[Route('/assign-required-to-sign-up-for-call', name: 'app_required_to_sign_up_for_call')]
+    public function requiredToSignUpForCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(!$user) {
+            throw $this->createAccessDeniedException();   
+        }
+        $required = $request->request->get('required');
+        $callId = $request->request->get('callId');
+        $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        $call->setRequiredToSignUp($required);
+        $entityManager = $doctrine->getManager();
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'Se han asignado los requisitos basicos para el aspirante'], 200, []);
     }
 
     #[Route('/reject-call', name: 'app_reject_call')]
@@ -1463,6 +1509,7 @@ class CallController extends AbstractController
         $applicantName = $request->request->get('applicantName');
         $dates = json_decode($request->request->get('dates'), true);
         $salary = $request->request->get('salary');
+        $jury = $request->request->get('jury');
         $user = $vToken->getUserIdFromToken($token);
         $specialUser = $user->getSpecialUser();
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
@@ -1474,6 +1521,9 @@ class CallController extends AbstractController
         foreach ($dates as $key => $value) {
             $dateTime = new DateTime($value);
             $call->{'set'.$key}($dateTime);
+        }
+        if($jury){
+            $call->setJury($jury);
         }
         $history = $call->getHistory();
         date_default_timezone_set('America/Bogota');
@@ -1549,8 +1599,7 @@ class CallController extends AbstractController
                 break;
             
             default:
-                
-            return new JsonResponse(['message' => 'Usuario no autorizado.'], 403, []);
+                return new JsonResponse(['message' => 'Usuario no autorizado.'], 403, []);
         }
         $notification = $doctrine->getRepository(Notification::class)->find($notificationId);
         $notification->setSeen(1);
@@ -1567,7 +1616,9 @@ class CallController extends AbstractController
         $newHistory= rtrim($history, ']').','.$addToHistory.']';
         $call->setHistory($newHistory);
         $entityManager = $doctrine->getManager();
-        $entityManager->persist($newNotification);
+        if($specialUser !== 'CTH'){
+            $entityManager->persist($newNotification);
+        }
         $entityManager->flush();
         return new JsonResponse(['message' => 'Se ha aprobado esta convocatoria con el id '.$callId], 200, []);
     }
