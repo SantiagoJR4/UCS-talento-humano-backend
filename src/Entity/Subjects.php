@@ -22,16 +22,6 @@ class Subjects
     private $id;
 
     /**
-     * @var \Subprofile
-     *
-     * @ORM\ManyToOne(targetEntity="Subprofile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
-     * })
-     */
-    private $subprofile;
-
-    /**
      * @var \Materias
      *
      * @ORM\ManyToOne(targetEntity="Materias")
@@ -41,9 +31,31 @@ class Subjects
      */
     private $materia;
 
+    /**
+     * @var \Subprofile
+     *
+     * @ORM\ManyToOne(targetEntity="Subprofile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="subprofile_id", referencedColumnName="id")
+     * })
+     */
+    private $subprofile;
+
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getMateria(): ?Materias
+    {
+        return $this->materia;
+    }
+
+    public function setMateria(?Materias $materia): self
+    {
+        $this->materia = $materia;
+
+        return $this;
     }
 
     public function getSubprofile(): ?Subprofile

@@ -223,13 +223,7 @@ class UserController extends AbstractController
         ]);
     }
 
-    #[Route('/saludo', name: 'saludo')]
-    public function saludo(Request $request): JsonResponse
-    {
-        return new JsonResponse(['Hola que dice']);
-    }
-    
- 
+     
     //TODO : HACER VERIFICACIÓN DE CORREO
 
     // #[Route('/verifyEmail', name:'user_verifyemail')]
