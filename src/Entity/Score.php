@@ -51,7 +51,7 @@ class Score
         return $this->competencePercentage;
     }
 
-    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): self
+    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): static
     {
         $this->competencePercentage = $competencePercentage;
 
@@ -63,7 +63,7 @@ class Score
         return $this->factorProfile;
     }
 
-    public function setFactorProfile(?FactorProfile $factorProfile): self
+    public function setFactorProfile(?FactorProfile $factorProfile): static
     {
         $this->factorProfile = $factorProfile;
 

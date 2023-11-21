@@ -150,7 +150,7 @@ class UsersInCall
         return $this->userStatus;
     }
 
-    public function setUserStatus(?string $userStatus): self
+    public function setUserStatus(?string $userStatus): static
     {
         $this->userStatus = $userStatus;
 
@@ -162,7 +162,7 @@ class UsersInCall
         return $this->stateUserCall;
     }
 
-    public function setStateUserCall(bool $stateUserCall): self
+    public function setStateUserCall(bool $stateUserCall): static
     {
         $this->stateUserCall = $stateUserCall;
 
@@ -174,7 +174,7 @@ class UsersInCall
         return $this->qualifyCv;
     }
 
-    public function setQualifyCv(?string $qualifyCv): self
+    public function setQualifyCv(?string $qualifyCv): static
     {
         $this->qualifyCv = $qualifyCv;
 
@@ -186,7 +186,7 @@ class UsersInCall
         return $this->status;
     }
 
-    public function setStatus(?string $status): self
+    public function setStatus(?string $status): static
     {
         $this->status = $status;
 
@@ -198,7 +198,7 @@ class UsersInCall
         return $this->hvRating;
     }
 
-    public function setHvRating(?string $hvRating): self
+    public function setHvRating(?string $hvRating): static
     {
         $this->hvRating = $hvRating;
 
@@ -210,7 +210,7 @@ class UsersInCall
         return $this->knowledgeRating;
     }
 
-    public function setKnowledgeRating(?string $knowledgeRating): self
+    public function setKnowledgeRating(?string $knowledgeRating): static
     {
         $this->knowledgeRating = $knowledgeRating;
 
@@ -222,7 +222,7 @@ class UsersInCall
         return $this->knowledgeTestFile;
     }
 
-    public function setKnowledgeTestFile(?string $knowledgeTestFile): self
+    public function setKnowledgeTestFile(?string $knowledgeTestFile): static
     {
         $this->knowledgeTestFile = $knowledgeTestFile;
 
@@ -234,7 +234,7 @@ class UsersInCall
         return $this->psychoRating;
     }
 
-    public function setPsychoRating(?string $psychoRating): self
+    public function setPsychoRating(?string $psychoRating): static
     {
         $this->psychoRating = $psychoRating;
 
@@ -246,7 +246,7 @@ class UsersInCall
         return $this->psychoTestFile;
     }
 
-    public function setPsychoTestFile(?string $psychoTestFile): self
+    public function setPsychoTestFile(?string $psychoTestFile): static
     {
         $this->psychoTestFile = $psychoTestFile;
 
@@ -258,7 +258,7 @@ class UsersInCall
         return $this->psychoTestReport;
     }
 
-    public function setPsychoTestReport(?string $psychoTestReport): self
+    public function setPsychoTestReport(?string $psychoTestReport): static
     {
         $this->psychoTestReport = $psychoTestReport;
 
@@ -270,7 +270,7 @@ class UsersInCall
         return $this->interviewRating;
     }
 
-    public function setInterviewRating(?string $interviewRating): self
+    public function setInterviewRating(?string $interviewRating): static
     {
         $this->interviewRating = $interviewRating;
 
@@ -282,7 +282,7 @@ class UsersInCall
         return $this->interviewFile;
     }
 
-    public function setInterviewFile(?string $interviewFile): self
+    public function setInterviewFile(?string $interviewFile): static
     {
         $this->interviewFile = $interviewFile;
 
@@ -294,7 +294,7 @@ class UsersInCall
         return $this->classRating;
     }
 
-    public function setClassRating(?string $classRating): self
+    public function setClassRating(?string $classRating): static
     {
         $this->classRating = $classRating;
 
@@ -306,7 +306,7 @@ class UsersInCall
         return $this->finalRating;
     }
 
-    public function setFinalRating(?string $finalRating): self
+    public function setFinalRating(?string $finalRating): static
     {
         $this->finalRating = $finalRating;
 
@@ -318,7 +318,7 @@ class UsersInCall
         return $this->call;
     }
 
-    public function setCall(?TblCall $call): self
+    public function setCall(?TblCall $call): static
     {
         $this->call = $call;
 
@@ -330,7 +330,7 @@ class UsersInCall
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

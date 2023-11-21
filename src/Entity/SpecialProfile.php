@@ -25,28 +25,28 @@ class SpecialProfile
     /**
      * @var string
      *
-     * @ORM\Column(name="under_graduate_training", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="under_graduate_training", type="text", length=0, nullable=false)
      */
     private $underGraduateTraining;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="post_graduate_training", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="post_graduate_training", type="text", length=0, nullable=false)
      */
     private $postGraduateTraining;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="previous_experience", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="previous_experience", type="text", length=0, nullable=false)
      */
     private $previousExperience;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="further_training", type="text", length=65535, nullable=false)
+     * @ORM\Column(name="further_training", type="text", length=0, nullable=false)
      */
     private $furtherTraining;
 
@@ -60,7 +60,7 @@ class SpecialProfile
         return $this->underGraduateTraining;
     }
 
-    public function setUnderGraduateTraining(string $underGraduateTraining): self
+    public function setUnderGraduateTraining(string $underGraduateTraining): static
     {
         $this->underGraduateTraining = $underGraduateTraining;
 
@@ -72,7 +72,7 @@ class SpecialProfile
         return $this->postGraduateTraining;
     }
 
-    public function setPostGraduateTraining(string $postGraduateTraining): self
+    public function setPostGraduateTraining(string $postGraduateTraining): static
     {
         $this->postGraduateTraining = $postGraduateTraining;
 
@@ -84,7 +84,7 @@ class SpecialProfile
         return $this->previousExperience;
     }
 
-    public function setPreviousExperience(string $previousExperience): self
+    public function setPreviousExperience(string $previousExperience): static
     {
         $this->previousExperience = $previousExperience;
 
@@ -96,7 +96,7 @@ class SpecialProfile
         return $this->furtherTraining;
     }
 
-    public function setFurtherTraining(string $furtherTraining): self
+    public function setFurtherTraining(string $furtherTraining): static
     {
         $this->furtherTraining = $furtherTraining;
 

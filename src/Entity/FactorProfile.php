@@ -58,7 +58,7 @@ class FactorProfile
         return $this->crest;
     }
 
-    public function setCrest(int $crest): self
+    public function setCrest(int $crest): static
     {
         $this->crest = $crest;
 
@@ -70,7 +70,7 @@ class FactorProfile
         return $this->factor;
     }
 
-    public function setFactor(?Factor $factor): self
+    public function setFactor(?Factor $factor): static
     {
         $this->factor = $factor;
 
@@ -82,7 +82,7 @@ class FactorProfile
         return $this->call;
     }
 
-    public function setCall(?TblCall $call): self
+    public function setCall(?TblCall $call): static
     {
         $this->call = $call;
 

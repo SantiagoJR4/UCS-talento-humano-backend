@@ -107,18 +107,18 @@ class User
     private $specialUser;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="history", type="text", length=0, nullable=false)
-     */
-    private $history;
-
-    /**
      * @var int
      *
      * @ORM\Column(name="sub", type="integer", nullable=false, options={"unsigned"=true})
      */
     private $sub;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="history", type="text", length=0, nullable=true)
+     */
+    private $history;
 
     public function getId(): ?int
     {
@@ -130,7 +130,7 @@ class User
         return $this->names;
     }
 
-    public function setNames(string $names): self
+    public function setNames(string $names): static
     {
         $this->names = $names;
 
@@ -142,7 +142,7 @@ class User
         return $this->lastNames;
     }
 
-    public function setLastNames(string $lastNames): self
+    public function setLastNames(string $lastNames): static
     {
         $this->lastNames = $lastNames;
 
@@ -154,7 +154,7 @@ class User
         return $this->typeIdentification;
     }
 
-    public function setTypeIdentification(string $typeIdentification): self
+    public function setTypeIdentification(string $typeIdentification): static
     {
         $this->typeIdentification = $typeIdentification;
 
@@ -166,7 +166,7 @@ class User
         return $this->identification;
     }
 
-    public function setIdentification(string $identification): self
+    public function setIdentification(string $identification): static
     {
         $this->identification = $identification;
 
@@ -178,7 +178,7 @@ class User
         return $this->email;
     }
 
-    public function setEmail(string $email): self
+    public function setEmail(string $email): static
     {
         $this->email = $email;
 
@@ -190,7 +190,7 @@ class User
         return $this->alternateEmail;
     }
 
-    public function setAlternateEmail(?string $alternateEmail): self
+    public function setAlternateEmail(?string $alternateEmail): static
     {
         $this->alternateEmail = $alternateEmail;
 
@@ -202,7 +202,7 @@ class User
         return $this->phone;
     }
 
-    public function setPhone(string $phone): self
+    public function setPhone(string $phone): static
     {
         $this->phone = $phone;
 
@@ -214,7 +214,7 @@ class User
         return $this->emailStatus;
     }
 
-    public function setEmailStatus(?bool $emailStatus): self
+    public function setEmailStatus(?bool $emailStatus): static
     {
         $this->emailStatus = $emailStatus;
 
@@ -226,7 +226,7 @@ class User
         return $this->password;
     }
 
-    public function setPassword(string $password): self
+    public function setPassword(string $password): static
     {
         $this->password = $password;
 
@@ -238,7 +238,7 @@ class User
         return $this->urlPhoto;
     }
 
-    public function setUrlPhoto(?string $urlPhoto): self
+    public function setUrlPhoto(?string $urlPhoto): static
     {
         $this->urlPhoto = $urlPhoto;
 
@@ -250,7 +250,7 @@ class User
         return $this->userType;
     }
 
-    public function setUserType(int $userType): self
+    public function setUserType(int $userType): static
     {
         $this->userType = $userType;
 
@@ -262,52 +262,33 @@ class User
         return $this->specialUser;
     }
 
-    public function setSpecialUser(?string $specialUser): self
+    public function setSpecialUser(?string $specialUser): static
     {
         $this->specialUser = $specialUser;
 
         return $this;
     }
 
-<<<<<<< HEAD
     public function getSub(): ?int
     {
         return $this->sub;
     }
 
-    public function setSub(int $sub): self
+    public function setSub(int $sub): static
     {
         $this->sub = $sub;
 
         return $this;
     }
 
-=======
->>>>>>> d3380203620501b3756662959676da6bfe4c8764
     public function getHistory(): ?string
     {
         return $this->history;
     }
 
-<<<<<<< HEAD
-    public function setHistory(?string $history): self
-=======
-    public function setHistory(string $history): self
->>>>>>> d3380203620501b3756662959676da6bfe4c8764
+    public function setHistory(?string $history): static
     {
         $this->history = $history;
-
-        return $this;
-    }
-
-    public function getSub(): ?int
-    {
-        return $this->sub;
-    }
-
-    public function setSub(int $sub): self
-    {
-        $this->sub = $sub;
 
         return $this;
     }
