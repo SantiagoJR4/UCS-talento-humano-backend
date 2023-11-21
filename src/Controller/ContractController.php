@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Contract;
 use App\Entity\ContractAssignment;
 use App\Entity\ContractCharges;
+use App\Entity\Incapacity;
 use App\Entity\License;
 use App\Entity\Medicaltest;
 use App\Entity\Notification;
@@ -259,7 +260,7 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
 		$data = $request->request->all();
 
-		$workStart = $data['work_start'];
+		$workStart = $data['work_start']; 
 		$expirationContract = $data['expiration_contract'];
 
 		if ($isValidToken === false) {
@@ -269,7 +270,23 @@ class ContractController extends AbstractController
 			if (!$user) {
 					throw $this->createNotFoundException('No user found for id' . $data['id']);
 			}
+
+			$employeeType = json_decode($data['employee_type'], true);
+			if (count($employeeType) > 0) {
+				$firstEmployeeType = $employeeType[0];
+			
+				if ($firstEmployeeType === 'AD') {
+					$userTypeValue = 1; 
+				} elseif ($firstEmployeeType === 'PR') {
+					$userTypeValue = 2; 
+				} else {
+					$userTypeValue = 6;
+				}
+			}
+			$user->setUserType($userTypeValue);
+
 			$contract = new Contract();
+			//$contract->setTypeEmployee($data['employee_type']);
 			$contract->setTypeContract($data['type_contract']);
 			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$workStart)){
 					$dateTimeWorkStart = new DateTime($workStart);
@@ -306,7 +323,6 @@ class ContractController extends AbstractController
 
 			$entityManager->persist($contract);
 			$entityManager->flush();
-
 			$contractId = $contract->getId(); // Obtener el ID del contrato recién creado
 			$contractEntity = $entityManager->getRepository(Contract::class)->find($contractId);
 
@@ -666,8 +682,8 @@ class ContractController extends AbstractController
 					'id' => $permission->getId(),
 					'solicitude_date' => $permission->getSolicitudeDate()->format('Y-m-d'),
 					'type_permission' => $permission->getTypePermission(),
-					'type_flexibility' => $permission->getTypeFlexibility() ?? 'No aplica',
-					'type_compensation' => $permission->getTypeCompensation() ?? 'No aplica',
+					'type_flexibility' => $permission->getTypeFlexibility(),
+					'type_compensation' => $permission->getTypeCompensation(),
 					'reason' => $permission->getReason(),
 					'support_pdf' => $permission->getSupportPdf(),
 					'state' => $permission->getState(),
@@ -693,7 +709,11 @@ class ContractController extends AbstractController
 		}
 
 		$user = $permission->getUser();
-		$permissionData[] = [
+		$compensation = $permission->getDatesCompensation();
+		if($compensation === '[]'){
+			$compensation = 'Sin fechas de compensación';
+		}
+		$permissionData = [
 			'permission' => [
 				'id' => $permission->getId(),
 				'solicitude_date' => $permission->getSolicitudeDate()->format('Y-m-d'),
@@ -702,13 +722,13 @@ class ContractController extends AbstractController
 				'type_compensation' => $permission->getTypeCompensation(),
 				'reason' => $permission->getReason(),
 				'support_pdf' => $permission->getSupportPdf(),
-				'datesArray' => $permission->getDatesArray(),
-				'datesCompensation' => $permission->getDatesCompensation(),
 				'state' => $permission->getState(),
 				'history' => $permission->getHistory(),
 				'username' => $user->getNames().' '.$user->getLastNames(),
 				'userIdentification' => $user->getIdentification()
-			]
+			],
+			'datesArray' => json_decode($permission->getDatesArray(),true),
+			'datesCompensation' => json_decode($compensation,true)
 		];
 		return new JsonResponse(['status'=>true, 'permission'=>$permissionData]);
 	}
@@ -758,7 +778,7 @@ class ContractController extends AbstractController
 		date_default_timezone_set('America/Bogota');
 		$addToHistory = json_encode(array(
 			'user' => $user->getId(),
-			'responsible' => $user->getSpecialUser(),
+			'responsible' => $user->getSpecialUser() ?? $user->getNames(),
 			'state' => $newStateForPermission,
 			'message' => 'El permiso fue aprobado por '.$user->getNames()." ".$user->getLastNames(),
 			'date' => date('Y-m-d H:i:s'),
@@ -776,17 +796,44 @@ class ContractController extends AbstractController
 	{
 		$token= $request->query->get('token');
 		$permissionId = $request->query->get('permissionId');
+		$notificationId = $request->query->get('notificationId');
 		$rejectText = $request->request->get('rejectText');
+		$applicant = $request->query->get('applicant');
+		
 		$user = $vToken->getUserIdFromToken($token);
+		$specialUser = $user->getSpecialUser();
 		$permission = $doctrine->getRepository(Permission::class)->find($permissionId);
 		if($permission === NULL){
 			return new JsonResponse(['message'=>'No existe ningun permiso solicitado'],400,[]);
 		}
+		$newNotification = new Notification();
+		$newNotification->setSeen(0);
+		$relatedEntity = array(
+			'id' => $permissionId,
+			'applicant' => $applicant,
+			'entity' => 'permission'
+		);
+
+		$newNotification->setRelatedEntity(json_encode($relatedEntity));
+		switch($specialUser){
+			case 'JI':
+				$userWhoMadePermission = $permission->getUser();
+				$newNotification->setUser($userWhoMadePermission);
+                $newNotification->setMessage('Permiso rechazado por Jefe inmediato');
+				break;
+			case 'CTH':
+				$userWhoMadePermission = $permission->getUser();
+				$newNotification->setUser($userWhoMadePermission);
+				$newNotification->setMessage('Permiso rechazado por Talento humano');
+				break;
+		}
+		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+		$notification->setSeen(1);
 		$permission->setState(3);
 		$history = $permission->getHistory();
 		date_default_timezone_set('America/Bogota');
 		$addToHistory = json_encode(array(
-			'user' => $user->getId(),
+			'user' => $user->getId(), 
 			'responsible' => $user->getSpecialUser(),
 			'state' => 3,
 			'message' => 'El permiso fue rechazado por'.$user->getNames()." ".$user->getLastNames(),
@@ -796,8 +843,9 @@ class ContractController extends AbstractController
 		$newHistory= rtrim($history, ']').','.$addToHistory.']';
 		$permission->setHistory($newHistory);
 		$entityManager = $doctrine->getManager();
+		$entityManager->persist($newNotification);
         $entityManager->flush();
-        return new JsonResponse(['message' => 'Se ha rechazado esta requisición con el id '.$permissionId], 200, []);
+        return new JsonResponse(['message' => 'Se ha rechazado este permiso con el id '.$permissionId], 200, []);
 	}
 	#[Route('contract/all-permissions',name:'app_contract_all_permissions')]
 	public function allPermissions(ManagerRegistry $doctrine) : JsonResponse
@@ -809,6 +857,10 @@ class ContractController extends AbstractController
 		}
 		foreach($permissions as $permission){
 			$user = $permission->getUser();
+			$compensation = $permission->getDatesCompensation();
+			if($compensation === '[]'){
+				$compensation = 'Sin fechas de compensación';
+			}
 			$permissionData[] = [
 				'permission' => [
 					'id' => $permission->getId(),
@@ -818,13 +870,13 @@ class ContractController extends AbstractController
 					'type_compensation' => $permission->getTypeCompensation(),
 					'reason' => $permission->getReason(),
 					'support_pdf' => $permission->getSupportPdf(),
-					'datesArray' => $permission->getDatesArray(),
-					'datesCompensation' => $permission->getDatesCompensation(),
 					'state' => $permission->getState(),
 					'history' => $permission->getHistory(),
 					'username' => $user->getNames().' '.$user->getLastNames(),
 					'userIdentification' => $user->getIdentification()
-				]
+				],
+				'datesArray' => json_decode($permission->getDatesArray(),true),
+				'datesCompensation' => json_decode($compensation,true)
 			];
 		}
 		return new JsonResponse(['status' => true, 'permissions' => $permissionData]);
@@ -940,7 +992,7 @@ class ContractController extends AbstractController
 					'solicitude_date' => $license->getSolicitudeDate()->format('Y-m-d'),
 					'type_license' => $license->getTypelicense(),
 					'type_compensation' => $license->getTypeCompensation(),
-					'lincese' => $license->getLicense(),
+					'license' => $license->getLicense(),
 					'otherLicense' => $license->getOthertypeLicense(),
 					'reason' => $license->getReason(),
 					'initial_date' => $license->getInitialDate()->format('Y-m-d'),
@@ -967,13 +1019,13 @@ class ContractController extends AbstractController
 		}
 
 		$user = $license->getUser();
-		$licenseData[] = [
+		$licenseData = [
 			'license' => [
 				'id' => $license->getId(),
 				'solicitude_date' => $license->getSolicitudeDate()->format('Y-m-d'),
 				'type_license' => $license->getTypelicense(),
 				'type_compensation' => $license->getTypeCompensation(),
-				'lincese' => $license->getLicense(),
+				'license' => $license->getLicense(),
 				'otherLicense' => $license->getOthertypeLicense(),
 				'reason' => $license->getReason(),
 				'initial_date' => $license->getInitialDate()->format('Y-m-d'),
@@ -1050,13 +1102,39 @@ class ContractController extends AbstractController
 	public function rejectLicense(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
 	{
 		$token= $request->query->get('token');
-		$licenseId = $request->query->get('li$licenseId');
+		$licenseId = $request->query->get('licenseId');
 		$rejectText = $request->request->get('rejectText');
+		$applicant = $request->query->get('applicant');
+		$notificationId = $request->query->get('notificationId');
+
 		$user = $vToken->getUserIdFromToken($token);
+		$specialUser = $user->getSpecialUser();
 		$license = $doctrine->getRepository(License::class)->find($licenseId);
 		if($license === NULL){
 			return new JsonResponse(['message'=>'No existe ninguna licencia solicitada'],400,[]);
 		}
+		$newNotification = new Notification();
+		$newNotification->setSeen(0);
+		$relatedEntity = array(
+			'id' => $licenseId,
+			'applicant' => $applicant,
+			'entity' => 'license'
+		);
+		$newNotification->setRelatedEntity(json_encode($relatedEntity));
+		switch($specialUser){
+			case 'JI':
+				$userWhoMadeLicense = $license->getUser();
+				$newNotification->setUser($userWhoMadeLicense);
+                $newNotification->setMessage('Licencia rechazada por Jefe inmediato');
+				break;
+			case 'CTH':
+				$userWhoMadeLicense = $license->getUser();
+				$newNotification->setUser($userWhoMadeLicense);
+				$newNotification->setMessage('Licencia rechazada por Talento humano');
+				break;
+		}
+		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+		$notification->setSeen(1);
 		$license->setState(3);
 		$history = $license->getHistory();
 		date_default_timezone_set('America/Bogota');
@@ -1071,6 +1149,7 @@ class ContractController extends AbstractController
 		$newHistory= rtrim($history, ']').','.$addToHistory.']';
 		$license->setHistory($newHistory);
 		$entityManager = $doctrine->getManager();
+		$entityManager->persist($newNotification);
         $entityManager->flush();
         return new JsonResponse(['message' => 'Se ha rechazado la licencia con el id '.$licenseId], 200, []);
 	}
@@ -1090,7 +1169,7 @@ class ContractController extends AbstractController
 					'solicitude_date' => $license->getSolicitudeDate()->format('Y-m-d'),
 					'type_license' => $license->getTypelicense(),
 					'type_compensation' => $license->getTypeCompensation(),
-					'lincese' => $license->getLicense(),
+					'license' => $license->getLicense(),
 					'otherLicense' => $license->getOthertypeLicense(),
 					'reason' => $license->getReason(),
 					'initial_date' => $license->getInitialDate()->format('Y-m-d'),
@@ -1103,7 +1182,378 @@ class ContractController extends AbstractController
 				]
 			];
 		}
-		return new JsonResponse(['status' => true, 'licences' => $licenseData]);
+		return new JsonResponse(['status' => true, 'licenses' => $licenseData]);
+	}
+	//******************************************INCAPACITY****************************************/
+	//--------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------
+	#[Route('/contract/create-incapacity', name:'app_contract_create_incapacity')]
+	public function createIncapacity(ManagerRegistry $doctrine, Request $request) : JsonResponse 
+	{	
+		$isValidToken = $this->validateTokenSuper($request)->getContent();
+		$entityManager = $doctrine->getManager();
+		$data = $request->request->all();
+
+		$incapacityDate = $data['incapacity_date'];
+
+		if($isValidToken === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$user = $entityManager->getRepository(User::class)->find($data['user']);
+			if(!$user){
+				throw $this->createNotFoundException('No user found for id'. $data['id']);
+			}
+			$incapacity = new Incapacity();
+			$solicitudeDate = new DateTime();
+			$incapacity -> setSolicitudeDate($solicitudeDate);
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$incapacityDate)){
+				$dateIncapacity = new DateTime($incapacityDate);
+				$incapacity -> setIncapacityDate($dateIncapacity);
+			}
+			$incapacity -> setNumberDaysIncapacity($data['number_days_incapacity']);
+			$incapacity -> setOriginIncapacity($data['origin_incapacity']);
+			$incapacity -> setState(0);
+			$incapacity -> setUser($user);
+
+			$file1 = $request->files->get('medical_support_pdf');
+			$file2 = $request->files->get('eps_support_pdf');
+			$identificationUser = $data['identificationUser'];
+
+			if(isset($file1)){
+				$nameFileMedical = $data['fileName1'];	
+				if($file1 instanceof UploadedFile){
+					$folderDestination = $this->getParameter('contract').'/'.$identificationUser;
+					$fileNameMedical = $identificationUser.'_'.time().'_'.$nameFileMedical;
+					try{
+						$file1->move($folderDestination,$fileNameMedical);
+						$incapacity->setMedicalSupportPdf($fileNameMedical);
+					}catch(\Exception $e){
+						return new JsonResponse(['error' => 'Error al solicitar una incapacidad']);
+					}
+				}
+			}else{
+				$incapacity->setMedicalSupportPdf('Sin soporte');
+			}
+			if(isset($file2)){
+				$nameFileEps = $data['fileName2'];	
+				if($file2 instanceof UploadedFile){
+					$folderDestination = $this->getParameter('contract').'/'.$identificationUser;
+					$fileNameEps = $identificationUser.'_'.time().'_'.$nameFileEps;
+					try{
+						$file2->move($folderDestination,$fileNameEps);
+						$incapacity->setEpsSupportPdf($fileNameEps);
+					}catch(\Exception $e){
+						return new JsonResponse(['error' => 'Error al solicitar una incapacidad']);
+					}
+				}
+			}else{
+				$incapacity->setEpsSupportPdf('Sin soporte');
+			}
+
+			date_default_timezone_set('America/Bogota');
+			$addToHistory = json_encode(array(array(
+				'user' => $user->getId(),
+				'responsible' => $user->getSpecialUser(),
+				'state' => 0,
+				'message' => 'La incapacidad fue solicitada por '.$user->getNames()." ".$user->getLastNames(),
+				'date' => date('Y-m-d H:i:s'),
+			)));
+			$incapacity->setHistory($addToHistory);
+
+			$entityManager->persist($incapacity);
+			$entityManager->flush();
+
+			$newNotification = new Notification();
+			$newNotification->setSeen(0);
+			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'ATHSST','userType'=>8]);
+			$newNotification->setUser($userForNotification);
+			$newNotification->setMessage('Solicita la aprobación de una incapacidad');
+			$relatedEntity = array(
+				'id'=>$incapacity->getId(),
+				'applicant'=>$user->getNames()." ".$user->getLastNames(),
+				'entity' => 'incapacity'
+			);
+			$newNotification->setRelatedEntity(json_encode($relatedEntity));
+			$entityManager->persist($newNotification);
+			$entityManager->flush();
+
+		}
+		return new JsonResponse(['status'=>'Success','message'=>'Incapacidad solicitada con éxito']);
+	}
+	//-----------------------------------------------------------------------------------------------
+	//---------- LISTAR INCAPACIDAD CON EL ID DEL USUARIO
+	#[Route('contract/list-incapacity/{id}', name:'app_contract_list_incapacity')]
+	public function listIncapacity(ManagerRegistry $doctrine, int $id): JsonResponse
+	{
+		$user = $doctrine->getRepository(User::class)->find($id);
+		if(!$user){
+			return new JsonResponse(['status' => false, 'message' => 'No se encontró el usuario']);
+		}
+		$incapacitys = $doctrine->getRepository(Incapacity::class)->findBy(['user'=>$user]);
+		if(empty($incapacitys)){
+			return new JsonResponse(['status'=>false,'message'=>'No se encontró ninguna solicitud de incapacidades']);
+		}
+		$contracts = $doctrine->getRepository(Contract::class)->findBy(['user'=>$user]);
+		if (empty($contracts)) {
+            return new JsonResponse(['status' => false, 'message' => 'No se encontraron contratos para este usuario']);
+        }
+		foreach($contracts as $contract){
+			$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
+			$assignmentsCharges = [];
+		
+			if (!empty($assignmentContract)) {
+				foreach ($assignmentContract as $assignment) {
+					$charge = $assignment->getCharge();
+		
+					if ($charge) {
+						$assignmentsCharges[] = [
+							'nameCharge' => $charge->getName(),
+						];
+					}
+				}
+			}
+		}
+
+		$incapacityData = [];
+		foreach($incapacitys as $incapacity){
+			$user = $incapacity->getUser();
+			$incapacityData[] = [
+				'incapacity' => [
+					'id' => $incapacity->getId(),
+					'solicitude_date' => $incapacity->getSolicitudeDate()->format('Y-m-d'),
+					'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
+					'number_days_incapacity' => $incapacity->getNumberDaysIncapacity(),
+					'origin_incapacity' => $incapacity->getOriginIncapacity(),
+					'medical_support_pdf' => $incapacity->getMedicalSupportPdf(),
+					'eps_support_pdf' => $incapacity->getEpsSupportPdf(),
+					'state' => $incapacity->getState(),
+					'history' => $incapacity->getHistory(),
+					'username' => $user->getNames().' '.$user->getLastNames(),
+					'userIdentification' => $user->getIdentification(),
+					'emailUser' => $user->getEmail(),
+					'phoneUser' => $user->getPhone(),
+					'charge'=>$assignmentsCharges
+				]
+			];
+		}
+		return new JsonResponse(['status'=>true, 'incapacity'=>$incapacityData]);
+	}
+	//----------------------------------------------------------------------------------------------
+	//--------- LISTAR INCAPACIDAD CON EL ID DE LA INCAPACIDAD
+	#[Route('contract/get-incapacity/{id}', name:'app_contract_get_incapacity')]
+	public function getIncapacity(ManagerRegistry $doctrine, int $id):JsonResponse
+	{
+		$incapacity = $doctrine->getRepository(Incapacity::class)->find($id);
+		if(!$incapacity){
+			return new JsonResponse(['status'=>false, 'message'=>'No se encontró la incapacidad']);
+		}
+		$user = $incapacity->getUser();
+		$contracts = $doctrine->getRepository(Contract::class)->findBy(['user'=>$user]);
+		if (empty($contracts)) {
+            return new JsonResponse(['status' => false, 'message' => 'No se encontraron contratos para este usuario']);
+        }
+		foreach($contracts as $contract){
+			// Obtener todas las asignaciones del contrato actual
+			$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
+			$assignmentsCharges = [];
+			foreach ($assignmentContract as $assignment) {
+				$charge = $assignment->getCharge();
+
+				if ($charge) {
+					$assignmentsCharges[] = [
+						'nameCharge' => $charge->getName(),
+					];
+				}
+			}
+		}
+
+		$incapacityData = [
+			'incapacity' => [
+				'id' => $incapacity->getId(),
+				'solicitude_date' => $incapacity->getSolicitudeDate()->format('Y-m-d'),
+				'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
+				'number_days_incapacity' => $incapacity->getNumberDaysIncapacity(),
+				'origin_incapacity' => $incapacity->getOriginIncapacity(),
+				'medical_support_pdf' => $incapacity->getMedicalSupportPdf(),
+				'eps_support_pdf' => $incapacity->getEpsSupportPdf(),
+				'state' => $incapacity->getState(),
+				'history' => $incapacity->getHistory(),
+				'username' => $user->getNames().' '.$user->getLastNames(),
+				'userIdentification' => $user->getIdentification(),
+				'emailUser' => $user->getEmail(),
+				'phoneUser' => $user->getPhone(),
+				'charge'=>$assignmentsCharges
+			]
+		];
+		return new JsonResponse(['status'=>true, 'incapacity'=>$incapacityData]);
+	}
+	#[Route('contract/approve-incapacity', name:'app_approve_incapacity')]
+	public function approveIncapacity(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$incapacityId = $request->query->get('incapacityId');
+		$notificationId = $request->query->get('notificationId');
+		$applicant = $request->query->get('applicant');
+		$user = $vToken->getUserIdFromToken($token);
+		$specialUser = $user->getSpecialUser();
+		$incapacity = $doctrine->getRepository(Incapacity::class)->find($incapacityId);
+
+		if($incapacity === NULL){
+			return new JsonResponse(['message'=>'No existe una incapacidad'],400,[]);
+		}
+		$newStateForIncapacity = 0;
+		$newNotification = new Notification();
+		$newNotification->setSeen(0);
+		$relatedEntity = array(
+			'id' => $incapacityId,
+			'applicant'=>$applicant,
+			'entity' => 'incapacity'
+		);
+		$newNotification->setRelatedEntity(json_encode($relatedEntity));
+		switch($specialUser){
+			case 'ATHSST':
+				$newStateForIncapacity = 1;
+				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
+                $newNotification->setUser($userForNotification);
+                $newNotification->setMessage('solicita la aprobación de una incapacidad por parte de Coordinación de talento humano');
+				break;
+			case 'CTH':
+				$newStateForIncapacity = 2;
+				$userWhoMadeIncapacity = $incapacity->getUser();
+				$newNotification->setUser($userWhoMadeIncapacity);
+				$newNotification->setMessage('Revisión de incapacidad finalizada.');
+				break;
+			default:
+			return new JsonResponse(['message'=>'Usuario no autorizado'],403,[]);
+		}
+		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+		$notification->setSeen(1);
+		$incapacity->setState($newStateForIncapacity);
+		$history = $incapacity->getHistory();
+		date_default_timezone_set('America/Bogota');
+		$addToHistory = json_encode(array(
+			'user' => $user->getId(),
+			'responsible' => $user->getSpecialUser(),
+			'state' => $newStateForIncapacity,
+			'message' => 'La incapacidad fue aprobada por '.$user->getNames()." ".$user->getLastNames(),
+			'date' => date('Y-m-d H:i:s'),
+		));
+		$newHistory = rtrim($history, ']').','.$addToHistory.']';
+		$incapacity->setHistory($newHistory);
+		$entityManager = $doctrine->getManager();
+		$entityManager->persist($newNotification);
+		$entityManager->flush();
+		return new JsonResponse(['message'=> 'Se ha aprobado la incapacidad con el id'. $incapacityId]);
+	}
+	#[Route('contract/reject-incapacity', name:'app_reject_incapacity')]
+	public function rejectIncapacity(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken):JsonResponse
+	{
+		$token= $request->query->get('token');
+		$incapacityId = $request->query->get('incapacityId');
+		$rejectText = $request->request->get('rejectText');
+		$applicant = $request->query->get('applicant');
+		$notificationId = $request->query->get('notificationId');
+
+		$user = $vToken->getUserIdFromToken($token);
+		$specialUser = $user->getSpecialUser();
+		$incapacity = $doctrine->getRepository(Incapacity::class)->find($incapacityId);
+		if($incapacity === NULL){
+			return new JsonResponse(['message'=>'No existe ninguna incapacidad solicitada'],400,[]);
+		}
+		$newNotification = new Notification();
+		$newNotification->setSeen(0);
+		$relatedEntity = array(
+			'id' => $incapacityId,
+			'applicant' => $applicant,
+			'entity' => 'incapacity'
+		);
+		$newNotification->setRelatedEntity(json_encode($relatedEntity));
+		switch($specialUser){
+			case 'ATHSST':
+				$userWhoMadeIncapacity = $incapacity->getUser();
+				$newNotification->setUser($userWhoMadeIncapacity);
+                $newNotification->setMessage('Incapacidad rechazada por Asistente seguridad y salud en el trabajo');
+				break;
+			case 'CTH':
+				$userWhoMadeIncapacity = $incapacity->getUser();
+				$newNotification->setUser($userWhoMadeIncapacity);
+				$newNotification->setMessage('Incapacidad rechazada por Talento humano');
+				break;
+		}
+		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+		$notification->setSeen(1);
+		$incapacity->setState(3);
+		$history = $incapacity->getHistory();
+		date_default_timezone_set('America/Bogota');
+		$addToHistory = json_encode(array(
+			'user' => $user->getId(),
+			'responsible' => $user->getSpecialUser(),
+			'state' => 3,
+			'message' => 'La incapacidad fue rechazada por'.$user->getNames()." ".$user->getLastNames(),
+			'userInput' => $rejectText,
+            'date' => date('Y-m-d H:i:s'),
+		));
+		$newHistory= rtrim($history, ']').','.$addToHistory.']';
+		$incapacity->setHistory($newHistory);
+		$entityManager = $doctrine->getManager();
+		$entityManager->persist($newNotification);
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'Se ha rechazado la incapacidad con el id '.$incapacityId], 200, []);
+
+	}
+
+	#[Route('contract/all-incapacities', name:'incapacities')]
+	public function allIncapacities(ManagerRegistry $doctrine): JsonResponse
+	{
+		$incapacities = $doctrine->getRepository(Incapacity::class)->findAll();
+		if (empty($incapacities)) {
+			return new JsonResponse(['status'=>false, 'message'=>'No se encontró ninguna solicitud de incapacidades']);
+		}
+
+		$incapacityData = [];
+		foreach ($incapacities as $incapacity) {
+			$user = $incapacity->getUser();
+			$assignmentsCharges = [];
+
+			// Obtener todos los contratos del usuario actual
+			$contracts = $doctrine->getRepository(Contract::class)->findBy(['user' => $user]);
+
+			foreach ($contracts as $contract) {
+				// Obtener todas las asignaciones del contrato actual
+				$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
+
+				foreach ($assignmentContract as $assignment) {
+					$charge = $assignment->getCharge();
+
+					if ($charge) {
+						$assignmentsCharges[] = [
+							'nameCharge' => $charge->getName(),
+						];
+					}
+				}
+			}
+
+			$incapacityData[] = [
+				'incapacity' => [
+					'id' => $incapacity->getId(),
+					'solicitude_date' => $incapacity->getSolicitudeDate()->format('Y-m-d'),
+					'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
+					'number_days_incapacity' => $incapacity->getNumberDaysIncapacity(),
+					'origin_incapacity' => $incapacity->getOriginIncapacity(),
+					'medical_support_pdf' => $incapacity->getMedicalSupportPdf(),
+					'eps_support_pdf' => $incapacity->getEpsSupportPdf(),
+					'state' => $incapacity->getState(),
+					'history' => $incapacity->getHistory(),
+					'username' => $user->getNames().' '.$user->getLastNames(),
+					'userIdentification' => $user->getIdentification(),
+					'emailUser' => $user->getEmail(),
+					'phoneUser' => $user->getPhone(),
+					'charge' => $assignmentsCharges,
+				]
+			];
+   			return new JsonResponse(['status'=>true, 'incapacities'=>$incapacityData]);
+		}
 	}
 	//--****************************************REQUISITON*********************************************----
 	///-------------------------------------------------------------------------------------------
@@ -1155,7 +1605,7 @@ class ContractController extends AbstractController
 
 			$newNotification = new Notification();
 			$newNotification->setSeen(0);
-			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType'=>1]);
+			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'JI','userType'=>1]);
 			$newNotification->setUser($userForNotification);
 			$newNotification->setMessage('Solicita la aprobación de una requisición');
 			$relatedEntity = array(
@@ -1198,8 +1648,8 @@ class ContractController extends AbstractController
 		}
 
 		$requisitionData = [];
-		$requisitionUser = [];
 		foreach($requisitions as $requisition){
+			$requisitionUser = [];
 			$userInRequisitions = $doctrine->getRepository(UsersInRequisition::class)->findBy(['requisition'=>$requisition->getId()]);
 			foreach($userInRequisitions as $userInRequisition){
 				$userName = $userInRequisition->getUser();
@@ -1362,11 +1812,48 @@ class ContractController extends AbstractController
 		$token = $request->query->get('token');
 		$requisitionId= $request->query->get('requisitionId');
 		$rejectText = $request->request->get('rejectText');
+		$applicant = $request->query->get('applicant');
+		$notificationId = $request->query->get('notificationId');
+
 		$user = $vToken->getUserIdFromToken($token);
+		$specialUser = $user->getSpecialUser();
 		$requisition = $doctrine->getRepository(Requisition::class)->find($requisitionId);
 		if($requisition === NULL){
 			return new JsonResponse(['message' => 'No existe ninguna requisición solicitada'], 400, []);
 		}
+		$newNotification = new Notification();
+		$newNotification->setSeen(0);
+		$relatedEntity = array(
+			'id' => $requisitionId,
+			'applicant' => $applicant,
+			'entity' => 'requisition'
+		);
+		$newNotification->setRelatedEntity(json_encode($relatedEntity));
+		switch($specialUser){
+			case 'JI':
+				$userWhoMadeLicense = $requisition->getUser();
+				$newNotification->setUser($userWhoMadeLicense);
+                $newNotification->setMessage('Requisición rechazada por Jefe inmediato');
+				break;
+			case 'VF':
+				$userWhoMadeLicense = $requisition->getUser();
+				$newNotification->setUser($userWhoMadeLicense);
+                $newNotification->setMessage('Requisición rechazada por Vicerrectoria financiera');
+				break;
+			case 'REC':
+				$userWhoMadeLicense = $requisition->getUser();
+				$newNotification->setUser($userWhoMadeLicense);
+                $newNotification->setMessage('Requisición rechazada por Rectoría');
+				break;
+			case 'CTH':
+				$userWhoMadeLicense = $requisition->getUser();
+				$newNotification->setUser($userWhoMadeLicense);
+                $newNotification->setMessage('Requisición rechazada por Talento humano');
+				break;
+		}
+		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+		$notification->setSeen(1);
+
 		$requisition->setState(4);
 		$history = $requisition->getHistory();
 		date_default_timezone_set('America/Bogota');
@@ -1381,8 +1868,9 @@ class ContractController extends AbstractController
 		$newHistory= rtrim($history, ']').','.$addToHistory.']';
 		$requisition->setHistory($newHistory);
 		$entityManager = $doctrine->getManager();
+		$entityManager->persist($newNotification);
         $entityManager->flush();
-        return new JsonResponse(['message' => 'Se ha rechazado esta requisición con el id '.$requisitionId], 200, []);
+        return new JsonResponse(['message' => 'Se ha rechazado la requisición con el id '.$requisitionId], 200, []);
 	}
 
 	#[Route('contract/all-requisitions', name: 'app_contract_all_requisitions')]

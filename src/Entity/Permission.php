@@ -65,9 +65,9 @@ class Permission
     private $reason;
 
     /**
-     * @var string
+     * @var string|null
      *
-     * @ORM\Column(name="support_pdf", type="text", length=0, nullable=false)
+     * @ORM\Column(name="support_pdf", type="text", length=0, nullable=true)
      */
     private $supportPdf;
 
@@ -195,7 +195,7 @@ class Permission
         return $this->supportPdf;
     }
 
-    public function setSupportPdf(string $supportPdf): self
+    public function setSupportPdf(?string $supportPdf): self
     {
         $this->supportPdf = $supportPdf;
 
