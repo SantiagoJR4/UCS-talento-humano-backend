@@ -360,21 +360,6 @@ class CallController extends AbstractController
         )));
         $newCall->setHistory($addToHistory);
         $entityManager = $doctrine->getManager();
-        $requiredForPercentages = json_decode($data['requiredForPercentages'], true);
-        $stepsOfCall = [];
-        $allSteps = [];
-        foreach ($requiredForPercentages as $key => $value) {
-            if( $key === 'curriculumVitae' && !!$value ){ array_push( $allSteps, 'CV' ); }
-            if( $key === 'knowledgeTest' && !!$value ){ array_push( $allSteps, 'KT' ); }
-            if( $key === 'psychoTest' && !!$value ){ array_push( $allSteps, 'PT' ); }
-            if( $key === 'interview' && !!$value ){ array_push( $allSteps, 'IN' ); }
-            if( $key === 'class' && !!$value ){ array_push( $allSteps, 'CL' ); }
-        }
-        array_push( $allSteps, 'FI', 'SE' );
-        $currentStep = $allSteps[0];
-        $stepsOfCall = ['allSteps' => $allSteps, 'currentStep' => $currentStep];
-        $stepsOfCall = json_encode($stepsOfCall);
-        $newCall->setStepsOfCall($stepsOfCall);
         if($isEdited) {
             $newSpecialProfile = new SpecialProfile();
             $newSpecialProfile->setUnderGraduateTraining($special['specialUnderGraduate']);
@@ -428,7 +413,7 @@ class CallController extends AbstractController
         $call = $query->getQuery()->getArrayResult();
         $call = $call[0];
         $call = convertDateTimeToString2($call);
-        $fieldsToDecode = ['requiredForPercentages', 'requiredForCurriculumVitae', 'requiredToSignUp', 'stepsOfCall', 'salary', 'history', 'jury' ];
+        $fieldsToDecode = ['salary', 'history', 'jury' ];
         foreach ($fieldsToDecode as $field) { $call[$field] = json_decode($call[$field], true); }
         return new JsonResponse($call, 200,[]);
     }
@@ -695,13 +680,31 @@ class CallController extends AbstractController
         {
             return new JsonResponse(['isValid' => $isTokenValid], 200, []);
         }
-        $callPercentage = json_decode($request->request->get('callPercentage'), true);
-        $hvPercentage = json_decode($request->request->get('hvPercentage'), true);
-        $competenciesPercentage = json_decode($request->request->get('competenciesPercentage'), true);
-        $factorsValues = json_decode($request->request->get('factorsValues'),true);
-        $scoreHV = $request->request->get('score');
-        $callId = $request->request->get('callId');
+        $data = $request->request->all();
+        $callPercentage = json_decode($data['callPercentage'], true);
+        $hvPercentage = json_decode($data['hvPercentage'], true);
+        $competenciesPercentage = json_decode($data['competenciesPercentage'], true);
+        $factorsValues = json_decode($data['factorsValues'],true);
+        $requiredForPercentages = json_decode($data['requiredForPercentages'], true);
+        $scoreHV = $data['score'];
+        $callId = $data['callId'];
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        $stepsOfCall = [];
+        $allSteps = [];
+        foreach ($requiredForPercentages as $key => $value) {
+            if( $key === 'curriculumVitae' && !!$value ){ array_push( $allSteps, 'CV' ); }
+            if( $key === 'knowledgeTest' && !!$value ){ array_push( $allSteps, 'KT' ); }
+            if( $key === 'psychoTest' && !!$value ){ array_push( $allSteps, 'PT' ); }
+            if( $key === 'interview' && !!$value ){ array_push( $allSteps, 'IN' ); }
+            if( $key === 'class' && !!$value ){ array_push( $allSteps, 'CL' ); }
+        }
+        array_push( $allSteps, 'FI', 'SE' );
+        $currentStep = $allSteps[0];
+        $stepsOfCall = ['allSteps' => $allSteps, 'currentStep' => $currentStep];
+        $stepsOfCall = json_encode($stepsOfCall);
+        $call->setStepsOfCall($stepsOfCall);
+        $call->setRequiredForPercentages($data['requiredForPercentages']);
+        $call->setRequiredForCurriculumVitae($data['requiredForCurriculumVitae']);
         //_______________________________________
         $entityManager = $doctrine->getManager();
         $newCallPercentage = new CallPercentage();
@@ -1448,6 +1451,19 @@ class CallController extends AbstractController
         $callId = $request->request->get('callId');
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         $call->setJury($jury);
+        $juryNames = json_decode($jury, true);
+        $juryNames = implode(', ', array_column($juryNames, 'fullNames'));
+        $history = $call->getHistory();
+        date_default_timezone_set('America/Bogota');
+        $addToHistory = json_encode(array(
+            'user' => $user->getId(),
+            'responsible' => $user->getSpecialUser(),
+            'state' => 2,
+            'message' => 'Quedaron como jurados del comite de evaluación '.$juryNames,
+            'date' => date('Y-m-d H:i:s'),
+        ));
+        $newHistory= rtrim($history, ']').','.$addToHistory.']';
+        $call->setHistory($newHistory);
         $entityManager = $doctrine->getManager();
         $entityManager->flush();
         return new JsonResponse(['message' => 'Se han asignado los jurados'], 200, []);
