@@ -413,7 +413,7 @@ class CallController extends AbstractController
         $call = $query->getQuery()->getArrayResult();
         $call = $call[0];
         $call = convertDateTimeToString2($call);
-        $fieldsToDecode = ['salary', 'history', 'jury' ];
+        $fieldsToDecode = ['salary', 'history', 'jury', 'requiredForCurriculumVitae', 'requiredForPercentages', 'requiredToSignUp', 'stepsOfCall'];
         foreach ($fieldsToDecode as $field) { $call[$field] = json_decode($call[$field], true); }
         return new JsonResponse($call, 200,[]);
     }
