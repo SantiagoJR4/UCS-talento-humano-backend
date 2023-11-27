@@ -17,6 +17,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mailer\MailerInterface;
 
 function createJwtResponse($user, $isUserInOpenCall) {
     $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
@@ -163,8 +165,8 @@ class UserController extends AbstractController
         $data = json_decode($request->request->get('json'), true);
         $passHash = hash('sha256', $data['password']);
         $user = $doctrine->getRepository(User::class)->findOneBy([
-            'typeIdentification' => $data['tipoIdentificacion'],
-            'identification' => $data['numero'],
+            'typeIdentification' => $data['IDType'],
+            'identification' => $data['number'],
             'password' => $passHash
         ]);
         $callOpenState = 4;
@@ -221,6 +223,41 @@ class UserController extends AbstractController
             'specialUser' => $decodedToken->specialUser,
             'isUserInOpenCall' => $decodedToken->isUserInOpenCall
         ]);
+    }
+
+    #[Route('/email-to-recover', name: 'app_email_to_recover')]
+    public function emailToRecover(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
+    {
+        $userIDType = $request->query->get('IDType');
+        $userNumber = $request->query->get('number');
+        $user = $doctrine->getRepository(User::class)->findOneBy([
+            'typeIdentification' => $userIDType,
+            'identification' => $userNumber,
+        ]);
+        if( $user )
+        {
+            try
+            {
+                $email = (new TemplatedEmail())
+                    ->from('convocatorias@unicatolicadelsur.edu.co') //correo oficina oasic
+                    ->to($user->getEmail()) //correo talento humano
+                    ->subject('Usuario en proceso de inscripción')
+                    ->htmlTemplate('email/recoverAccountEmail.html.twig')
+                    ->context([
+                        'fullname' => $user->getNames().' '.$user->getLastNames(),
+                        'email' => 'email here',
+                    ]);
+                $mailer->send($email);
+            } catch (\Throwable $th)
+            {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+            }
+            return new JsonResponse('Se han enviado instrucciones al correo registrado con esta cuenta.', 200, []);
+        }
+        else
+        {
+            return new JsonResponse('La información proporcionada no coincide con ninguna cuenta registrada.', 404, []);
+        }
     }
 
      
