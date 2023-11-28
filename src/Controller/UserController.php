@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\CurriculumVitae;
+use App\Entity\RecoveryEmail;
 use App\Service\Helpers;
 use App\Service\UserService;
 use App\Entity\User;
@@ -41,6 +42,18 @@ function createJwtResponse($user, $isUserInOpenCall) {
     ];
     $token = JWT::encode($payload, $jwtKey, 'HS256');
     return new JsonResponse(['token'=>$token, 'user'=>$resp]);
+}
+
+function createAccountRecoveryLink($userID) {
+    $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+    $payload = [
+        'id' =>  $userID,
+        'iat' => time(),
+        'exp' => time() + 86400
+    ];
+    $token = JWT::encode($payload, $jwtKey, 'HS256');
+    //TODO: change to production
+    return($token);
 }
 
 
@@ -238,19 +251,31 @@ class UserController extends AbstractController
         {
             try
             {
+                $tokenForRecoverAccount = createAccountRecoveryLink($user->getId());
+                //var_dump($user);
+                $newRecoveryEmail = new RecoveryEmail();
+                $newRecoveryEmail->setToken($tokenForRecoverAccount);
+                $newRecoveryEmail->setUsed(false);
+                $newRecoveryEmail->setUser($user);
+                //TODO: change to production
+                $linkForRecover = 'http://localhost:4200/#/auth/recover-account/' . $tokenForRecoverAccount; 
                 $email = (new TemplatedEmail())
                     ->from('convocatorias@unicatolicadelsur.edu.co') //correo oficina oasic
                     ->to($user->getEmail()) //correo talento humano
-                    ->subject('Usuario en proceso de inscripción')
+                    ->subject('Recuperación de cuenta')
                     ->htmlTemplate('email/recoverAccountEmail.html.twig')
                     ->context([
                         'fullname' => $user->getNames().' '.$user->getLastNames(),
-                        'email' => 'email here',
+                        'emailToRecover' => $linkForRecover,
                     ]);
                 $mailer->send($email);
+                $entityManager = $doctrine->getManager();
+                $entityManager->persist($newRecoveryEmail);
+                $entityManager->flush();
             } catch (\Throwable $th)
             {
                 $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse($th->getMessage(), 404, []);
             }
             return new JsonResponse('Se han enviado instrucciones al correo registrado con esta cuenta.', 200, []);
         }
@@ -260,6 +285,19 @@ class UserController extends AbstractController
         }
     }
 
+    #[Route('/validate-for-new-password', name: 'app_validate_for_new_password')]
+    public function validateForNewPassword(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
+    {
+        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $token = $request->query->get('token');
+        try {
+            $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
+        } catch (\Exception $e) {
+            return new JsonResponse(false, 404,[]);
+        }
+        $expirationTime = $decodedToken->exp;
+        return new JsonResponse(true, 200, []);
+    }
      
     //TODO : HACER VERIFICACIÓN DE CORREO
 
