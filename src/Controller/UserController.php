@@ -258,7 +258,7 @@ class UserController extends AbstractController
                 $newRecoveryEmail->setUsed(false);
                 $newRecoveryEmail->setUser($user);
                 //TODO: change to production
-                $linkForRecover = 'http://localhost:4200/#/auth/recover-account/' . $tokenForRecoverAccount; 
+                $linkForRecover = 'http://yeshua.unicatolicadelsur.edu.co:4200/ucs-talento-humano/#/auth/recover-account/' . $tokenForRecoverAccount; 
                 $email = (new TemplatedEmail())
                     ->from('convocatorias@unicatolicadelsur.edu.co') //correo oficina oasic
                     ->to($user->getEmail()) //correo talento humano
