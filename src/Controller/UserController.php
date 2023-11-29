@@ -295,8 +295,31 @@ class UserController extends AbstractController
         } catch (\Exception $e) {
             return new JsonResponse(false, 404,[]);
         }
-        $expirationTime = $decodedToken->exp;
-        return new JsonResponse(true, 200, []);
+        $recoveryEmail = $doctrine->getRepository(RecoveryEmail::class)->findOneBy(['token' => $token]);
+        $isUsed = $recoveryEmail->isUsed();
+        return new JsonResponse($isUsed ? false : true, 200, []);
+    }
+
+    #[Route('/change-password', name: 'app_change-password')]
+    public function changePassword(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
+    {
+        $jwtKey = 'Un1c4t0l1c4';
+        $token = $request->query->get('token');
+        $password = $request->query->get('password');
+        $passHash = hash('sha256', $password);
+        try {
+            $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
+            $userID = $decodedToken->id;
+            $user = $doctrine->getRepository(User::class)->find($userID);
+            $user->setPassword($passHash);
+            $recoveryEmail = $doctrine->getRepository(RecoveryEmail::class)->findOneBy(['token' => $token]);
+            $recoveryEmail->setUsed(true);
+            $entityManager = $doctrine->getManager();
+            $entityManager->flush();
+        } catch (\Throwable $th) {
+            return new JsonResponse('Error al cambiar la contraseña, por favor repita el proceso, en caso de persistir comuniquese con nosotros', 404, []);
+        }
+        return new JsonResponse('Cambio de contraseña realizado!', 200, []);
     }
      
     //TODO : HACER VERIFICACIÓN DE CORREO
