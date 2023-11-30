@@ -200,6 +200,10 @@ class UserController extends AbstractController
             return createJwtResponse($user, $isUserInOpenCall);
         }
         $client = HttpClient::create();
+        $data["tipoIdentificacion"] = $data["IDType"];
+        $data["numero"] = $data["number"];
+        // unset($data["IDType"]);
+        // unset($data["number"]);
         $responseIctus = $client->request('POST', 'https://ictus.unicatolicadelsur.edu.co/unicat/web/login', [
             'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
             'body' => http_build_query(['json' => json_encode($data)])
