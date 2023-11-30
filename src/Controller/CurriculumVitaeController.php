@@ -52,7 +52,6 @@ function filesToChangeOrDelete($table) {
         case 'TeachingExperience':
         case 'language':
             return ['certifiedPdf'];
-        
         default:
             return [];
     }
@@ -150,7 +149,7 @@ class CurriculumVitaeController extends AbstractController
             $filesystem = new Filesystem();
             foreach ($filesToDelete as $key => $value) {
                 $fileToDelete = $objectToDelete->{'get' . ucfirst($value)}();
-                if( $filesystem->exists($this->getParameter('hv') . '/' . $fileToDelete)){
+                if( $fileToDelete && $filesystem->exists($this->getParameter('hv') . '/' . $fileToDelete)){
                     $filesystem->remove($this->getParameter('hv') . '/' . $fileToDelete);
                 }
             }
