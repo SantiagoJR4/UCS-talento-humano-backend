@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Permission
  *
- * @ORM\Table(name="permission", indexes={@ORM\Index(name="fk_permission_user", columns={"user_id"})})
+ * @ORM\Table(name="permission", indexes={@ORM\Index(name="user_id", columns={"user_id"})})
  * @ORM\Entity
  */
 class Permission
@@ -32,28 +32,28 @@ class Permission
     /**
      * @var string
      *
-     * @ORM\Column(name="type_permission", type="string", length=1, nullable=false, options={"fixed"=true,"comment"="P: personal, L:laboral, F: flexibilización de jornada	"})
+     * @ORM\Column(name="type_permission", type="string", length=1, nullable=false, options={"fixed"=true})
      */
     private $typePermission;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="type_flexibility", type="string", length=2, nullable=true, options={"fixed"=true,"comment"="JC: Jornada continua, C: Compensada, TC: Trabajo desde casa	"})
+     * @ORM\Column(name="type_flexibility", type="string", length=2, nullable=true, options={"fixed"=true})
      */
     private $typeFlexibility;
 
     /**
      * @var string|null
      *
-     * @ORM\Column(name="type_compensation", type="string", length=2, nullable=true, options={"fixed"=true,"comment"="R: remunerado, NR: no remunerado	"})
+     * @ORM\Column(name="type_compensation", type="string", length=2, nullable=true, options={"fixed"=true})
      */
     private $typeCompensation;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="type_date_permission", type="string", length=1, nullable=false, options={"fixed"=true,"comment"="H: horas, D: días	"})
+     * @ORM\Column(name="type_date_permission", type="string", length=1, nullable=false, options={"fixed"=true})
      */
     private $typeDatePermission;
 
@@ -88,11 +88,7 @@ class Permission
     /**
      * @var int
      *
-     * @ORM\Column(name="state", type="smallint", nullable=false, options={"comment"="0: creada
-1: aprobada JI
-2: aprobada TH
-3: rechazada
-4: aceptada"})
+     * @ORM\Column(name="state", type="smallint", nullable=false)
      */
     private $state;
 

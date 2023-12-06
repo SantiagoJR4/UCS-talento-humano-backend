@@ -93,6 +93,13 @@ class Contract
     private $contractFile;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="workload", type="text", length=0, nullable=true)
+     */
+    private $workload;
+
+    /**
      * @var \User
      *
      * @ORM\ManyToOne(targetEntity="User")
@@ -112,7 +119,7 @@ class Contract
         return $this->typeContract;
     }
 
-    public function setTypeContract(string $typeContract): static
+    public function setTypeContract(string $typeContract): self
     {
         $this->typeContract = $typeContract;
 
@@ -124,7 +131,7 @@ class Contract
         return $this->workStart;
     }
 
-    public function setWorkStart(\DateTimeInterface $workStart): static
+    public function setWorkStart(\DateTimeInterface $workStart): self
     {
         $this->workStart = $workStart;
 
@@ -136,7 +143,7 @@ class Contract
         return $this->initialContract;
     }
 
-    public function setInitialContract(string $initialContract): static
+    public function setInitialContract(string $initialContract): self
     {
         $this->initialContract = $initialContract;
 
@@ -148,7 +155,7 @@ class Contract
         return $this->expirationContract;
     }
 
-    public function setExpirationContract(\DateTimeInterface $expirationContract): static
+    public function setExpirationContract(\DateTimeInterface $expirationContract): self
     {
         $this->expirationContract = $expirationContract;
 
@@ -160,7 +167,7 @@ class Contract
         return $this->workDedication;
     }
 
-    public function setWorkDedication(string $workDedication): static
+    public function setWorkDedication(string $workDedication): self
     {
         $this->workDedication = $workDedication;
 
@@ -172,7 +179,7 @@ class Contract
         return $this->salary;
     }
 
-    public function setSalary(int $salary): static
+    public function setSalary(int $salary): self
     {
         $this->salary = $salary;
 
@@ -184,7 +191,7 @@ class Contract
         return $this->weeklyHours;
     }
 
-    public function setWeeklyHours(int $weeklyHours): static
+    public function setWeeklyHours(int $weeklyHours): self
     {
         $this->weeklyHours = $weeklyHours;
 
@@ -196,7 +203,7 @@ class Contract
         return $this->functions;
     }
 
-    public function setFunctions(string $functions): static
+    public function setFunctions(string $functions): self
     {
         $this->functions = $functions;
 
@@ -208,7 +215,7 @@ class Contract
         return $this->specificFunctions;
     }
 
-    public function setSpecificFunctions(string $specificFunctions): static
+    public function setSpecificFunctions(string $specificFunctions): self
     {
         $this->specificFunctions = $specificFunctions;
 
@@ -220,9 +227,21 @@ class Contract
         return $this->contractFile;
     }
 
-    public function setContractFile(string $contractFile): static
+    public function setContractFile(string $contractFile): self
     {
         $this->contractFile = $contractFile;
+
+        return $this;
+    }
+
+    public function getWorkload(): ?string
+    {
+        return $this->workload;
+    }
+
+    public function setWorkload(?string $workload): self
+    {
+        $this->workload = $workload;
 
         return $this;
     }
@@ -232,7 +251,7 @@ class Contract
         return $this->user;
     }
 
-    public function setUser(?User $user): static
+    public function setUser(?User $user): self
     {
         $this->user = $user;
 

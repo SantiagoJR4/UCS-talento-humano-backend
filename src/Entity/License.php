@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * License
  *
- * @ORM\Table(name="license", indexes={@ORM\Index(name="fk_licence_user", columns={"user_id"})})
+ * @ORM\Table(name="license", indexes={@ORM\Index(name="user_id", columns={"user_id"})})
  * @ORM\Entity
  */
 class License
@@ -32,7 +32,7 @@ class License
     /**
      * @var string
      *
-     * @ORM\Column(name="type_compensation", type="string", length=2, nullable=false, options={"fixed"=true,"comment"="R: remunerado, NR: no remunerado	"})
+     * @ORM\Column(name="type_compensation", type="string", length=2, nullable=false, options={"fixed"=true})
      */
     private $typeCompensation;
 
@@ -88,7 +88,7 @@ class License
     /**
      * @var int
      *
-     * @ORM\Column(name="state", type="smallint", nullable=false, options={"comment"="0: creada 1: aprobada JI 2: aprobada TH 3: rechazada 4: aceptada	"})
+     * @ORM\Column(name="state", type="smallint", nullable=false)
      */
     private $state;
 

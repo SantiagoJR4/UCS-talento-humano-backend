@@ -366,9 +366,8 @@ class ContractController extends AbstractController
         if (!$user) {
             return new JsonResponse(['status' => false, 'message' => 'No se encontró el usuario']);
         }
-
-        // Obtener todos los contratos asociados al usuario
         $contracts = $doctrine->getRepository(Contract::class)->findBy(['user' => $user]);
+
         if (empty($contracts)) {
             return new JsonResponse(['status' => false, 'message' => 'No se encontraron contratos para este usuario']);
         }
@@ -418,6 +417,92 @@ class ContractController extends AbstractController
                 ],
                 'assignmentsProfiles' => $assignmentsProfiles,
                 'assignmentsCharges' => $assignmentsCharges,
+            ];
+        }
+
+        return new JsonResponse([
+            'status' => true,
+            'contract_data' => $contractData,
+        ]); 
+	}
+	//--------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------
+	//----------------- CONTRATOS VIGENTES
+	#[Route('/contract/read-contract-current/{id}', name:'app_read_contract_current')]
+	public function readContractCurrent(ManagerRegistry $doctrine, int $id): JsonResponse
+	{
+		$user = $doctrine->getRepository(User::class)->find($id);
+        if (!$user) {
+            return new JsonResponse(['status' => false, 'message' => 'No se encontró el usuario']);
+        }
+
+		$query = $doctrine->getManager()->createQueryBuilder();
+		$query
+			->select('c')
+			->from('App\Entity\Contract', 'c')
+			->where('c.expirationContract >= :expirationDate')
+			->andWhere('c.user = :user')
+			->setParameters(array('expirationDate'=> date('Y-m-d'), 'user' => $user));
+		$contracts = $query->getQuery()->getResult();
+        if (empty($contracts)) {
+            return new JsonResponse(['status' => false, 'message' => 'No se encontraron contratos para este usuario']);
+        }
+
+		$contractData = [];
+        foreach ($contracts as $contract) {
+            // Obtener todas las asignaciones del contrato actual
+            $assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
+
+            $assignmentsProfiles = [];
+            $assignmentsCharges = [];
+			$assignmentInmmediateBoss=[];
+            foreach ($assignmentContract as $assignment) {
+                $profile = $assignment->getProfile();
+                $charge = $assignment->getCharge();
+				$inmmediateBoss = $assignment->getInmmediateBoss();
+
+                if ($profile) {
+                    $assignmentsProfiles[] = [
+                        'id' => $profile->getId(),
+                        'name' => $profile->getName(),
+                        // Agregar más campos del perfil según tu modelo
+                    ];
+                }
+
+                if ($charge) {
+                    $assignmentsCharges[] = [
+                        'id' => $charge->getId(),
+                        'name' => $charge->getName(),
+                        // Agregar más campos del cargo según tu modelo
+                    ];
+                }
+
+				if($inmmediateBoss){
+					$assignmentInmmediateBoss[]=[
+						'id' => $inmmediateBoss->getId(),
+						'names' => $inmmediateBoss->getNames().' '.$inmmediateBoss->getLastNames()
+					];
+				}
+            }
+
+            $contractData[] = [
+                'contract' => [
+                    'id' => $contract->getId(),
+                    'type_contract' => $contract->getTypeContract(),
+                    'work_start' => $contract->getWorkStart()->format('Y-m-d'),
+                    'initial_contract' => $contract->getInitialContract(),
+                    'expiration_contract' => $contract->getExpirationContract()->format('Y-m-d'),
+                    'work_dedication' => $contract->getWorkDedication(),
+                    'salary' => $contract->getSalary(),
+                    'weekly_hours' => $contract->getWeeklyHours(),
+                    'functions' => $contract->getFunctions(),
+                    'specific_functions' => $contract->getSpecificFunctions(),
+                    'contract_file' => $contract->getContractFile(),
+                    // Agregar más campos del contrato según tu modelo
+                ],
+                'assignmentsProfiles' => $assignmentsProfiles,
+                'assignmentsCharges' => $assignmentsCharges,
+				'inmmediateBoss' => $assignmentInmmediateBoss
             ];
         }
 
@@ -1610,7 +1695,8 @@ class ContractController extends AbstractController
 			$newNotification->setMessage('Solicita la aprobación de una requisición');
 			$relatedEntity = array(
 				'id'=>$requisition->getId(),
-				'applicant'=>$user->getNames()." ".$user->getLastNames(),
+				'applicantId'=>$user->getId(),
+				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
 				'entity' => 'requisition'
 			);
 			$newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1741,7 +1827,9 @@ class ContractController extends AbstractController
 		$token = $request->query->get('token');
 		$requisitionId = $request->query->get('requisitionId');
 		$notificationId = $request->query->get('notificationId');
-		$applicant = $request->query->get('applicant');
+		$applicantId = $request->query->get('applicantId');
+		$applicantName = $request->request->get('applicantName');
+
 		$user = $vToken->getUserIdFromToken($token);
 		$specialUser = $user->getSpecialUser();
 		$requisition = $doctrine->getRepository(Requisition::class)->find($requisitionId);
@@ -1753,7 +1841,8 @@ class ContractController extends AbstractController
 		$newNotification->setSeen(0);
 		$relatedEntity = array(
 			'id'=>$requisitionId,
-			'applicant'=>$applicant,
+			'applicantId'=>$applicantId,
+            'applicantName'=>$applicantName,
 			'entity'=>'requisition'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1812,7 +1901,8 @@ class ContractController extends AbstractController
 		$token = $request->query->get('token');
 		$requisitionId= $request->query->get('requisitionId');
 		$rejectText = $request->request->get('rejectText');
-		$applicant = $request->query->get('applicant');
+		$applicantId = $request->query->get('applicantId');
+		$applicantName = $request->request->get('applicantName');
 		$notificationId = $request->query->get('notificationId');
 
 		$user = $vToken->getUserIdFromToken($token);
@@ -1825,7 +1915,8 @@ class ContractController extends AbstractController
 		$newNotification->setSeen(0);
 		$relatedEntity = array(
 			'id' => $requisitionId,
-			'applicant' => $applicant,
+			'applicantId'=>$applicantId,
+            'applicantName'=>$applicantName,
 			'entity' => 'requisition'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));

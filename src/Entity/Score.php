@@ -8,7 +8,6 @@ use Doctrine\ORM\Mapping as ORM;
  * Score
  *
  * @ORM\Table(name="score", indexes={@ORM\Index(name="fk_score_factor_profile", columns={"factor_profile_id"}), @ORM\Index(name="fk_score_competence_profile", columns={"competence_percentage_id"})})
- * @ORM\Table(name="score", indexes={@ORM\Index(name="fk_score_factor_profile", columns={"factor_profile_id"}), @ORM\Index(name="fk_score_competence_profile", columns={"competence_percentage_id"})})
  * @ORM\Entity
  */
 class Score
@@ -23,16 +22,6 @@ class Score
     private $id;
 
     /**
-     * @var \FactorProfile
-     *
-     * @ORM\ManyToOne(targetEntity="FactorProfile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="factor_profile_id", referencedColumnName="id")
-     * })
-     */
-    private $factorProfile;
-
-    /**
      * @var \CompetencePercentage
      *
      * @ORM\ManyToOne(targetEntity="CompetencePercentage")
@@ -42,21 +31,19 @@ class Score
      */
     private $competencePercentage;
 
+    /**
+     * @var \FactorProfile
+     *
+     * @ORM\ManyToOne(targetEntity="FactorProfile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="factor_profile_id", referencedColumnName="id")
+     * })
+     */
+    private $factorProfile;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getFactorProfile(): ?FactorProfile
-    {
-        return $this->factorProfile;
-    }
-
-    public function setFactorProfile(?FactorProfile $factorProfile): self
-    {
-        $this->factorProfile = $factorProfile;
-
-        return $this;
     }
 
     public function getCompetencePercentage(): ?CompetencePercentage
@@ -64,7 +51,7 @@ class Score
         return $this->competencePercentage;
     }
 
-    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): static
+    public function setCompetencePercentage(?CompetencePercentage $competencePercentage): self
     {
         $this->competencePercentage = $competencePercentage;
 
@@ -76,7 +63,7 @@ class Score
         return $this->factorProfile;
     }
 
-    public function setFactorProfile(?FactorProfile $factorProfile): static
+    public function setFactorProfile(?FactorProfile $factorProfile): self
     {
         $this->factorProfile = $factorProfile;
 
