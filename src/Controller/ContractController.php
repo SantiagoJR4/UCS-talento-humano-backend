@@ -480,7 +480,8 @@ class ContractController extends AbstractController
 				if($inmmediateBoss){
 					$assignmentInmmediateBoss[]=[
 						'id' => $inmmediateBoss->getId(),
-						'names' => $inmmediateBoss->getNames().' '.$inmmediateBoss->getLastNames()
+						'names' => $inmmediateBoss->getNames().' '.$inmmediateBoss->getLastNames(),
+						'identification'=>$inmmediateBoss->getIdentification()
 					];
 				}
             }
