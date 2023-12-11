@@ -34,6 +34,7 @@ function createJwtResponse($user, $isUserInOpenCall) {
     ];
     $payload = [
         'sub' => $user->getSub(),
+        'userID' => $user->getId(),
         'userType' => $user->getUserType(),
         'specialUser' => $user->getSpecialUser(),
         'isUserInOpenCall' => $isUserInOpenCall,
@@ -223,7 +224,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/validate-token', name: 'app_validate_token')]
-    public function validateToken(Request $request): JsonResponse
+    public function validateToken(Request $request, ManagerRegistry $doctrine): JsonResponse
     {
         $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
         $token = $request->query->get('token');
@@ -234,6 +235,34 @@ class UserController extends AbstractController
         }
         $expirationTime = $decodedToken->exp;
         $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
+        $userID = $decodedToken->userID;
+        $callOpenState = 4;
+        $queryBuilder = $doctrine->getManager()->createQueryBuilder();
+        $user = $doctrine->getRepository(User::class)->find($userID);
+        $queryCall = $queryBuilder
+            ->select('c.id, uc.status')
+            ->from('App\Entity\UsersInCall', 'uc')
+            ->join('uc.call', 'c')
+            ->where($queryBuilder->expr()->andX(
+                $queryBuilder->expr()->eq('c.state',':callOpenState'),
+                $queryBuilder->expr()->eq('uc.user',':user'),
+            ))
+            ->setParameter('user', $user)
+            ->setParameter('callOpenState', $callOpenState);
+        $array = $queryCall->getQuery()->getArrayResult();
+        foreach ($array as &$item) {
+            if (isset($item['status'])) {
+                $item['status'] = json_decode($item['status'], true);
+                if($item['status']['CVSTATUS'] === 4){
+                    return new JsonResponse([
+                        'isValid' => $isTokenValid,
+                        'userType' => $decodedToken->userType,
+                        'specialUser' => $decodedToken->specialUser,
+                        'isUserInOpenCall' => false
+                    ]);
+                }
+            }
+        }
         return new JsonResponse([
             'isValid' => $isTokenValid,
             'userType' => $decodedToken->userType,
