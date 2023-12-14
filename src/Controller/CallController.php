@@ -567,6 +567,10 @@ class CallController extends AbstractController
 
             return new JsonResponse(['message' => 'Usuario se ha inscrito'], 200, []);
         }
+        else
+        {
+            return new JsonResponse(['Por favor comuniquese con nosotros, si este error persiste'], 400, []);
+        }
     }
     #[Route('/update-sign-up-to-call',name:'app_update_sign_up_to_call')]
     public function updateSignUpToCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
