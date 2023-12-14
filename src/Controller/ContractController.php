@@ -724,18 +724,28 @@ class ContractController extends AbstractController
 			$entityManager->persist($permission);
 			$entityManager->flush();
 
-			$newNotification = new Notification();
-			$newNotification->setSeen(0);
-			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'JI','userType'=>1]);
-			$newNotification->setUser($userForNotification);
-			$newNotification->setMessage('Solicita la aprobación de un permiso');
-			$relatedEntity = array(
-				'id'=>$permission->getId(),
-				'applicant'=>$user->getNames()." ".$user->getLastNames(),
-				'entity' => 'permission'
-			);
-			$newNotification->setRelatedEntity(json_encode($relatedEntity));
-			$entityManager->persist($newNotification);
+			$immediateBossArray = json_decode($data['arrayImmediateBoss'],true);
+			// $immediateBossIds = [];
+
+			foreach ($immediateBossArray as $boss) {
+				$bossID = $boss['id'];
+				$immediateBossUsers = $doctrine->getRepository(User::class)->find($bossID);
+				$newNotification = new Notification();
+				$newNotification->setSeen(0);
+				$newNotification->setUser($immediateBossUsers);
+				$newNotification->setMessage('Solicita la aprobación de un permiso');
+				
+				$relatedEntity = array(
+					'id' => $permission->getId(),
+					'applicantId'=>$user->getId(),
+					'applicantName' => $user->getNames() . " " . $user->getLastNames(),
+					'entity' => 'permission'    
+				);
+				$newNotification->setRelatedEntity(json_encode($relatedEntity));
+				
+				$entityManager->persist($newNotification);
+			}
+
 			$entityManager->flush();
 
 		}
@@ -811,6 +821,7 @@ class ContractController extends AbstractController
 				'state' => $permission->getState(),
 				'history' => $permission->getHistory(),
 				'username' => $user->getNames().' '.$user->getLastNames(),
+				'idUser' => $user->getId(),
 				'userIdentification' => $user->getIdentification()
 			],
 			'datesArray' => json_decode($permission->getDatesArray(),true),
@@ -837,17 +848,11 @@ class ContractController extends AbstractController
 		$newNotification->setSeen(0);
 		$relatedEntity = array(
 			'id' => $permissionId,
-			'applicant'=>$applicant,
+			'applicantName'=>$applicant,
 			'entity'=>'permission'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
 		switch($specialUser){
-			case 'JI':
-				$newStateForPermission = 1;
-				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
-                $newNotification->setUser($userForNotification);
-                $newNotification->setMessage('solicita la aprobación de un permiso por parte de Coordinación de talento humano');
-				break;
 			case 'CTH':
 				$newStateForPermission = 2;
 				$userWhoMadePermission = $permission->getUser();
@@ -855,7 +860,11 @@ class ContractController extends AbstractController
 				$newNotification->setMessage('Revisión de permiso finalizada.');
 				break;
 			default:
-			return new JsonResponse(['message'=>'Usuario no autorizado'],403,[]);
+				$newStateForPermission = 1;
+				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
+                $newNotification->setUser($userForNotification);
+                $newNotification->setMessage('solicita la aprobación de un permiso por parte de Coordinación de talento humano');
+				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
 		$notification->setSeen(1);
@@ -896,21 +905,19 @@ class ContractController extends AbstractController
 		$newNotification->setSeen(0);
 		$relatedEntity = array(
 			'id' => $permissionId,
-			'applicant' => $applicant,
-			'entity' => 'permission'
+			'applicantName' => $applicant,
+			'entity' => 'permission'	
 		);
 
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
+		$userWhoMadePermission = $permission->getUser();
+		$newNotification->setUser($userWhoMadePermission);
 		switch($specialUser){
-			case 'JI':
-				$userWhoMadePermission = $permission->getUser();
-				$newNotification->setUser($userWhoMadePermission);
-                $newNotification->setMessage('Permiso rechazado por Jefe inmediato');
-				break;
 			case 'CTH':
-				$userWhoMadePermission = $permission->getUser();
-				$newNotification->setUser($userWhoMadePermission);
 				$newNotification->setMessage('Permiso rechazado por Talento humano');
+				break;
+			default:
+                $newNotification->setMessage('Permiso rechazado por Jefe inmediato');
 				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
@@ -1048,7 +1055,8 @@ class ContractController extends AbstractController
 			$newNotification->setMessage('Solicita la aprobación de una licencia');
 			$relatedEntity = array(
 				'id'=>$license->getId(),
-				'applicant'=>$user->getNames()." ".$user->getLastNames(),
+				'applicantId'=>$user->getId(),
+				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
 				'entity' => 'license'
 			);
 			$newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1144,7 +1152,7 @@ class ContractController extends AbstractController
 		$newNotification->setSeen(0);
 		$relatedEntity = array(
 			'id' => $licenseId,
-			'applicant'=>$applicant,
+			'applicantName'=>$applicant,
 			'entity'=>'license'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1203,7 +1211,7 @@ class ContractController extends AbstractController
 		$newNotification->setSeen(0);
 		$relatedEntity = array(
 			'id' => $licenseId,
-			'applicant' => $applicant,
+			'applicantName' => $applicant,
 			'entity' => 'license'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1352,12 +1360,13 @@ class ContractController extends AbstractController
 
 			$newNotification = new Notification();
 			$newNotification->setSeen(0);
-			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'ATHSST','userType'=>8]);
+			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'JI','userType'=>1]);
 			$newNotification->setUser($userForNotification);
 			$newNotification->setMessage('Solicita la aprobación de una incapacidad');
 			$relatedEntity = array(
 				'id'=>$incapacity->getId(),
-				'applicant'=>$user->getNames()." ".$user->getLastNames(),
+				'applicantId'=>$user->getId(),
+				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
 				'entity' => 'incapacity'
 			);
 			$newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1493,7 +1502,7 @@ class ContractController extends AbstractController
 		$newNotification->setSeen(0);
 		$relatedEntity = array(
 			'id' => $incapacityId,
-			'applicant'=>$applicant,
+			'applicantName'=>$applicant,
 			'entity' => 'incapacity'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1551,7 +1560,7 @@ class ContractController extends AbstractController
 		$newNotification->setSeen(0);
 		$relatedEntity = array(
 			'id' => $incapacityId,
-			'applicant' => $applicant,
+			'applicantName' => $applicant,
 			'entity' => 'incapacity'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
