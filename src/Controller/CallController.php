@@ -1386,7 +1386,8 @@ class CallController extends AbstractController
         $queryFP = $doctrine->getManager()->createQueryBuilder();
         $query->select('cp.id','cp.curriculumVitae','cp.knowledgeTest','cp.psychoTest',
         'cp.interview','cp.class','cp.underGraduateTraining','cp.postGraduateTraining',
-        'cp.previousExperience','cp.furtherTraining','cp.hvScore')
+        'cp.workExperience','cp.teachingExperience','cp.intellectualProduction',
+        'cp.furtherTraining','cp.hvScore')
             ->from('App\Entity\CallPercentage ', 'cp')
             ->where('cp.call = :callId')
             ->setParameter('callId', $callId);
