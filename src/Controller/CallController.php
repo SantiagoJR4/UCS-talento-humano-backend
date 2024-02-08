@@ -413,7 +413,7 @@ class CallController extends AbstractController
         $call = $query->getQuery()->getArrayResult();
         $call = $call[0];
         $call = convertDateTimeToString2($call);
-        $fieldsToDecode = ['salary', 'history', 'jury' ];
+        $fieldsToDecode = ['salary', 'history', 'jury', 'requiredForCurriculumVitae', 'requiredForPercentages', 'requiredToSignUp', 'stepsOfCall'];
         foreach ($fieldsToDecode as $field) { $call[$field] = json_decode($call[$field], true); }
         return new JsonResponse($call, 200,[]);
     }
@@ -566,6 +566,10 @@ class CallController extends AbstractController
             }
 
             return new JsonResponse(['message' => 'Usuario se ha inscrito'], 200, []);
+        }
+        else
+        {
+            return new JsonResponse(['Por favor comuniquese con nosotros, si este error persiste'], 400, []);
         }
     }
     #[Route('/update-sign-up-to-call',name:'app_update_sign_up_to_call')]
@@ -852,9 +856,10 @@ class CallController extends AbstractController
         $userInCallStatus = json_decode($userInCall->getStatus(), true);
         $userInCallStatus['CVSTATUS'] = $askAgain === NULL ? 3 : 4; 
         $userInCall->setStatus(json_encode($userInCallStatus));
+        $call = $userInCall->getCall();
+        $callId = $call->getId();
         $entityManager->flush();
-
-        if( $askAgain !== NULL ){
+        if( $askAgain !== NULL && $callId === 47 ){
             $qb = function($class, $ids) use ($doctrine) {
                 return $doctrine->getRepository($class)
                     ->createQueryBuilder('e')
@@ -1382,7 +1387,8 @@ class CallController extends AbstractController
         $queryFP = $doctrine->getManager()->createQueryBuilder();
         $query->select('cp.id','cp.curriculumVitae','cp.knowledgeTest','cp.psychoTest',
         'cp.interview','cp.class','cp.underGraduateTraining','cp.postGraduateTraining',
-        'cp.previousExperience','cp.furtherTraining','cp.hvScore')
+        'cp.workExperience','cp.teachingExperience','cp.intellectualProduction',
+        'cp.furtherTraining','cp.hvScore')
             ->from('App\Entity\CallPercentage ', 'cp')
             ->where('cp.call = :callId')
             ->setParameter('callId', $callId);
@@ -1664,4 +1670,107 @@ class CallController extends AbstractController
         $array = $query->getQuery()->getArrayResult();
         return new JsonResponse($array, 200, []);
     }
+
+    #[Route('/email-test-interview', name: 'app_email_test_interview')]
+    public function testEmailInterview(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
+    {
+        $type = $request->request->get('type');
+        // $data = [
+        //     [
+        //         "fullname" => "Stephanny Alejandra Rojas Trujillo",
+        //         "callName" => "43",
+        //         "email" => "santipo12@gmail.com"
+        //     ],
+        // ];
+        $data = [
+            [
+                "fullname" => "Stephanny Alejandra Rojas Trujillo",
+                "callName" => "43",
+                "email" => "sart710@hotmail.com"
+            ],
+            [
+                "fullname" => "Frank David Florez Tapia",
+                "callName" => "40",
+                "email" => "frankflorez1989@gmail.com"
+            ],
+            [
+                "fullname" => "Luis Walter Nayidt Vallejo Benavides",
+                "callName" => "40",
+                "email" => "luisvallejobenavides@gmail.com"
+            ],
+            [
+                "fullname" => "Nathaly Viviana Chavez Patiño",
+                "callName" => "42",
+                "email" => "naticapat85@hotmail.com"
+            ],
+            [
+                "fullname" => "Aida Lucy Enriquez Guerrero",
+                "callName" => "42",
+                "email" => "aida.enriquezg@gmail.com"
+            ],
+            [
+                "fullname" => "Claudia Janneth Barrera Hidalgo",
+                "callName" => "42",
+                "email" => "clau0516@icloud.com"
+            ],
+            [
+                "fullname" => "Liliana Fabiola Castro Morillo",
+                "callName" => "42",
+                "email" => "lilcasmor@gmail.com"
+            ],
+            [
+                "fullname" => "Stefanny Nathaly	Narvaez Gamboa",
+                "callName" => "42",
+                "email" => "stefannynar1988@gmail.com"
+            ],
+            [
+                "fullname" => "Edgar Rolando Erazo Santander",
+                "callName" => "42",
+                "email" => "rolosst@outlook.com"
+            ],
+            [
+                "fullname" => "Nilcen Gabriela Obando Botina",
+                "callName" => "42",
+                "email" => "gabrielaobandobotina@gmail.com"
+            ],
+            [
+                "fullname" => "Sandra Milena Cabrera Cortez",
+                "callName" => "42",
+                "email" => "sandry24.04@hotmail.com"
+            ],
+            [
+                "fullname" => "Silvana Lorena Moran Zambrano",
+                "callName" => "41",
+                "email" => "silvanarom96@gmail.com"
+            ],
+            [
+                "fullname" => "Dilsan Zuleima Yepez Chaves",
+                "callName" => "41",
+                "email" => "zuleimayepez@hotmail.com"
+            ],
+        ];
+        foreach ($data as $key => $value) {
+            try{
+                $email = (new TemplatedEmail())
+                    ->from('convocatorias@unicatolicadelsur.edu.co')
+                    ->to($value['email'])
+                    ->subject($type === 'not' ? 'Resultado Convocatoria' : 'Recordatorio de Citación')
+                    ->htmlTemplate($type === 'not' ? 'email/notSelectedForCall.html.twig' : 'email/interviewCitationEmail.html.twig')
+                    ->context([
+                        'fullname' => $value['fullname'],
+                        'callName' => $value['callName'],
+                        'date' => $type === 'not' ? null : $value['date'],
+                        'hour' => $type === 'not' ? null : $value['hour']
+                    ]);         
+                $mailer->send($email);
+                $message = 'La revisión fue enviada con éxito';
+            } catch (\Throwable $th) {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse(['status'=>'Error','message'=>$message]);
+            }
+        }
+
+        return new JsonResponse(['data'=>'hecho'], 200, []);
+    }
+
 }

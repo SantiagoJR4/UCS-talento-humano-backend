@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\CurriculumVitae;
+use App\Entity\RecoveryEmail;
 use App\Service\Helpers;
 use App\Service\UserService;
 use App\Entity\User;
@@ -17,6 +18,8 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mailer\MailerInterface;
 
 function createJwtResponse($user, $isUserInOpenCall) {
     $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
@@ -31,6 +34,7 @@ function createJwtResponse($user, $isUserInOpenCall) {
     ];
     $payload = [
         'sub' => $user->getSub(),
+        'userID' => $user->getId(),
         'userType' => $user->getUserType(),
         'specialUser' => $user->getSpecialUser(),
         'isUserInOpenCall' => $isUserInOpenCall,
@@ -39,6 +43,18 @@ function createJwtResponse($user, $isUserInOpenCall) {
     ];
     $token = JWT::encode($payload, $jwtKey, 'HS256');
     return new JsonResponse(['token'=>$token, 'user'=>$resp]);
+}
+
+function createAccountRecoveryLink($userID) {
+    $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+    $payload = [
+        'id' =>  $userID,
+        'iat' => time(),
+        'exp' => time() + 86400
+    ];
+    $token = JWT::encode($payload, $jwtKey, 'HS256');
+    //TODO: change to production
+    return($token);
 }
 
 
@@ -163,8 +179,8 @@ class UserController extends AbstractController
         $data = json_decode($request->request->get('json'), true);
         $passHash = hash('sha256', $data['password']);
         $user = $doctrine->getRepository(User::class)->findOneBy([
-            'typeIdentification' => $data['tipoIdentificacion'],
-            'identification' => $data['numero'],
+            'typeIdentification' => $data['IDType'],
+            'identification' => $data['number'],
             'password' => $passHash
         ]);
         $callOpenState = 4;
@@ -185,6 +201,10 @@ class UserController extends AbstractController
             return createJwtResponse($user, $isUserInOpenCall);
         }
         $client = HttpClient::create();
+        $data["tipoIdentificacion"] = $data["IDType"];
+        $data["numero"] = $data["number"];
+        // unset($data["IDType"]);
+        // unset($data["number"]);
         $responseIctus = $client->request('POST', 'https://ictus.unicatolicadelsur.edu.co/unicat/web/login', [
             'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
             'body' => http_build_query(['json' => json_encode($data)])
@@ -204,7 +224,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/validate-token', name: 'app_validate_token')]
-    public function validateToken(Request $request): JsonResponse
+    public function validateToken(Request $request, ManagerRegistry $doctrine): JsonResponse
     {
         $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
         $token = $request->query->get('token');
@@ -215,6 +235,34 @@ class UserController extends AbstractController
         }
         $expirationTime = $decodedToken->exp;
         $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
+        $userID = $decodedToken->userID;
+        $callOpenState = 4;
+        $queryBuilder = $doctrine->getManager()->createQueryBuilder();
+        $user = $doctrine->getRepository(User::class)->find($userID);
+        $queryCall = $queryBuilder
+            ->select('c.id, uc.status')
+            ->from('App\Entity\UsersInCall', 'uc')
+            ->join('uc.call', 'c')
+            ->where($queryBuilder->expr()->andX(
+                $queryBuilder->expr()->eq('c.state',':callOpenState'),
+                $queryBuilder->expr()->eq('uc.user',':user'),
+            ))
+            ->setParameter('user', $user)
+            ->setParameter('callOpenState', $callOpenState);
+        $array = $queryCall->getQuery()->getArrayResult();
+        foreach ($array as &$item) {
+            if (isset($item['status'])) {
+                $item['status'] = json_decode($item['status'], true);
+                if($item['status']['CVSTATUS'] === 4){
+                    return new JsonResponse([
+                        'isValid' => $isTokenValid,
+                        'userType' => $decodedToken->userType,
+                        'specialUser' => $decodedToken->specialUser,
+                        'isUserInOpenCall' => false
+                    ]);
+                }
+            }
+        }
         return new JsonResponse([
             'isValid' => $isTokenValid,
             'userType' => $decodedToken->userType,
@@ -223,6 +271,89 @@ class UserController extends AbstractController
         ]);
     }
 
+    #[Route('/email-to-recover', name: 'app_email_to_recover')]
+    public function emailToRecover(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
+    {
+        $userIDType = $request->query->get('IDType');
+        $userNumber = $request->query->get('number');
+        $user = $doctrine->getRepository(User::class)->findOneBy([
+            'typeIdentification' => $userIDType,
+            'identification' => $userNumber,
+        ]);
+        if( $user )
+        {
+            try
+            {
+                $tokenForRecoverAccount = createAccountRecoveryLink($user->getId());
+                //var_dump($user);
+                $newRecoveryEmail = new RecoveryEmail();
+                $newRecoveryEmail->setToken($tokenForRecoverAccount);
+                $newRecoveryEmail->setUsed(false);
+                $newRecoveryEmail->setUser($user);
+                //TODO: change to production
+                $linkForRecover = 'http://yeshua.unicatolicadelsur.edu.co:4200/ucs-talento-humano/#/auth/recover-account/' . $tokenForRecoverAccount; 
+                $email = (new TemplatedEmail())
+                    ->from('convocatorias@unicatolicadelsur.edu.co') //correo oficina oasic
+                    ->to($user->getEmail()) //correo talento humano
+                    ->subject('Recuperación de cuenta')
+                    ->htmlTemplate('email/recoverAccountEmail.html.twig')
+                    ->context([
+                        'fullname' => $user->getNames().' '.$user->getLastNames(),
+                        'emailToRecover' => $linkForRecover,
+                    ]);
+                $mailer->send($email);
+                $entityManager = $doctrine->getManager();
+                $entityManager->persist($newRecoveryEmail);
+                $entityManager->flush();
+            } catch (\Throwable $th)
+            {
+                $message = 'Error al enviar el correo:'.$th->getMessage();
+                return new JsonResponse($th->getMessage(), 404, []);
+            }
+            return new JsonResponse('Se han enviado instrucciones al correo registrado con esta cuenta.', 200, []);
+        }
+        else
+        {
+            return new JsonResponse('La información proporcionada no coincide con ninguna cuenta registrada.', 404, []);
+        }
+    }
+
+    #[Route('/validate-for-new-password', name: 'app_validate_for_new_password')]
+    public function validateForNewPassword(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
+    {
+        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $token = $request->query->get('token');
+        try {
+            $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
+        } catch (\Exception $e) {
+            return new JsonResponse(false, 404,[]);
+        }
+        $recoveryEmail = $doctrine->getRepository(RecoveryEmail::class)->findOneBy(['token' => $token]);
+        $isUsed = $recoveryEmail->isUsed();
+        return new JsonResponse($isUsed ? false : true, 200, []);
+    }
+
+    #[Route('/change-password', name: 'app_change-password')]
+    public function changePassword(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
+    {
+        $jwtKey = 'Un1c4t0l1c4';
+        $token = $request->query->get('token');
+        $password = $request->query->get('password');
+        $passHash = hash('sha256', $password);
+        try {
+            $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
+            $userID = $decodedToken->id;
+            $user = $doctrine->getRepository(User::class)->find($userID);
+            $user->setPassword($passHash);
+            $recoveryEmail = $doctrine->getRepository(RecoveryEmail::class)->findOneBy(['token' => $token]);
+            $recoveryEmail->setUsed(true);
+            $entityManager = $doctrine->getManager();
+            $entityManager->flush();
+        } catch (\Throwable $th) {
+            return new JsonResponse('Error al cambiar la contraseña, por favor repita el proceso, en caso de persistir comuniquese con nosotros', 404, []);
+        }
+        return new JsonResponse('Cambio de contraseña realizado!', 200, []);
+    }
      
     //TODO : HACER VERIFICACIÓN DE CORREO
 
