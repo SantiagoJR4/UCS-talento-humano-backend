@@ -13,6 +13,7 @@ use App\Entity\Permission;
 use App\Entity\Permissions;
 use App\Entity\PermissionsAndLicences;
 use App\Entity\Profile;
+use App\Entity\Reemployment;
 use App\Entity\Requisition;
 use App\Entity\User;
 use App\Entity\UsersInRequisition;
@@ -846,9 +847,13 @@ class ContractController extends AbstractController
 		$newStateForPermission = 0;
 		$newNotification = new Notification();
 		$newNotification->setSeen(0);
+		$userNames = $doctrine->getRepository(User::class)->find($applicant);
+	
+		$userNames= $userNames->getNames();
 		$relatedEntity = array(
 			'id' => $permissionId,
-			'applicantName'=>$applicant,
+			'applicantId'=>$applicant,
+			'applicantName'=>$userNames,
 			'entity'=>'permission'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -856,6 +861,7 @@ class ContractController extends AbstractController
 			case 'CTH':
 				$newStateForPermission = 2;
 				$userWhoMadePermission = $permission->getUser();
+
 				$newNotification->setUser($userWhoMadePermission);
 				$newNotification->setMessage('Revisión de permiso finalizada.');
 				break;
@@ -863,7 +869,7 @@ class ContractController extends AbstractController
 				$newStateForPermission = 1;
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
                 $newNotification->setUser($userForNotification);
-                $newNotification->setMessage('solicita la aprobación de un permiso por parte de Coordinación de talento humano');
+                $newNotification->setMessage('solicita la aprobación de un permiso por parte de Talento Humano');
 				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
@@ -903,21 +909,27 @@ class ContractController extends AbstractController
 		}
 		$newNotification = new Notification();
 		$newNotification->setSeen(0);
+		$userNames = $doctrine->getRepository(User::class)->find($applicant);
+	
+		$userNames= $userNames->getNames();
 		$relatedEntity = array(
 			'id' => $permissionId,
-			'applicantName' => $applicant,
+			'applicantId' => $applicant,
+			'applicantName' => $userNames,
 			'entity' => 'permission'	
 		);
 
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
-		$userWhoMadePermission = $permission->getUser();
-		$newNotification->setUser($userWhoMadePermission);
 		switch($specialUser){
 			case 'CTH':
 				$newNotification->setMessage('Permiso rechazado por Talento humano');
+				$userWhoMadePermission = $permission->getUser();
+				$newNotification->setUser($userWhoMadePermission);
 				break;
 			default:
                 $newNotification->setMessage('Permiso rechazado por Jefe inmediato');
+				$userWhoMadePermission = $permission->getUser();
+				$newNotification->setUser($userWhoMadePermission);
 				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
@@ -1048,19 +1060,25 @@ class ContractController extends AbstractController
 			$entityManager->persist($license);
 			$entityManager->flush();
 
-			$newNotification = new Notification();
-			$newNotification->setSeen(0);
-			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'JI','userType'=>1]);
-			$newNotification->setUser($userForNotification);
-			$newNotification->setMessage('Solicita la aprobación de una licencia');
-			$relatedEntity = array(
-				'id'=>$license->getId(),
-				'applicantId'=>$user->getId(),
-				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
-				'entity' => 'license'
-			);
-			$newNotification->setRelatedEntity(json_encode($relatedEntity));
-			$entityManager->persist($newNotification);
+			$immediateBossArray = json_decode($data['arrayImmediateBoss'],true);
+
+			foreach($immediateBossArray as $boss){
+				$bossID = $boss['id'];
+				$immediateBossUsers = $doctrine->getRepository(User::class)->find($bossID);
+				$newNotification = new Notification();
+				$newNotification->setSeen(0);
+				$newNotification->setUser($immediateBossUsers);
+				$newNotification->setMessage('Solicita la aprobación de una licencia');
+				$relatedEntity = array(
+					'id'=>$license->getId(),
+					'applicantId'=>$user->getId(),
+					'applicantName'=>$user->getNames()." ".$user->getLastNames(),
+					'entity' => 'license'
+				);
+				$newNotification->setRelatedEntity(json_encode($relatedEntity));
+				$entityManager->persist($newNotification);
+			}
+
 			$entityManager->flush();
 		}
 		return new JsonResponse(['status'=>'Success','message'=>'Licencia solicitada con éxito']);
@@ -1150,19 +1168,17 @@ class ContractController extends AbstractController
 		$newStateForLicense = 0;
 		$newNotification = new Notification();
 		$newNotification->setSeen(0);
+		$userNames = $doctrine->getRepository(User::class)->find($applicant);
+	
+		$userNames= $userNames->getNames();
 		$relatedEntity = array(
 			'id' => $licenseId,
-			'applicantName'=>$applicant,
+			'applicantId'=>$applicant,
+			'applicantName' => $userNames,
 			'entity'=>'license'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
 		switch($specialUser){
-			case 'JI':
-				$newStateForLicense = 1;
-				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
-                $newNotification->setUser($userForNotification);
-                $newNotification->setMessage('solicita la aprobación de una licencia por parte de Coordinación de talento humano');
-				break;
 			case 'CTH':
 				$newStateForLicense = 2;
 				$userWhoMadeLicense = $license->getUser();
@@ -1170,6 +1186,11 @@ class ContractController extends AbstractController
 				$newNotification->setMessage('Revisión de licencia finalizada.');
 				break;
 			default:
+				$newStateForLicense = 1;
+				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
+				$newNotification->setUser($userForNotification);
+				$newNotification->setMessage('solicita la aprobación de una licencia por parte de Coordinación de talento humano');
+				break;
 			return new JsonResponse(['message'=>'Usuario no autorizado'],403,[]);
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
@@ -1209,22 +1230,26 @@ class ContractController extends AbstractController
 		}
 		$newNotification = new Notification();
 		$newNotification->setSeen(0);
+		$userNames = $doctrine->getRepository(User::class)->find($applicant);
+	
+		$userNames= $userNames->getNames();
 		$relatedEntity = array(
 			'id' => $licenseId,
-			'applicantName' => $applicant,
+			'applicantId' => $applicant,
+			'applicantName' => $userNames,
 			'entity' => 'license'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
 		switch($specialUser){
-			case 'JI':
-				$userWhoMadeLicense = $license->getUser();
-				$newNotification->setUser($userWhoMadeLicense);
-                $newNotification->setMessage('Licencia rechazada por Jefe inmediato');
-				break;
 			case 'CTH':
-				$userWhoMadeLicense = $license->getUser();
-				$newNotification->setUser($userWhoMadeLicense);
+				// $userWhoMadeLicense = $license->getUser();
+				// $newNotification->setUser($userWhoMadeLicense);
 				$newNotification->setMessage('Licencia rechazada por Talento humano');
+				break;
+			default:
+				//$userWhoMadeLicense = $license->getUser();
+				// $newNotification->setUser($userWhoMadeLicense);
+                $newNotification->setMessage('Licencia rechazada por Jefe inmediato');
 				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
@@ -1358,19 +1383,27 @@ class ContractController extends AbstractController
 			$entityManager->persist($incapacity);
 			$entityManager->flush();
 
-			$newNotification = new Notification();
-			$newNotification->setSeen(0);
-			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'JI','userType'=>1]);
-			$newNotification->setUser($userForNotification);
-			$newNotification->setMessage('Solicita la aprobación de una incapacidad');
-			$relatedEntity = array(
-				'id'=>$incapacity->getId(),
-				'applicantId'=>$user->getId(),
-				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
-				'entity' => 'incapacity'
-			);
-			$newNotification->setRelatedEntity(json_encode($relatedEntity));
-			$entityManager->persist($newNotification);
+			$immediateBossArray = json_decode($data['arrayImmediateBoss'],true);
+			// $immediateBossIds = [];
+
+			foreach ($immediateBossArray as $boss) {
+				$bossID = $boss['id'];
+				$immediateBossUsers = $doctrine->getRepository(User::class)->find($bossID);
+				$newNotification = new Notification();
+				$newNotification->setSeen(0);
+				$newNotification->setUser($immediateBossUsers);
+				$newNotification->setMessage('Solicita la aprobación de una incapacidad');
+				
+				$relatedEntity = array(
+					'id' => $incapacity->getId(),
+					'applicantId'=>$user->getId(),
+					'applicantName' => $user->getNames() . " " . $user->getLastNames(),
+					'entity' => 'incapacity'    
+				);
+				$newNotification->setRelatedEntity(json_encode($relatedEntity));
+				
+				$entityManager->persist($newNotification);
+			}
 			$entityManager->flush();
 
 		}
@@ -1500,9 +1533,13 @@ class ContractController extends AbstractController
 		$newStateForIncapacity = 0;
 		$newNotification = new Notification();
 		$newNotification->setSeen(0);
+		$userNames = $doctrine->getRepository(User::class)->find($applicant);
+	
+		$userNames= $userNames->getNames();
 		$relatedEntity = array(
 			'id' => $incapacityId,
-			'applicantName'=>$applicant,
+			'applicantId'=>$applicant,
+			'applicantName'=>$userNames,
 			'entity' => 'incapacity'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1558,9 +1595,13 @@ class ContractController extends AbstractController
 		}
 		$newNotification = new Notification();
 		$newNotification->setSeen(0);
+		$userNames = $doctrine->getRepository(User::class)->find($applicant);
+	
+		$userNames= $userNames->getNames();
 		$relatedEntity = array(
 			'id' => $incapacityId,
-			'applicantName' => $applicant,
+			'applicantId' => $applicant,
+			'applicantName'=>$userNames,
 			'entity' => 'incapacity'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
@@ -1654,13 +1695,16 @@ class ContractController extends AbstractController
 	///-------------------------------------------------------------------------------------------
 	//--------------------------------------------------------------------------------------------
 	#[Route('contract/create-requisition', name:'app_contract_create_requisition')]
-	public function createRequisition(ManagerRegistry $doctrine, Request $request): JsonResponse
+	public function createRequisition(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
 	{
-		$isTokenValid = $this->validateTokenSuper($request)->getContent();
+		$token = $request->query->get('token');
 		$entityManager = $doctrine->getManager();
 		$data = $request->request->all();
 
-		if($isTokenValid === false){
+		$userLogueado = $vToken->getUserIdFromToken($token);
+		$specialUser = $userLogueado->getSpecialUser();
+
+		if($token === false){
 			return new JsonResponse(['error' => 'Token no válido']);
 		}else{
 			$user = $entityManager->getRepository(User::class)->find($data['user']);
@@ -1698,19 +1742,48 @@ class ContractController extends AbstractController
 			$entityManager->persist($requisition);
 			$entityManager->flush();
 
-			$newNotification = new Notification();
-			$newNotification->setSeen(0);
-			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'JI','userType'=>1]);
-			$newNotification->setUser($userForNotification);
-			$newNotification->setMessage('Solicita la aprobación de una requisición');
-			$relatedEntity = array(
-				'id'=>$requisition->getId(),
-				'applicantId'=>$user->getId(),
-				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
-				'entity' => 'requisition'
-			);
-			$newNotification->setRelatedEntity(json_encode($relatedEntity));
-			$entityManager->persist($newNotification);
+			// var_dump(json_decode($data['arrayImmediateBoss'],true));
+			// $idVF = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'REC', 'userType'=>1])
+
+			switch($specialUser){
+				case 'VF':
+					$inmediateBossEntity = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'REC', 'userType'=>1]);
+					$immediateBossArray = [$inmediateBossEntity->getId()];
+					break;
+				case 'AOASIC':
+				case 'CTH':
+				case 'VPSB':
+				case 'VAE':
+				case 'VII':
+				case 'ASIAC':
+					$immediateBossArray = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF', 'userType'=>1]);
+					$immediateBossArray = [$immediateBossArray->getId()];
+					break;
+				default:
+					$immediateBossArray = json_decode($data['arrayImmediateBoss'],true);
+					$immediateBossArray = array_map(function($boosId){
+						return $boosId['id'];
+					}, $immediateBossArray);
+				break;
+			}
+
+			foreach($immediateBossArray as $boss){
+				// $bossID = $boss['id'];
+				$immediateBossUsers = $doctrine->getRepository(User::class)->find($boss);
+				$newNotification = new Notification();
+				$newNotification->setSeen(0);
+				$newNotification->setUser($immediateBossUsers);
+				$newNotification->setMessage('Solicita la aprobación de una requisición');
+				
+				$relatedEntity = array(
+					'id'=>$requisition->getId(),
+					'applicantId'=>$user->getId(),
+					'applicantName'=>$user->getNames()." ".$user->getLastNames(),
+					'entity' => 'requisition'
+				);
+				$newNotification->setRelatedEntity(json_encode($relatedEntity));
+				$entityManager->persist($newNotification);
+			}
 			$entityManager->flush();
 
 			//--------------------------------------------------------------------------------
@@ -1823,6 +1896,7 @@ class ContractController extends AbstractController
 				'salary' => $requisition->getSalary(),
 				'profileName' => $profile->getName(),
 				'username' => $user->getNames() . ' ' . $user->getLastNames(),
+				'idUser' => $user->getId(),
 				'userIdentification' => $user->getIdentification()
 			],
 			'requisitionUser' => $requisitionUser
@@ -1838,7 +1912,6 @@ class ContractController extends AbstractController
 		$requisitionId = $request->query->get('requisitionId');
 		$notificationId = $request->query->get('notificationId');
 		$applicantId = $request->query->get('applicantId');
-		$applicantName = $request->request->get('applicantName');
 
 		$user = $vToken->getUserIdFromToken($token);
 		$specialUser = $user->getSpecialUser();
@@ -1849,20 +1922,17 @@ class ContractController extends AbstractController
 		$newStateForRequisition = 0;
 		$newNotification = new Notification();
 		$newNotification->setSeen(0);
+		$userNames = $doctrine->getRepository(User::class)->find($applicantId);
+		$userNames = $userNames->getNames()." ".$userNames->getLastNames();
+
 		$relatedEntity = array(
 			'id'=>$requisitionId,
 			'applicantId'=>$applicantId,
-            'applicantName'=>$applicantName,
+            'applicantName'=>$userNames,
 			'entity'=>'requisition'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
 		switch($specialUser){
-			case 'JI':
-				$newStateForRequisition = 1;
-				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
-                $newNotification->setUser($userForNotification);
-                $newNotification->setMessage('solicita la aprobación de una requisición por parte de Vicerrectoria Financiera');
-				break;
 			case 'VF':
 				$newStateForRequisition = 2;
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'REC','userType' => 1]);
@@ -1882,7 +1952,11 @@ class ContractController extends AbstractController
 				$newNotification->setMessage('Revisión de requisición finalizada.');
 				break;
 			default:
-			return new JsonResponse(['message'=>'Usuario no autorizado'],403,[]);
+				$newStateForRequisition = 1;
+				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF', 'userType'=>1]);
+				$newNotification->setUser($userForNotification);
+				$newNotification->setMessage('solicita la aprobación de una requisición por parte de Vicerrectoría Financiera');
+				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
 		$notification->setSeen(1);
@@ -1912,7 +1986,6 @@ class ContractController extends AbstractController
 		$requisitionId= $request->query->get('requisitionId');
 		$rejectText = $request->request->get('rejectText');
 		$applicantId = $request->query->get('applicantId');
-		$applicantName = $request->request->get('applicantName');
 		$notificationId = $request->query->get('notificationId');
 
 		$user = $vToken->getUserIdFromToken($token);
@@ -1923,33 +1996,36 @@ class ContractController extends AbstractController
 		}
 		$newNotification = new Notification();
 		$newNotification->setSeen(0);
+		$userNames = $doctrine->getRepository(User::class)->find($applicantId);
+		$userNames = $userNames->getNames()." ".$userNames->getLastNames();
+
 		$relatedEntity = array(
 			'id' => $requisitionId,
 			'applicantId'=>$applicantId,
-            'applicantName'=>$applicantName,
+            'applicantName'=>$userNames,
 			'entity' => 'requisition'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
 		switch($specialUser){
-			case 'JI':
-				$userWhoMadeLicense = $requisition->getUser();
-				$newNotification->setUser($userWhoMadeLicense);
-                $newNotification->setMessage('Requisición rechazada por Jefe inmediato');
-				break;
 			case 'VF':
+                $newNotification->setMessage('Requisición rechazada por Vicerrectoria financiera');
 				$userWhoMadeLicense = $requisition->getUser();
 				$newNotification->setUser($userWhoMadeLicense);
-                $newNotification->setMessage('Requisición rechazada por Vicerrectoria financiera');
 				break;
 			case 'REC':
+                $newNotification->setMessage('Requisición rechazada por Rectoría');
 				$userWhoMadeLicense = $requisition->getUser();
 				$newNotification->setUser($userWhoMadeLicense);
-                $newNotification->setMessage('Requisición rechazada por Rectoría');
 				break;
 			case 'CTH':
+                $newNotification->setMessage('Requisición rechazada por Talento humano');
 				$userWhoMadeLicense = $requisition->getUser();
 				$newNotification->setUser($userWhoMadeLicense);
-                $newNotification->setMessage('Requisición rechazada por Talento humano');
+				break;
+			default:
+				$newNotification->setMessage('Requisición rechazada por Jefe inmediato');
+				$userWhoMadeRequisition = $requisition->getUser();
+				$newNotification->setUser($userWhoMadeRequisition);
 				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
@@ -2022,6 +2098,338 @@ class ContractController extends AbstractController
 			];
 		}
 		return new JsonResponse(['status' => true, 'requisition_data' => $requisitionData]);
+	}
+	//-------------------------------------------------------------------------------------------
+	//-----------------------------Reemployment-------------------------------------------------
+	#[Route('/contract/create-reemployment', name:'app_contract_create_reemployment')]
+	public function createReemploymen(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+	{
+		$token= $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+		$data = $request->request->all();
+
+		$userLogueado = $vToken->getUserIdFromToken($token);
+
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$user = $entityManager->getRepository(User::class)->find($data['user']);
+			if(!$user){
+				throw $this->createNotFoundException('No user found for id' . $data['id']);
+			}
+			$chargeId = $entityManager->getRepository(ContractCharges::class)->find($data['chargeId']);
+			if(!$chargeId){
+				throw $this->createNotFoundException('No charge found for id' . $data['id']);
+			}
+
+			$initialDate = $data['initial_date'];
+			$finalDate = $data['final_date'];
+	
+			$reemployment = new Reemployment();
+			$solicitudeDate = new DateTime();
+			$reemployment -> setSolicitudeDate($solicitudeDate);
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$initialDate)){
+				$dateTimeInitial = new DateTime($initialDate);
+				$reemployment -> setInitialDate($dateTimeInitial);
+			}	
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$finalDate)){
+				$dateTimeFinal = new DateTime($finalDate);
+ 				$reemployment -> setFinalDate($dateTimeFinal);
+			}
+
+			$reemployment -> setWorkDedication($data['workDedication']);
+			$reemployment -> setSalary($data['salary']);
+			$reemployment -> setState(0);
+
+			$reemployment -> setPeriod('A2024');
+			$reemployment -> setCharges($chargeId);
+			$reemployment -> setUser($user);
+
+			date_default_timezone_set('America/Bogota');
+			$addToHistory = json_encode(array(array(
+				'user' => $userLogueado->getId(),
+				'responsible' => $userLogueado->getSpecialUser(),
+				'state' => 1,
+				'message' => 'La solicitud de revinculación de personal administrativo fue solicitado por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
+				'date' => date('Y-m-d H:i:s'),
+			)));
+			$reemployment->setHistory($addToHistory);
+
+			$entityManager->persist($reemployment);
+			$entityManager->flush();
+			
+			return new JsonResponse(['message'=>'Revinculación solicitada con exito.'],200,[]);
+
+		}
+	}
+
+	#[Route('/contract/update-reemployment', name:'app_contract_reemployment_update')]
+	public function updateReemployment(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken) : JsonResponse
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+        $data = $request->request->all();
+		$userLogueado = $vToken->getUserIdFromToken($token);
+
+		$reemployment = $entityManager->getRepository(Reemployment::class)->find($data['id']);
+
+		if(!$reemployment){
+			throw $this->createNotFoundException(
+				'No reemployment found for id'.$data['id']
+			);
+		}
+
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$user = $entityManager->getRepository(User::class)->find($data['user']);
+			if(!$user){
+				throw $this->createNotFoundException('No user found for id' . $data['id']);
+			}
+			$chargeId = $entityManager->getRepository(ContractCharges::class)->find($data['chargeId']);
+			if(!$chargeId){
+				throw $this->createNotFoundException('No charge found for id' . $data['id']);
+			}
+
+			$initialDate = $data['initial_date'];
+			$finalDate = $data['final_date'];
+
+			$solicitudeDate = new DateTime();
+			$reemployment -> setSolicitudeDate($solicitudeDate);
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$initialDate)){
+				$dateTimeInitial = new DateTime($initialDate);
+				$reemployment -> setInitialDate($dateTimeInitial);
+			}	
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$finalDate)){
+				$dateTimeFinal = new DateTime($finalDate);
+ 				$reemployment -> setFinalDate($dateTimeFinal);
+			}
+
+			$reemployment -> setWorkDedication($data['workDedication']);
+			$reemployment -> setSalary($data['salary']);
+			$reemployment -> setState(1);
+			$reemployment -> setPeriod('A2024');
+			$reemployment -> setCharges($chargeId);
+			$reemployment -> setUser($user);
+
+			date_default_timezone_set('America/Bogota');
+			$addToHistory = json_encode(array(array(
+				'user' => $userLogueado->getId(),
+				'responsible' => $userLogueado->getSpecialUser(),
+				'state' => 1,
+				'message' => 'Actualización de revinculación de personal administrativo fue solicitado por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
+				'date' => date('Y-m-d H:i:s'),
+			)));
+			$reemployment->setHistory($addToHistory);
+
+			$entityManager->persist($reemployment);
+			$entityManager->flush();
+			
+			return new JsonResponse(['message'=>'Actualización de revinculación exitosa.'],200,[]);
+
+		}
+	}
+	#[Route('/contract/delete-reemployment/{id}', name:'app_contract_reemployment_delete')]
+	public function deleteReemployment(ManagerRegistry $doctrine,Request $request, int $id): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$reemployment = $entityManager->getRepository(Reemployment::class)->find($id);
+
+			if(!$reemployment){
+				throw $this->createNotFoundException(
+					'No reemployment found for id'.$id['id']
+				);	
+			}
+
+			$entityManager->remove($reemployment);
+			$entityManager->flush();
+		}
+
+		return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Usuario revinculado eliminado']);
+	}
+	#[Route('/contract/list-reemployment', name:'app_contract_reemployment_list')]
+	public function listReemployment(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken ) : JsonResponse
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$reemployments = $entityManager->getRepository(Reemployment::class)->findAll();
+			$response = [];
+
+			$query = $doctrine->getManager()->createQueryBuilder();
+			$query
+				->select('c')
+				->from('App\Entity\Reemployment', 'c')
+				->where('c.finalDate >= :expirationPeriod')
+				->setParameters(array('expirationPeriod'=>date('Y-m-d')));
+			$reemployments = $query->getQuery()->getResult();
+
+			foreach($reemployments as $reemployment){
+				$user = $reemployment->getUser();
+				$workDedication = $reemployment->getWorkDedication();
+				// if($workDedication === 'TC'){$workDedication = 'Tiempo Completo';}
+				// else{$workDedication = 'Medio Tiempo';}
+
+				$response[] = [
+					'id' => $reemployment->getId(),
+					'period' => $reemployment->getPeriod(),
+					'solicitude_date' => $reemployment->getSolicitudeDate()->format('Y-m-d'),
+					'initial_date' => $reemployment->getInitialDate()->format('Y-m-d'),
+					'final_date' => $reemployment->getFinalDate()->format('Y-m-d'),
+					'state' => $reemployment->getState(),
+					'history' => $reemployment->getHistory(),
+					'chargeId' => $reemployment->getCharges()->getId(),
+					'chargeName' => $reemployment->getCharges()->getName(),
+					'chargeWorkDedication' => $workDedication,
+					'chargeSalary' => $reemployment->getSalary(),
+					'user' => $user->getNames().' '.$user->getLastNames(),
+					'userId' => $user->getId(),
+					'identification' => $user->getIdentification(),
+					'email' => $user->getEmail(),
+					'phone' => $user->getPhone()
+
+				];
+			}
+		}
+		return new JsonResponse(['status' => true, 'reemployment' => $response]);
+	}
+	//LISTAR DATOS DE REVINCULACIÓN DE UN USUARIO CON EL ID
+	#[Route('/contract/list-reemployment/{id}', name:'app_contract_reemployment_listUser')]
+	public function listReemploymentUser(ManagerRegistry $doctrine, Request $request, int $id ) : JsonResponse
+	{
+		$token = $request->query->get('token');
+		$user = $doctrine->getRepository(User::class)->find($id);
+		
+		if(!$user){
+			return new JsonResponse(['status' => false, 'message' => 'No se encontró el usuario']);
+		}
+
+		$query = $doctrine->getManager()->createQueryBuilder();
+		$query
+			->select('c')
+			->from('App\Entity\Reemployment', 'c')
+			->where('c.finalDate >= :expirationPeriod')
+			->andWhere('c.user = :user')
+			->setParameters(array('expirationPeriod'=>date('Y-m-d'), 'user'=>$user));
+		$reemployment = $query->getQuery()->getResult();
+		
+		if (empty($reemployment)){
+			return new JsonResponse(['status'=>false,'message'=>'No tiene revinculación activa']);
+		}
+
+		$reemployments = $doctrine->getRepository(Reemployment::class)->findBy(['user'=>$user]);
+		if(empty($reemployments)){
+			return new JsonResponse(['status'=>false,'message'=>'No se encontró solicitud de revinculación']);
+		}
+
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$response = [];
+
+			foreach($reemployments as $reemployment){
+				$user = $reemployment->getUser();
+				$workDedication = $reemployment->getWorkDedication();
+				// if($workDedication === 'TC'){$workDedication = 'Tiempo Completo';}
+				// else{$workDedication = 'Medio Tiempo';}
+
+				$response[] = [
+					'id' => $reemployment->getId(),
+					'period' => $reemployment->getPeriod(),
+					'solicitude_date' => $reemployment->getSolicitudeDate()->format('Y-m-d'),
+					'initial_date' => $reemployment->getInitialDate()->format('Y-m-d'),
+					'final_date' => $reemployment->getFinalDate()->format('Y-m-d'),
+					'state' => $reemployment->getState(),
+					'history' => $reemployment->getHistory(),
+					'chargeId' => $reemployment->getCharges()->getId(),
+					'chargeName' => $reemployment->getCharges()->getName(),
+					'chargeWorkDedication' => $workDedication,
+					'chargeSalary' => $reemployment->getSalary(),
+					'user' => $user->getNames().' '.$user->getLastNames(),
+					'userId' => $user->getId(),
+					'identification' => $user->getIdentification()
+				];
+			}
+		}
+		return new JsonResponse(['status' => true, 'reemployment' => $response]);
+	}
+	#[Route('/contract/saveReemployments', name:'app_save_reemployments')]
+	public function saveUserReemployments(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request) : JsonResponse
+	{
+		$token = $request->query->get('token');
+		$user = $vToken->getUserIdFromToken($token);
+		$entityManager = $doctrine->getManager();
+		$idsToChange = json_decode($request->getContent(), true);
+		
+		foreach ($idsToChange as $id) {
+			$reemployment = $doctrine->getRepository(Reemployment::class)->find($id);
+		
+			if (!$reemployment) {
+				return new JsonResponse(['status' => false, 'message' => 'No se encontró solicitud de revinculación para el id ' . $id]);
+			}
+			$reemployment->setState(1);
+		}
+
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$newNotification = new Notification();
+			$newNotification->setSeen(0);
+			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
+			$newNotification->setUser($userForNotification);
+			$newNotification->setMessage('Listado de revinculación personal administrativo.');
+			$relatedEntity = array(
+				'applicantId'=>$user->getId(),
+				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
+				'entity'=>'reemployment'
+			);
+			$newNotification->setRelatedEntity(json_encode($relatedEntity));
+							
+			$entityManager->persist($newNotification);
+		}
+		$entityManager->flush();
+		return new JsonResponse(['status'=>'Success','message'=>'Lista enviada con exito']);
+
+	}
+
+	#[Route('/contract/listWorkers', name: 'app_list_workers')]
+	public function workers(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$user = $vToken->getUserIdFromToken($token);
+	
+		// Filtra los usuarios por los tipos 1 y 2
+		$users = $doctrine->getRepository(User::class)->findBy(['userType' => [1, 2]]);
+	
+		$userData = [];
+		foreach ($users as $user) {
+			$userData[] = [
+				'id' => $user->getId(),
+				'names' => $user->getNames(),
+				'last_names' => $user->getLastNames(),
+				'type_identification' => $user->getTypeIdentification(),
+				'identification' => $user->getIdentification(),
+				'email' => $user->getEmail(),
+				'phone' => $user->getPhone(),
+				'url_photo' => $user->getUrlPhoto(),
+				'user_type' => $user->getUserType(),
+				'special_user' => $user->getSpecialUser()
+			];
+		}
+	
+		// Retorna la respuesta JSON
+		return new JsonResponse($userData);
 	}
 }
 
