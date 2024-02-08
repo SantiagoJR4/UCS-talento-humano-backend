@@ -74,9 +74,23 @@ class CallPercentage
     /**
      * @var int|null
      *
-     * @ORM\Column(name="previous_experience", type="integer", nullable=true)
+     * @ORM\Column(name="work_experience", type="integer", nullable=true)
      */
-    private $previousExperience;
+    private $workExperience;
+
+    /**
+     * @var int|null
+     *
+     * @ORM\Column(name="teaching_experience", type="integer", nullable=true)
+     */
+    private $teachingExperience;
+
+    /**
+     * @var int|null
+     *
+     * @ORM\Column(name="intellectual_production", type="integer", nullable=true)
+     */
+    private $intellectualProduction;
 
     /**
      * @var int|null
@@ -191,14 +205,38 @@ class CallPercentage
         return $this;
     }
 
-    public function getPreviousExperience(): ?int
+    public function getWorkExperience(): ?int
     {
-        return $this->previousExperience;
+        return $this->workExperience;
     }
 
-    public function setPreviousExperience(?int $previousExperience): self
+    public function setWorkExperience(?int $workExperience): self
     {
-        $this->previousExperience = $previousExperience;
+        $this->workExperience = $workExperience;
+
+        return $this;
+    }
+
+    public function getTeachingExperience(): ?int
+    {
+        return $this->teachingExperience;
+    }
+
+    public function setTeachingExperience(?int $teachingExperience): self
+    {
+        $this->teachingExperience = $teachingExperience;
+
+        return $this;
+    }
+
+    public function getIntellectualProduction(): ?int
+    {
+        return $this->intellectualProduction;
+    }
+
+    public function setIntellectualProduction(?int $intellectualProduction): self
+    {
+        $this->intellectualProduction = $intellectualProduction;
 
         return $this;
     }

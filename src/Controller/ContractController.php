@@ -2301,8 +2301,18 @@ class ContractController extends AbstractController
 
 				];
 			}
+			$queryTeachers = $doctrine->getManager()->createQueryBuilder();
+			$queryTeachers 
+				->select('u.id, u.names, u.lastNames, u.identification, u.email, u.phone')
+				->from('App\Entity\User', 'u')
+				->where('u.userType = 2');
+			$teachers = $queryTeachers->getQuery()->getResult();
+			foreach ($teachers as $key => $value) {
+				$teachers[$key]['user'] = $value['names'] . ' ' . $value['lastNames'];
+			}
+			$workers = array_merge($response, $teachers);
 		}
-		return new JsonResponse(['status' => true, 'reemployment' => $response]);
+		return new JsonResponse(['status' => true, 'reemployment' => $workers]);
 	}
 	//LISTAR DATOS DE REVINCULACIÓN DE UN USUARIO CON EL ID
 	#[Route('/contract/list-reemployment/{id}', name:'app_contract_reemployment_listUser')]
