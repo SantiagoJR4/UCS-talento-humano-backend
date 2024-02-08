@@ -1674,153 +1674,79 @@ class CallController extends AbstractController
     #[Route('/email-test-interview', name: 'app_email_test_interview')]
     public function testEmailInterview(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
     {
+        $type = $request->request->get('type');
+        // $data = [
+        //     [
+        //         "fullname" => "Stephanny Alejandra Rojas Trujillo",
+        //         "callName" => "43",
+        //         "email" => "santipo12@gmail.com"
+        //     ],
+        // ];
         $data = [
             [
-                "fullname" => "Maria Paola Devries Yepez",
-                "callName" => "40",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "9:00 AM",
-                "email" => "mpydevries@gmail.com"
+                "fullname" => "Stephanny Alejandra Rojas Trujillo",
+                "callName" => "43",
+                "email" => "sart710@hotmail.com"
             ],
             [
-                "fullname" => "Edwin Geovany Carvajal Vallejo",
+                "fullname" => "Frank David Florez Tapia",
                 "callName" => "40",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "9:35 AM",
-                "email" => "geovanycar@gmail.com"
+                "email" => "frankflorez1989@gmail.com"
             ],
             [
-                "fullname" => "Susana Milena Benavides Pupiales",
+                "fullname" => "Luis Walter Nayidt Vallejo Benavides",
                 "callName" => "40",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "10:30 AM",
-                "email" => "SUMPIPE@OUTLOOK.COM"
+                "email" => "luisvallejobenavides@gmail.com"
             ],
             [
-                "fullname" => "Paulo Cesar Moreno Bolaños",
-                "callName" => "40",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "11:05 AM",
-                "email" => "paulocmorenob@outlook.com"
+                "fullname" => "Nathaly Viviana Chavez Patiño",
+                "callName" => "42",
+                "email" => "naticapat85@hotmail.com"
             ],
             [
-                "fullname" => "Cesar Urbina Figueroa",
-                "callName" => "40",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "11:40 AM",
-                "email" => "csarur@gmail.com"
+                "fullname" => "Aida Lucy Enriquez Guerrero",
+                "callName" => "42",
+                "email" => "aida.enriquezg@gmail.com"
             ],
             [
-                "fullname" => "Juan Pablo Santacruz Patiño",
-                "callName" => "40",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "12:10 PM",
-                "email" => "jpsantacruzp@hotmail.com"
+                "fullname" => "Claudia Janneth Barrera Hidalgo",
+                "callName" => "42",
+                "email" => "clau0516@icloud.com"
             ],
             [
-                "fullname" => "Jessica Vanessa Ordoñez Jamondino",
+                "fullname" => "Liliana Fabiola Castro Morillo",
+                "callName" => "42",
+                "email" => "lilcasmor@gmail.com"
+            ],
+            [
+                "fullname" => "Stefanny Nathaly	Narvaez Gamboa",
+                "callName" => "42",
+                "email" => "stefannynar1988@gmail.com"
+            ],
+            [
+                "fullname" => "Edgar Rolando Erazo Santander",
+                "callName" => "42",
+                "email" => "rolosst@outlook.com"
+            ],
+            [
+                "fullname" => "Nilcen Gabriela Obando Botina",
+                "callName" => "42",
+                "email" => "gabrielaobandobotina@gmail.com"
+            ],
+            [
+                "fullname" => "Sandra Milena Cabrera Cortez",
+                "callName" => "42",
+                "email" => "sandry24.04@hotmail.com"
+            ],
+            [
+                "fullname" => "Silvana Lorena Moran Zambrano",
                 "callName" => "41",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "8:00 AM",
-                "email" => "jessicavanessaordonez@gmail.com"
+                "email" => "silvanarom96@gmail.com"
             ],
             [
-                "fullname" => "Luz Elena Pantoja Ortega",
+                "fullname" => "Dilsan Zuleima Yepez Chaves",
                 "callName" => "41",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "8:35 AM",
-                "email" => "luzelenapantoja@hotmail.com"
-            ],
-            [
-                "fullname" => "Marcela Patricia Quiroz Ibarra",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "9:10 AM",
-                "email" => "marcelaquirozibarra@gmail.com"
-            ],
-            [
-                "fullname" => "Daniela Alejandra Getial Mora",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "9:45 AM",
-                "email" => "danielitagm1993@gmail.com"
-            ],
-            [
-                "fullname" => "Anya Vanessa Vallejo Silva",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "10:50 AM",
-                "email" => "anyavanesa@hotmail.com"
-            ],
-            [
-                "fullname" => "Maria Jose Rosero Delgado",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "11:25 AM",
-                "email" => "mariajose1573@hotmail.com"
-            ],
-            [
-                "fullname" => "Mónica Viviana González Ibarra",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "12:00 PM",
-                "email" => "monicagonzalezi46@gmail.com"
-            ],
-            [
-                "fullname" => "Paulina Vanessa Tobar Echeverri",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "2:30 PM",
-                "email" => "paulina_vte@hotmail.com"
-            ],
-            [
-                "fullname" => "Victor Ivan Ordoñez Rosero",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "3:05 PM",
-                "email" => "victorivanordonezrosero@gmail.com"
-            ],
-            [
-                "fullname" => "Lynda Jennifer Burbano Figueroa",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "3:40 PM",
-                "email" => "ljbf2008@hotmail.com"
-            ],
-            [
-                "fullname" => "Luis Felipe Quemag España",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "4:15 PM",
-                "email" => "fm.fepipe@hotmail.com"
-            ],
-            [
-                "fullname" => "Mery Stefhania Torres Hernández",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "4:10 PM",
-                "email" => "docentemerytorres@gmail.com"
-            ],
-            [
-                "fullname" => "Esteban David Delgado Cadena",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "4:45 PM",
-                "email" => "esteban.david1568@gmail.com"
-            ],
-            [
-                "fullname" => "Jaime Roman Navarro Usama",
-                "callName" => "42",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "5:20 PM",
-                "email" => "jnavarro43@uan.edu.co"
-            ],
-            [
-                "fullname" => "Javier Andres Figueroa Meneses",
-                "callName" => "44",
-                "date" => "Lunes, 29 de enero de 2024",
-                "hour" => "3:30 PM",
-                "email" => "adm.javierfigueroa@hotmail.com"
+                "email" => "zuleimayepez@hotmail.com"
             ],
         ];
         foreach ($data as $key => $value) {
@@ -1828,13 +1754,13 @@ class CallController extends AbstractController
                 $email = (new TemplatedEmail())
                     ->from('convocatorias@unicatolicadelsur.edu.co')
                     ->to($value['email'])
-                    ->subject('Recordatorio de Citación')
-                    ->htmlTemplate('email/interviewCitationEmail.html.twig')
+                    ->subject($type === 'not' ? 'Resultado Convocatoria' : 'Recordatorio de Citación')
+                    ->htmlTemplate($type === 'not' ? 'email/notSelectedForCall.html.twig' : 'email/interviewCitationEmail.html.twig')
                     ->context([
                         'fullname' => $value['fullname'],
                         'callName' => $value['callName'],
-                        'date' => $value['date'],
-                        'hour' => $value['hour']
+                        'date' => $type === 'not' ? null : $value['date'],
+                        'hour' => $type === 'not' ? null : $value['hour']
                     ]);         
                 $mailer->send($email);
                 $message = 'La revisión fue enviada con éxito';
