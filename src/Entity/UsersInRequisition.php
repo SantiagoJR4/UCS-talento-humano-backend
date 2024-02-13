@@ -22,16 +22,6 @@ class UsersInRequisition
     private $id;
 
     /**
-     * @var \User
-     *
-     * @ORM\ManyToOne(targetEntity="User")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
-     * })
-     */
-    private $user;
-
-    /**
      * @var \Requisition
      *
      * @ORM\ManyToOne(targetEntity="Requisition")
@@ -41,21 +31,19 @@ class UsersInRequisition
      */
     private $requisition;
 
+    /**
+     * @var \User
+     *
+     * @ORM\ManyToOne(targetEntity="User")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="id")
+     * })
+     */
+    private $user;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
-
-        return $this;
     }
 
     public function getRequisition(): ?Requisition
@@ -66,6 +54,18 @@ class UsersInRequisition
     public function setRequisition(?Requisition $requisition): self
     {
         $this->requisition = $requisition;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }

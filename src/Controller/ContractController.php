@@ -646,8 +646,17 @@ class ContractController extends AbstractController
 	{
 		$charges = $doctrine->getRepository(ContractCharges::class)->findAll();
 		$serializerAllCharges = $serializer->serialize($charges,'json');
-		if(empty($charges)){ return new JsonResponse(['status'=>false,'message'=>'No se encontró lista de cargos']);}
+		if(empty($charges)){ return new JsonResponse(['status'=>false,'message'=>'No se encontró lista de niveles']);}
 		return new JsonResponse($serializerAllCharges,200,[],true);
+	}
+
+	#[Route('/contract/get-AllProfiles', name: 'app_get_AllProfiles')]
+	public function getAllProfiles(ManagerRegistry $doctrine, SerializerInterface $serializer): JsonResponse
+	{
+		$allProfiles = $doctrine->getRepository(Profile::class)->findAll();
+		$serializerAllProfiles = $serializer->serialize($allProfiles,'json');
+		if(empty($allProfiles)){ return new JsonResponse(['status'=>false,'message'=>'No se encontró lista de cargos']);}
+		return new JsonResponse($serializerAllProfiles,200,[],true);
 	}
 
 	#[Route('/contract/get-profiles-charges', name: 'app_get_profiles_charges')]
@@ -2121,6 +2130,10 @@ class ContractController extends AbstractController
 			if(!$chargeId){
 				throw $this->createNotFoundException('No charge found for id' . $data['id']);
 			}
+			$profileId = $entityManager->getRepository(Profile::class)->find($data['profileId']);
+			if(!$profileId){
+				throw $this->createNotFoundException('No profile found for id' . $data['id']);
+			}
 
 			$initialDate = $data['initial_date'];
 			$finalDate = $data['final_date'];
@@ -2145,6 +2158,7 @@ class ContractController extends AbstractController
 
 			$reemployment -> setPeriod('A2024');
 			$reemployment -> setCharges($chargeId);
+			$reemployment -> setProfile($profileId);
 			$reemployment -> setUser($user);
 
 			date_default_timezone_set('America/Bogota');
@@ -2190,7 +2204,11 @@ class ContractController extends AbstractController
 			}
 			$chargeId = $entityManager->getRepository(ContractCharges::class)->find($data['chargeId']);
 			if(!$chargeId){
-				throw $this->createNotFoundException('No charge found for id' . $data['id']);
+				throw $this->createNotFoundException('No level found for id' . $data['id']);
+			}
+			$profileId = $entityManager->getRepository(Profile::class)->find($data['profileId']);
+			if(!$profileId){
+				throw $this->createNotFoundException('No profile found for id' . $data['id']);
 			}
 
 			$initialDate = $data['initial_date'];
@@ -2211,9 +2229,10 @@ class ContractController extends AbstractController
 
 			$reemployment -> setWorkDedication($data['workDedication']);
 			$reemployment -> setSalary($data['salary']);
-			$reemployment -> setState(1);
+			$reemployment -> setState(0);
 			$reemployment -> setPeriod('A2024');
 			$reemployment -> setCharges($chargeId);
+			$reemployment -> setProfile($profileId);
 			$reemployment -> setUser($user);
 
 			date_default_timezone_set('America/Bogota');
@@ -2278,8 +2297,6 @@ class ContractController extends AbstractController
 			foreach($reemployments as $reemployment){
 				$user = $reemployment->getUser();
 				$workDedication = $reemployment->getWorkDedication();
-				// if($workDedication === 'TC'){$workDedication = 'Tiempo Completo';}
-				// else{$workDedication = 'Medio Tiempo';}
 
 				$response[] = [
 					'id' => $reemployment->getId(),
@@ -2293,6 +2310,9 @@ class ContractController extends AbstractController
 					'chargeName' => $reemployment->getCharges()->getName(),
 					'chargeWorkDedication' => $workDedication,
 					'chargeSalary' => $reemployment->getSalary(),
+					'typeEmployee' => $reemployment->getCharges()->getTypeEmployee(),
+					'profileId' => $reemployment->getProfile()->getId(),
+					'profileName' => $reemployment->getProfile()->getName(),
 					'user' => $user->getNames().' '.$user->getLastNames(),
 					'userId' => $user->getId(),
 					'identification' => $user->getIdentification(),
@@ -2301,20 +2321,20 @@ class ContractController extends AbstractController
 
 				];
 			}
-			$queryTeachers = $doctrine->getManager()->createQueryBuilder();
-			$queryTeachers 
-				->select('u.id, u.names, u.lastNames, u.identification, u.email, u.phone')
-				->from('App\Entity\User', 'u')
-				->where('u.userType = 2');
-			$teachers = $queryTeachers->getQuery()->getResult();
-			foreach ($teachers as $key => $value) {
-				$teachers[$key]['user'] = $value['names'] . ' ' . $value['lastNames'];
-			}
-			$workers = array_merge($response, $teachers);
+			// $queryTeachers = $doctrine->getManager()->createQueryBuilder();
+			// $queryTeachers 
+			// 	->select('u.id, u.names, u.lastNames, u.identification, u.email, u.phone')
+			// 	->from('App\Entity\User', 'u')
+			// 	->where('u.userType = 2');
+			// $teachers = $queryTeachers->getQuery()->getResult();
+			// foreach ($teachers as $key => $value) {
+			// 	$teachers[$key]['user'] = $value['names'] . ' ' . $value['lastNames'];
+			// }
+			// $workers = array_merge($response, $teachers);
 		}
-		return new JsonResponse(['status' => true, 'reemployment' => $workers]);
+		return new JsonResponse(['status' => true, 'reemployment' => $response]);
 	}
-	//LISTAR DATOS DE REVINCULACIÓN DE UN USUARIO CON EL ID
+	//LISTAR DATOS DE REVINCULACIÓN DE UN USUARIO CON EL ID DEL USUARIO
 	#[Route('/contract/list-reemployment/{id}', name:'app_contract_reemployment_listUser')]
 	public function listReemploymentUser(ManagerRegistry $doctrine, Request $request, int $id ) : JsonResponse
 	{
@@ -2354,7 +2374,7 @@ class ContractController extends AbstractController
 				// if($workDedication === 'TC'){$workDedication = 'Tiempo Completo';}
 				// else{$workDedication = 'Medio Tiempo';}
 
-				$response[] = [
+				$response = [
 					'id' => $reemployment->getId(),
 					'period' => $reemployment->getPeriod(),
 					'solicitude_date' => $reemployment->getSolicitudeDate()->format('Y-m-d'),
@@ -2364,8 +2384,11 @@ class ContractController extends AbstractController
 					'history' => $reemployment->getHistory(),
 					'chargeId' => $reemployment->getCharges()->getId(),
 					'chargeName' => $reemployment->getCharges()->getName(),
+					'typeEmployee' => $reemployment->getCharges()->getTypeEmployee(),
 					'chargeWorkDedication' => $workDedication,
 					'chargeSalary' => $reemployment->getSalary(),
+					'profileId' => $reemployment->getProfile()->getId(),
+					'profileName' => $reemployment->getProfile()->getName(),
 					'user' => $user->getNames().' '.$user->getLastNames(),
 					'userId' => $user->getId(),
 					'identification' => $user->getIdentification()
