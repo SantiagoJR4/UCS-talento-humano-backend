@@ -1773,4 +1773,36 @@ class CallController extends AbstractController
         return new JsonResponse(['data'=>'hecho'], 200, []);
     }
 
+    #[Route('/send-emails-for-private-call', name: 'app_send_emails_for_private_call')]
+    public function sendEmailsForPrivateCall(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request, MailerInterface $mailer): JsonResponse
+    {
+        $token= $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(!$user) {
+            throw $this->createAccessDeniedException();   
+        }
+        $data = json_decode($request->request->get('data'),true);
+        $callNumber = $request->request->get('callNumber');
+        $callName = $request->request->get('callName');
+        $message = count($data) === 1 ? 'Correo enviado con éxito' : 'Correos enviados con exito';
+        foreach ($data as $key => $value) {
+            try {
+                $email = (new TemplatedEmail())
+                    ->from('convocatorias@unicatolicadelsur.edu.co')
+                    ->to($value['email'])
+                    ->subject('Invitación a convocatoria')
+                    ->htmlTemplate('email/invitationToPrivateCallEmail.html.twig')
+                    ->context([
+                        'fullname' => $value['fullname'],
+                        'callNumber' => $callNumber,
+                        'callName' => $callName
+                    ]);
+                $mailer->send($email);
+            } catch (\Throwable $th) {
+                return new JsonResponse(['message'=>$th->getMessage()],500,[]);
+            }
+        }
+        return new JsonResponse(['data'=>$message],200,[]);
+    }
+
 }

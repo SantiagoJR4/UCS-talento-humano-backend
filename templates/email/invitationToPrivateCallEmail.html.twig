@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Invitación a convocatoria</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+
+        h1 {
+            color: #166838;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f8f8;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+        }
+
+        p {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Invitación a convocatoria</h1>
+        <p>{{ fullname }}</p>
+        <p>Cordial saludo,</p>
+        <p>Mediante la presente, le informamos que ha sido invitado para inscribirse a la convocatoria N° {{callName}}.</p>
+        <br>
+        <p>Por tanto, si aún no lo ha hecho, le invitamos a registrar sus datos en la plataforma NEPHESH de la Fundación Universitaria Católica del Sur mediante el siguiente enlace:</p>
+        <p><a href="http://yeshua.unicatolicadelsur.edu.co:4200/ucs-talento-humano/#/auth/login">¡Haga clic aquí!</a></p>
+        <br>
+        <p><strong>TENGA EN CUENTA:</strong></p>
+        <ul>
+            <li>La inscripción solo se puede realizar si se ha registrado previamente.</li>
+            <li>Aunque cuente con la invitación, la inscripción solo se puede realizar si cumple los requisitos de la convocatoria, le invitamos a llenar su hoja de vida antes de entrar a concursar.</li>
+            <li>Una vez completada su hoja de vida debe proceder a inscribirse, antes de que termine el tiempo de recepción.</li>
+        </ul>
+        <br>
+        <p>Atentamente,</p>
+        <p>Fundación Universitaria Católica del Sur.</p>
+    </div>
+</body>
+
+</html>
