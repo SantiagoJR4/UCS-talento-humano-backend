@@ -2118,6 +2118,7 @@ class ContractController extends AbstractController
 		$data = $request->request->all();
 
 		$userLogueado = $vToken->getUserIdFromToken($token);
+		$specialUser = $userLogueado->getSpecialUser();
 
 		if($token === false){
 			return new JsonResponse(['ERROR' => 'Token no válido']);
@@ -2154,6 +2155,7 @@ class ContractController extends AbstractController
 
 			$reemployment -> setWorkDedication($data['workDedication']);
 			$reemployment -> setSalary($data['salary']);
+			$reemployment -> setHours($data['hours']);
 			$reemployment -> setState(0);
 
 			$reemployment -> setPeriod('A2024');
@@ -2165,7 +2167,7 @@ class ContractController extends AbstractController
 			$addToHistory = json_encode(array(array(
 				'user' => $userLogueado->getId(),
 				'responsible' => $userLogueado->getSpecialUser(),
-				'state' => 1,
+				'state' => $specialUser === 'VF' ? 1 : 0,
 				'message' => 'La solicitud de revinculación de personal administrativo fue solicitado por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
 				'date' => date('Y-m-d H:i:s'),
 			)));
@@ -2229,6 +2231,7 @@ class ContractController extends AbstractController
 
 			$reemployment -> setWorkDedication($data['workDedication']);
 			$reemployment -> setSalary($data['salary']);
+			$reemployment -> setHours($data['hours']);
 			$reemployment -> setState(0);
 			$reemployment -> setPeriod('A2024');
 			$reemployment -> setCharges($chargeId);
@@ -2322,6 +2325,8 @@ class ContractController extends AbstractController
 				'solicitude_date' => $reemployment->getSolicitudeDate()->format('Y-m-d'),
 				'initial_date' => $reemployment->getInitialDate()->format('Y-m-d'),
 				'final_date' => $reemployment->getFinalDate()->format('Y-m-d'),
+				'hours' => $reemployment->getHours(),
+				'salary' => $reemployment->getSalary(),
 				'state' => $reemployment->getState(),
 				'chargeId' => $reemployment->getCharges()->getId(),
 				'chargeName' => $reemployment->getCharges()->getName(),
@@ -2400,6 +2405,8 @@ class ContractController extends AbstractController
 					'solicitude_date' => $reemployment->getSolicitudeDate()->format('Y-m-d'),
 					'initial_date' => $reemployment->getInitialDate(),
 					'final_date' => $reemployment->getFinalDate(),
+					'hours' => $reemployment->getHours(),
+					'salary' => $reemployment->getSalary(),
 					'state' => $reemployment->getState(),
 					'history' => $reemployment->getHistory(),
 					'chargeId' => $reemployment->getCharges()->getId(),
