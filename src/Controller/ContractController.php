@@ -2441,5 +2441,26 @@ class ContractController extends AbstractController
 		// Retorna la respuesta JSON
 		return new JsonResponse($userData);
 	}
+
+	#[Route('/contract/all-profile-charge', name: 'app_all_profile_charge')]
+	public function allProfileCharge(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$user = $vToken->getUserIdFromToken($token);
+
+		if(!$user){
+			throw $this->createAccessDeniedException();
+		}
+
+		$query = $doctrine->getManager()->createQueryBuilder();
+		$query
+			->select('pc.id','p.name as profileName','c.name as chargeName','c.salary as chargeSalary')
+			->from('App\Entity\ProfileCharge', 'pc')
+			->join('pc.profile', 'p')
+			->join('pc.charge', 'c');
+		$allProfileCharges = $query->getQuery()->getArrayResult();
+		return new JsonResponse($allProfileCharges, 200, []);
+	} 
+
 }
 

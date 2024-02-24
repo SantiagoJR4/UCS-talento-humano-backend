@@ -419,33 +419,38 @@ class CallController extends AbstractController
     }
 
     #[Route('/get-calls', name: 'app_get_active_calls')]
-    public function getActiveCalls(ManagerRegistry $doctrine, Request $request): JsonResponse
+    public function getActiveCalls(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
     {
-        $states = json_decode($request->request->get('states'));
-        $query = $doctrine->getManager()->createQueryBuilder();
-        $query->select('c', 'p', 'subp', 'spec')
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        $userID = $user->getIdentification();
+        $specialUser = $user->getSpecialUser();
+        $queryCommon = $doctrine->getManager()->createQueryBuilder();
+        $queryCommon
+            ->select('c', 'p', 'subp', 'spec')
             ->from('App\Entity\TblCall', 'c')
-            ->where('c.state IN (:states)')
             ->leftJoin('c.profile', 'p')
             ->leftJoin('c.subprofile', 'subp')
-            ->leftJoin('c.specialProfile', 'spec')
-            ->setParameter('states', $states); // TODO: Change this, when needed
-            // $querysp = $doctrine->getManager()->createQueryBuilder();
-            // $querysp->select('c', 'sp')
-            // ->from('App\Entity\TblCall', 'c')
-            // ->where('c.state = :state')
-            // ->leftJoin('c.subprofile', 'sp')
-            // ->setParameter('state', 0); // TODO: Change this, when needed
-            // $queryspec = $doctrine->getManager()->createQueryBuilder();
-            // $queryspec->select('c', 'spe')
-            //     ->from('App\Entity\TblCall', 'c')
-            //     ->where('c.state = :state')
-            //     ->join('c.specialProfile', 'spe')
-            //     ->setParameter('state', 0); // TODO: Change this, when needed
-        $profileActiveCalls = $query->getQuery()->getArrayResult();
-        // $subprofileActiveCalls = $querysp->getQuery()->getArrayResult();
-        // $specialProfileActiveCalls = $queryspec->getQuery()->getArrayResult();
-        $allActiveCalls = array_merge($profileActiveCalls);
+            ->leftJoin('c.specialProfile', 'spec');
+        if($specialUser === 'CTH'){
+
+        } else {
+            $queryCommon
+            ->where($queryCommon->expr()->like('c.isPrivate', ':value'))
+            ->orWhere($queryCommon->expr()->like('c.isPrivate', ':userID'))
+            ->setParameters([
+                'value'=> '%' . '{"value":false}' . '%',
+                'userID'=> '%'.'"identification":"'.$userID.'"%'
+            ]);
+        }
+        $allActiveCalls = $queryCommon->getQuery()->getArrayResult();
+        foreach ($allActiveCalls as $key => $value) {
+            $isPrivateObject = json_decode($value['isPrivate'], true);
+            if($isPrivateObject['value'] === true){
+                $allActiveCalls[$key]['isPrivate'] = $isPrivateObject;
+            }
+            $allActiveCalls[$key]['jury'] = json_decode($value['jury'], true);
+        }
         $response = convertDateTimeToString2($allActiveCalls);
         return new JsonResponse( $response, 200, [] );
     }
@@ -1778,12 +1783,15 @@ class CallController extends AbstractController
     {
         $token= $request->query->get('token');
         $user =  $vToken->getUserIdFromToken($token);
-        if(!$user) {
+        $callId = json_decode($request->request->get('callId'),true);
+        $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        if(!$user && !$call) {
             throw $this->createAccessDeniedException();   
         }
+        $callName = $call->getName();
+        $callDescription = $call->getDescription();
+        $callIsPrivate = json_decode($call->getIsPrivate(), true);
         $data = json_decode($request->request->get('data'),true);
-        $callNumber = $request->request->get('callNumber');
-        $callName = $request->request->get('callName');
         $message = count($data) === 1 ? 'Correo enviado con éxito' : 'Correos enviados con exito';
         foreach ($data as $key => $value) {
             try {
@@ -1794,7 +1802,7 @@ class CallController extends AbstractController
                     ->htmlTemplate('email/invitationToPrivateCallEmail.html.twig')
                     ->context([
                         'fullname' => $value['fullname'],
-                        'callNumber' => $callNumber,
+                        'callDescription' => $callDescription,
                         'callName' => $callName
                     ]);
                 $mailer->send($email);
@@ -1802,6 +1810,10 @@ class CallController extends AbstractController
                 return new JsonResponse(['message'=>$th->getMessage()],500,[]);
             }
         }
+        $callIsPrivate['candidates'] = array_merge($callIsPrivate['candidates'], $data);
+        $call->setIsPrivate(json_encode($callIsPrivate));
+        $entityManager = $doctrine->getManager();
+        $entityManager->flush();
         return new JsonResponse(['data'=>$message],200,[]);
     }
 
