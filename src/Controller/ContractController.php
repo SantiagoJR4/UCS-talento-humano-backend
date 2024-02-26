@@ -2454,7 +2454,7 @@ class ContractController extends AbstractController
 
 		$query = $doctrine->getManager()->createQueryBuilder();
 		$query
-			->select('pc.id','p.name as profileName','c.name as chargeName','c.salary as chargeSalary')
+			->select('pc.id','p.id as chargeId' , 'c.id as levelId','p.name as chargeName','c.name as levelName','c.salary as levelSalary')
 			->from('App\Entity\ProfileCharge', 'pc')
 			->join('pc.profile', 'p')
 			->join('pc.charge', 'c');
