@@ -22,16 +22,6 @@ class CompetenceProfile
     private $id;
 
     /**
-     * @var \Profile
-     *
-     * @ORM\ManyToOne(targetEntity="Profile")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
-     * })
-     */
-    private $profile;
-
-    /**
      * @var \Competence
      *
      * @ORM\ManyToOne(targetEntity="Competence")
@@ -41,21 +31,19 @@ class CompetenceProfile
      */
     private $competence;
 
+    /**
+     * @var \Profile
+     *
+     * @ORM\ManyToOne(targetEntity="Profile")
+     * @ORM\JoinColumns({
+     *   @ORM\JoinColumn(name="profile_id", referencedColumnName="id")
+     * })
+     */
+    private $profile;
+
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getProfile(): ?Profile
-    {
-        return $this->profile;
-    }
-
-    public function setProfile(?Profile $profile): self
-    {
-        $this->profile = $profile;
-
-        return $this;
     }
 
     public function getCompetence(): ?Competence
@@ -66,6 +54,18 @@ class CompetenceProfile
     public function setCompetence(?Competence $competence): self
     {
         $this->competence = $competence;
+
+        return $this;
+    }
+
+    public function getProfile(): ?Profile
+    {
+        return $this->profile;
+    }
+
+    public function setProfile(?Profile $profile): self
+    {
+        $this->profile = $profile;
 
         return $this;
     }

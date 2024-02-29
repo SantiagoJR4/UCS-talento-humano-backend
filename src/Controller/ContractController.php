@@ -304,16 +304,30 @@ class ContractController extends AbstractController
 			$contract->setFunctions($data['functions']);
 			$contract->setSpecificfunctions($data['specific_functions']);
 			$contract->setWorkload($data['workload']);
+
+			$currentYear = date('Y');
+			$currentMonth = date('m');
+
+			if ($currentMonth >= '1' && $currentMonth <= '6') {
+				
+				$contract->setPeriod('A' . $currentYear);
+			} elseif ($currentMonth >= '7' && $currentMonth <= '12') {
+				$contract->setPeriod('B' . $currentYear);
+			}
+		
+			$contract->setState(1); //Activo
+
 			$contract->setUser($user);
 
 			$file = $request->files->get('file');
 			$identificationUser = $data['identificationUser'];
+			$namesUser =$user->getNames()." ".$user->getLastNames();
 			
 			if ($file instanceof UploadedFile) {
 				$folderDestination = $this->getParameter('contract')
 											.'/'
 											.$identificationUser;
-				$fileName = 'contrato_'.$identificationUser.'_'.time().'.docx';
+				$fileName = 'contrato_'.$currentYear.'1-'.$namesUser.'.docx';
 				try {
 						$file->move($folderDestination, $fileName);
 						$contract->setContractFile($fileName);
@@ -329,6 +343,10 @@ class ContractController extends AbstractController
 
 			$contractCharges = json_decode($data['contractCharges'],true);
 			$profiles = json_decode($data['profiles'],true);
+			// Filtrar los elementos nulos del array
+			$profiles = array_filter($profiles, function ($profileId) {
+				return $profileId !== null;
+			});
 
 			$numAssignments = min(count($contractCharges), count($profiles));
 
@@ -2188,6 +2206,7 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
         $data = $request->request->all();
 		$userLogueado = $vToken->getUserIdFromToken($token);
+		$specialUser = $userLogueado->getSpecialUser();
 
 		$reemployment = $entityManager->getRepository(Reemployment::class)->find($data['id']);
 
@@ -2242,7 +2261,7 @@ class ContractController extends AbstractController
 			$addToHistory = json_encode(array(array(
 				'user' => $userLogueado->getId(),
 				'responsible' => $userLogueado->getSpecialUser(),
-				'state' => 1,
+				'state' =>  $specialUser === 'VF' ? 1 : 0,
 				'message' => 'Actualización de revinculación de personal administrativo fue solicitado por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
 				'date' => date('Y-m-d H:i:s'),
 			)));
@@ -2331,12 +2350,13 @@ class ContractController extends AbstractController
 				'chargeId' => $reemployment->getCharges()->getId(),
 				'chargeName' => $reemployment->getCharges()->getName(),
 				'chargeWorkDedication' => $workDedication,
-				'chargeSalary' => $reemployment->getSalary(),
+				'chargeSalary' => $reemployment->getCharges()->getSalary(),
 				'typeEmployee' => $reemployment->getCharges()->getTypeEmployee(),
 				'profileId' => $reemployment->getProfile()->getId(),
 				'profileName' => $reemployment->getProfile()->getName(),
 				'user' => $user->getNames().' '.$user->getLastNames(),
 				'userId' => $user->getId(),
+				'specialUser' => $user->getSpecialUser(),
 				'identification' => $user->getIdentification(),
 				'email' => $user->getEmail(),
 				'phone' => $user->getPhone(),
@@ -2352,6 +2372,8 @@ class ContractController extends AbstractController
 					return $var['typeEmployee'] === 'PR' && $var['history'][0]['responsible'] === 'DIRENF';
 				case 'DIRASS':
 					return $var['typeEmployee'] === 'PR' && $var['history'][0]['responsible'] === 'DIRASS';
+				case 'VAE':
+					return $var['typeEmployee'] === 'PR' && $var['history'][0]['responsible'] === 'VAE';
 				case 'CTH':
 					return $var['state'] === 1;
 			}
@@ -2413,7 +2435,7 @@ class ContractController extends AbstractController
 					'chargeName' => $reemployment->getCharges()->getName(),
 					'typeEmployee' => $reemployment->getCharges()->getTypeEmployee(),
 					'chargeWorkDedication' => $workDedication,
-					'chargeSalary' => $reemployment->getSalary(),
+					'chargeSalary' => $reemployment->getCharges()->getSalary(),
 					'profileId' => $reemployment->getProfile()->getId(),
 					'profileName' => $reemployment->getProfile()->getName(),
 					'user' => $user->getNames().' '.$user->getLastNames(),
@@ -2463,6 +2485,7 @@ class ContractController extends AbstractController
 					break;
 				case 'DIRENF':
 				case 'DIRASS':
+				case 'VAE':
 					$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
 					$newNotification->setUser($userForNotification);
 					$newNotification->setMessage('Listado de revinculación personal docente.');
@@ -2472,7 +2495,7 @@ class ContractController extends AbstractController
 			$entityManager->persist($newNotification);
 		}
 		$entityManager->flush();
-		return new JsonResponse(['status'=>'Success','message'=>'Lista enviada con exito']);
+		return new JsonResponse(['status'=>'Success','message'=>'Lista de revinculación enviada con exito']);
 	}
 	#[Route('/contract/approve-reemploymentsTeachers', name:'app_approve_reemploymentsTeachers')]
 	public function approveReemploymentsTeachers(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request): JsonResponse
@@ -2506,6 +2529,7 @@ class ContractController extends AbstractController
 		switch($specialUser){
 			case 'DIRENF':
 			case 'DIRASS':
+			case 'VAE':
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType'=>1]);
 				$newNotification->setUser($userForNotification);
 				$newNotification->setMessage('Solicita la aprobación del listado de revinculación del personal docente por parte de Vicerrectoría Financiera.');
@@ -2599,6 +2623,7 @@ class ContractController extends AbstractController
 	{
 		$token = $request->query->get('token');
 		$user = $vToken->getUserIdFromToken($token);
+		$userLogueado = $user->getSpecialUser();
 
 		$users = $doctrine->getRepository(User::class)->findBy(['userType' => $typeId]);
 	
