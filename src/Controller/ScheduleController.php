@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Classroom;
+use App\Entity\Period;
 use App\Entity\Programas;
 use App\Entity\Schedule;
 use DateTime;
@@ -42,17 +43,16 @@ class ScheduleController extends AbstractController
     #[Route('/schedule/get-periods', name: 'app_get_periods')]
     public function getPeriods(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
-        $date = $request->request->get('date');
-        $formattedDate = new DateTime($date, new DateTimeZone('America/Bogota'));
-        $day = $formattedDate->format('w');
+        $date = new DateTime(date('Y-m-d'), new DateTimeZone('America/Bogota'));
         $query = $doctrine->getManager()->createQueryBuilder();
         $query
             ->select('p')
             ->from('App\Entity\Period', 'p')
             ->where(':date BETWEEN p.start AND p.end')
+            ->andWhere('p.personalized = 0')
             ->setParameter('date', $date);
-        $allPeriods = $query->getQuery()->getArrayResult();
-        return new JsonResponse($allPeriods, 200, []);
+        $availablePeriods = $query->getQuery()->getArrayResult();
+        return new JsonResponse($availablePeriods, 200, []);
     }
 
     #[Route('/schedule/get-schedules', name: 'app_get_schedules')]
@@ -137,9 +137,28 @@ class ScheduleController extends AbstractController
         $entityManager = $doctrine->getManager();
         $newSchedule =  new Schedule();
         $formattedDate = new DateTime($data['date'], new DateTimeZone('America/Bogota'));
-        $newSchedule->setOneDay($formattedDate);
         $day = $formattedDate->format('w');
         $newSchedule->setDay($day);
+        if(json_decode($data['isRepeatable'], true)){
+            if(json_decode($data['period'], true) === 0){
+                $newPeriod = new Period();
+                $newPeriod->setName('Personalized' . date("Y-m-d H:i:s"));
+                $periodStart = new DateTime($data['newPeriodStart'], new DateTimeZone('America/Bogota'));
+                $newPeriod->setStart($periodStart);
+                $periodEnd = new DateTime($data['newPeriodEnd'], new DateTimeZone('America/Bogota'));
+                $newPeriod->setEnd($periodEnd);
+                $newPeriod->setPersonalized(1);
+                $entityManager->persist($newPeriod);
+                $entityManager->flush();
+                $newSchedule->setPeriod($newPeriod);
+            }
+            else {
+                $period = $doctrine->getRepository(Period::class)->find($data['period']);
+                $newSchedule->setPeriod($period);
+            }
+        } else {
+            $newSchedule->setOneDay($formattedDate);
+        }
         $newSchedule->setStart($data['startHour']);
         $newSchedule->setEnd($data['endHour']);
         $classroom = $entityManager->getRepository(Classroom::class)->find($data['classroomId']);
@@ -148,7 +167,7 @@ class ScheduleController extends AbstractController
         $newSchedule->setProgram($program);
         $newSchedule->setTitle($data['title']);
         $newSchedule->setPersonInCharge($data['personInCharge']);
-        $newSchedule->setSemester('NO APLICA');
+        $newSchedule->setSemester($data['semester']);
         $entityManager->persist($newSchedule);
         $entityManager->flush();
 
