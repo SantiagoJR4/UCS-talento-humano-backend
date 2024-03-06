@@ -518,7 +518,8 @@ class ContractController extends AbstractController
                     'functions' => $contract->getFunctions(),
                     'specific_functions' => $contract->getSpecificFunctions(),
                     'contract_file' => $contract->getContractFile(),
-                    // Agregar más campos del contrato según tu modelo
+                    'state' => $contract->getState(),
+					'period' => $contract->getPeriod()
                 ],
                 'assignmentsProfiles' => $assignmentsProfiles,
                 'assignmentsCharges' => $assignmentsCharges,
@@ -2318,21 +2319,17 @@ class ContractController extends AbstractController
 			->setParameters([
 				'expirationPeriod' => date('Y-m-d')
 			]);
+		if( $typeReemployment === 'CTH') {
+			$queryUser->leftjoin('r.user', 'u')
+				->leftjoin(Contract::class, 'co', 'WITH', 'co.user = u.id')
+				->andWhere('co.state = 0')
+				->andWhere('co.expirationContract >= :expirationPeriod ');
+		}
 		$reemploymentsUsers = $queryUser->getQuery()->getResult();
 
 		if (empty($reemploymentsUsers)) {
 			return new JsonResponse(['status' => false, 'message' => 'No se encontró una lista de revinculación']);
 		}
-
-		// $query = $doctrine->getManager()->createQueryBuilder();
-		// $query
-		// 	->select('c')
-		// 	->from(Reemployment::class, 'c')
-		// 	->where('c.finalDate >= :expirationPeriod')
-		// 	->setParameters(['expirationPeriod' => date('Y-m-d')]);
-		// $reemployments = $query->getQuery()->getResult();
-
-		// $combinedResults = array_merge($reemploymentsUsers, $reemployments);
 
 		foreach($reemploymentsUsers as $reemployment){
 			$user = $reemployment->getUser();
