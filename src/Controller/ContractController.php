@@ -2319,12 +2319,12 @@ class ContractController extends AbstractController
 			->setParameters([
 				'expirationPeriod' => date('Y-m-d')
 			]);
-		if( $typeReemployment === 'CTH') {
-			$queryUser->leftjoin('r.user', 'u')
-				->leftjoin(Contract::class, 'co', 'WITH', 'co.user = u.id')
-				->andWhere('co.state = 0')
-				->andWhere('co.expirationContract >= :expirationPeriod ');
-		}
+		// if( $typeReemployment === 'CTH') {
+		// 	$queryUser->leftjoin('r.user', 'u')
+		// 		->leftjoin(Contract::class, 'co', 'WITH', 'co.user = u.id')
+		// 		->andWhere('co.state = 0')
+		// 		->andWhere('co.expirationContract >= :expirationPeriod ');
+		// }
 		$reemploymentsUsers = $queryUser->getQuery()->getResult();
 
 		if (empty($reemploymentsUsers)) {
