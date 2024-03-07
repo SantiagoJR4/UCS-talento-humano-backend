@@ -374,6 +374,11 @@ class ContractController extends AbstractController
 
 			$entityManager->flush();
 
+			$activedReemployment = $doctrine->getRepository(Reemployment::class)->findOneBy(['user' => $user]);
+			$activedReemployment->setState(2);
+			$doctrine->getManager()->persist($activedReemployment);
+			$doctrine->getManager()->flush();
+
 			return new JsonResponse(['status' => 'Success', 'Code' => '200', 'message' => 'Contrato y asignación generados con éxito']);
 		}
 	}
@@ -2407,20 +2412,20 @@ class ContractController extends AbstractController
 			return new JsonResponse(['status'=>false,'message'=>'No se encontró solicitud de revinculación']);
 		}
 
-		$queryContract = $doctrine->getManager()->createQueryBuilder();
-		$queryContract
-			->select('c')
-			->from('App\Entity\Contract', 'c')
-			->where('c.expirationContract >= :expirationDate')
-			->andWhere('c.user = :user')
-			->setParameters(array('expirationDate'=> date('Y-m-d'), 'user' => $user));
-		$contract = $queryContract->getQuery()->getResult();
-        if ($contract) {
-			$activedReemployment = $doctrine->getRepository(Reemployment::class)->findOneBy(['user' => $user]);
-			$activedReemployment->setState(2);
-			$doctrine->getManager()->persist($activedReemployment);
-			$doctrine->getManager()->flush();
-        }
+		// $queryContract = $doctrine->getManager()->createQueryBuilder();
+		// $queryContract
+		// 	->select('c')
+		// 	->from('App\Entity\Contract', 'c')
+		// 	->where('c.expirationContract >= :expirationDate')
+		// 	->andWhere('c.user = :user')
+		// 	->setParameters(array('expirationDate'=> date('Y-m-d'), 'user' => $user));
+		// $contract = $queryContract->getQuery()->getResult();
+        // if ($contract) {
+		// 	$activedReemployment = $doctrine->getRepository(Reemployment::class)->findOneBy(['user' => $user]);
+		// 	$activedReemployment->setState(2);
+		// 	$doctrine->getManager()->persist($activedReemployment);
+		// 	$doctrine->getManager()->flush();
+        // }
 
 		if($token === false){
 			return new JsonResponse(['ERROR' => 'Token no válido']);
