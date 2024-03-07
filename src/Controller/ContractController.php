@@ -327,7 +327,7 @@ class ContractController extends AbstractController
 				$folderDestination = $this->getParameter('contract')
 											.'/'
 											.$identificationUser;
-				$fileName = 'contrato_'.$currentYear.'1-'.$namesUser.'.docx';
+				$fileName = 'contrato_'.$currentYear.'- 1 -'.$namesUser.'.docx';
 				try {
 						$file->move($folderDestination, $fileName);
 						$contract->setContractFile($fileName);
@@ -2406,6 +2406,21 @@ class ContractController extends AbstractController
 		if(empty($reemployments)){
 			return new JsonResponse(['status'=>false,'message'=>'No se encontró solicitud de revinculación']);
 		}
+
+		$queryContract = $doctrine->getManager()->createQueryBuilder();
+		$queryContract
+			->select('c')
+			->from('App\Entity\Contract', 'c')
+			->where('c.expirationContract >= :expirationDate')
+			->andWhere('c.user = :user')
+			->setParameters(array('expirationDate'=> date('Y-m-d'), 'user' => $user));
+		$contract = $queryContract->getQuery()->getResult();
+        if ($contract) {
+			$activedReemployment = $doctrine->getRepository(Reemployment::class)->findOneBy(['user' => $user]);
+			$activedReemployment->setState(2);
+			$doctrine->getManager()->persist($activedReemployment);
+			$doctrine->getManager()->flush();
+        }
 
 		if($token === false){
 			return new JsonResponse(['ERROR' => 'Token no válido']);
