@@ -119,10 +119,12 @@ class ScheduleController extends AbstractController
             for($x = $schedule['start'];$x < $schedule['end']; $x++){
                 $keyToChange = 'h_' . str_pad($x, 2, '0', STR_PAD_LEFT);
                 $mappedSchedules[$indexOfMappedSchedules][$keyToChange] = [
+                    'id' => $schedule['id'],
                     'name' => $schedule['title'],
                     'personInCharge' => $schedule['personInCharge'],
                     'program' => $schedule['programAcronym'],
                     'semester' => $schedule['semester'],
+                    'hours' => $schedule['start'].':00-'.$schedule['end'].':00'
                 ];
             }
         }
@@ -172,6 +174,29 @@ class ScheduleController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse(['data' => 'Nuevo ítem de horario registrado'], 200, []);
+    }
+
+    #[Route('schedule/delete-schedule', name: 'app__delete_schedule')]
+    public function deleteSchedule(ManagerRegistry $doctrine, Request $request): JsonResponse
+    {
+        $scheduleId = $request->query->get('scheduleId');
+        $entityManager = $doctrine->getManager();
+        $scheduleToDelete = $doctrine->getRepository(Schedule::class)->find($scheduleId);
+        $periodToDelete = $scheduleToDelete->getPeriod();
+        if($periodToDelete && $periodToDelete->isPersonalized()){
+            $entityManager->remove($periodToDelete);
+            $entityManager->flush();
+        }
+        $entityManager->remove($scheduleToDelete);
+        $entityManager->flush();
+        return new JsonResponse(['status' => 'success' ,'data' => 'Horario borrado satsfactoriamente'],200,[]);
+    }
+
+    #[Route('schedule/update-schedule', name: 'app__update_schedule')]
+    public function updateSchedule(ManagerRegistry $doctrine, Request $request): JsonResponse
+    {
+        $data = $request->request->all();
+        return new JsonResponse($data, 200, []);
     }
 
     #[Route('schedule/tests', name: 'app_new_tests')]
