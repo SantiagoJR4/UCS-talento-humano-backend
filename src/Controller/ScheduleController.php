@@ -18,7 +18,7 @@ use Symfony\Component\Validator\Constraints\Date;
 
 class ScheduleController extends AbstractController
 {
-    #[Route('/schedule/get-classrooms', name: 'app_get_classrooms')]
+    #[Route('/schedule/get-classrooms', name: 'app_schedule_get_classrooms')]
     public function getClassrooms(ManagerRegistry $doctrine): JsonResponse
     {
         $query = $doctrine->getManager()->createQueryBuilder();
@@ -29,7 +29,7 @@ class ScheduleController extends AbstractController
         return new JsonResponse($allClassrooms, 200, []);
     }
 
-    #[Route('/schedule/get-programs', name: 'app_get_programs')]
+    #[Route('/schedule/get-programs', name: 'app_schedule_get_programs')]
     public function getPrograms(ManagerRegistry $doctrine): JsonResponse
     {
         $query = $doctrine->getManager()->createQueryBuilder();
@@ -40,7 +40,7 @@ class ScheduleController extends AbstractController
         return new JsonResponse($allPrograms, 200, []);
     }
 
-    #[Route('/schedule/get-periods', name: 'app_get_periods')]
+    #[Route('/schedule/get-periods', name: 'app_schedule_get_periods')]
     public function getPeriods(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $date = new DateTime(date('Y-m-d'), new DateTimeZone('America/Bogota'));
@@ -55,7 +55,7 @@ class ScheduleController extends AbstractController
         return new JsonResponse($availablePeriods, 200, []);
     }
 
-    #[Route('/schedule/get-schedules', name: 'app_get_schedules')]
+    #[Route('/schedule/get-schedules', name: 'app_schedule_get_schedules')]
     public function getsShedules(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $date = $request->query->get('date');
@@ -132,7 +132,7 @@ class ScheduleController extends AbstractController
         return new JsonResponse($mappedSchedules, 200, []);
     }
 
-    #[Route('schedule/new-schedule', name: 'app_new_schedule')]
+    #[Route('schedule/new-schedule', name: 'app_schedule_new_schedule')]
     public function newSchedule(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $data = $request->request->all();
@@ -176,7 +176,7 @@ class ScheduleController extends AbstractController
         return new JsonResponse(['data' => 'Nuevo ítem de horario registrado'], 200, []);
     }
 
-    #[Route('schedule/delete-schedule', name: 'app__delete_schedule')]
+    #[Route('schedule/delete-schedule', name: 'app_schedule_delete_schedule')]
     public function deleteSchedule(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $scheduleId = $request->query->get('scheduleId');
@@ -192,14 +192,14 @@ class ScheduleController extends AbstractController
         return new JsonResponse(['status' => 'success' ,'data' => 'Horario borrado satsfactoriamente'],200,[]);
     }
 
-    #[Route('schedule/update-schedule', name: 'app__update_schedule')]
+    #[Route('schedule/update-schedule', name: 'app_schedule_update_schedule')]
     public function updateSchedule(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $data = $request->request->all();
         return new JsonResponse($data, 200, []);
     }
 
-    #[Route('schedule/tests', name: 'app_new_tests')]
+    #[Route('schedule/tests', name: 'app_schedule_new_tests')]
     public function tests(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
         $queryTest = $doctrine->getManager()->createQueryBuilder();
