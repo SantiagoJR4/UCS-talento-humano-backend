@@ -18,11 +18,13 @@ use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 
 //TODO: Hacer global
 function convertDateTimeToString($data) {
@@ -145,6 +147,14 @@ class CurriculumVitaeController extends AbstractController
         if(isSet($user)){
             $entityManager = $doctrine->getManager();
             $objectToDelete = $entityManager->getRepository('App\\Entity\\'.$table)->find($id);
+            if (!$objectToDelete) {
+                throw new NotFoundHttpException('No se encontró la entidad a borrar');
+            }
+            $history = $objectToDelete->getHistory();
+            $historyArray = json_decode($history, true);
+            if(end($historyArray)['state'] !== 0){
+                throw new AccessDeniedException('No tiene autorización realizar este cambio');
+            }
             $filesToDelete = filesToChangeOrDelete($table);
             $filesystem = new Filesystem();
             foreach ($filesToDelete as $key => $value) {
@@ -159,6 +169,13 @@ class CurriculumVitaeController extends AbstractController
         }
     }
 
+    #[Route('/curriculum-vitae/testing-cv', name: 'app_curriculum_vitae_testing_cv')]
+    public function testingCV(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken, Filesystem $filesystem): JsonResponse
+    {
+        return new JsonResponse(null,200,[]);
+    }
+
+    // TODO: add notifications
     #[Route('/curriculum-vitae/update-cv', name: 'app_curriculum_vitae_update')]
     public function update(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken, Filesystem $filesystem): JsonResponse
     {
@@ -169,7 +186,12 @@ class CurriculumVitaeController extends AbstractController
         $entityManager = $doctrine->getManager();
         $entityObj = $entityManager->getRepository($entity)->find($id);
         if (!$entityObj) {
-            throw $this->createNotFoundException('Entity not found');
+            throw new NotFoundHttpException('No se encontró la entidad');
+        }
+        $initialHistory = $entityObj->getHistory();
+        $initialHistoryArray = json_decode($initialHistory, true);
+        if(!in_array(end($initialHistoryArray)['state'], [0,4])){
+            throw new AccessDeniedException('No tiene autorización realizar este cambio');
         }
         $fieldsToUpdate = $request->request->all();
         $files = $request->files->all();
@@ -211,10 +233,9 @@ class CurriculumVitaeController extends AbstractController
                 }
             }
         }
-        $initialHistory = $entityObj->getHistory();
         date_default_timezone_set('America/Bogota');
-        $addHistory = json_encode(['state'=>1,'date'=>date('Y-m-d H:i:s'), 'call'=> NULL]);
-        $newHistory = rtrim($initialHistory, ']').','.$addHistory.']';
+        $initialHistoryArray[] = ['state'=>4,'date'=>date('Y-m-d H:i:s'), 'call'=> NULL];
+        $newHistory = json_encode($initialHistoryArray);
         $entityObj->setHistory($newHistory);
         $entityManager->persist($entityObj);
         $entityManager->flush();
@@ -507,4 +528,37 @@ class CurriculumVitaeController extends AbstractController
     
         return new JsonResponse($data);
     }
+
+    #[Route('/curriculum-vitae/qualify-cv', name:'app_curriculum_vitae_qualify_cv')]
+    public function qualifyCV(ManagerRegistry $doctrine,Request $request,ValidateToken $vToken): JsonResponse
+    {
+        $state = $request->query->get('state');
+        if(in_array($state, ['1','2','3'])){
+            throw new AccessDeniedException('No tiene permisos para realizar esta acción');
+        }
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(!$user){
+            throw new UserNotFoundException('Usuario no encontrado');
+        }
+        if($user->getSpecialUser() !== 'CTH' && $user->getUserType() !== 8){
+            throw new AccessDeniedException('No tiene permisos para realizar esta acción');
+        }
+        $id = $request->query->get('id');
+        $entity = 'App\\Entity\\'.ucFirst($request->query->get('entity'));
+        $entityManager = $doctrine->getManager();
+        $entityObj = $entityManager->getRepository($entity)->find($id);
+        if (!$entityObj) {
+            throw new NotFoundHttpException('No se encontró la entidad');
+        }
+        $history = $entityObj->getHistory();
+        $historyArray = json_decode($history, true);
+        date_default_timezone_set('America/Bogota');
+        $historyArray[] = ['state'=>(int)$state, date('Y-m-d H:i:s'), 'call'=> NULL];
+        $newHistory = json_encode($historyArray);
+        $entityObj->setHistory($newHistory);
+        $entityManager->flush();
+        return new JsonResponse(['status'=> 'done', 'message' => 'Se ha completado con éxito esta tarea']);
+    }
+
 }

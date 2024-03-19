@@ -374,7 +374,7 @@ class CallController extends AbstractController
             $profile = $doctrine->getRepository(Profile::class)->find($data['profileId']);
             $newCall->setProfile($profile);
         } else {
-            $profile = $doctrine->getRepository(Profile::class)->findOneBy(['name' => 'Docentes o profesores']);
+            $profile = $doctrine->getRepository(Profile::class)->findOneBy(['name' => 'Profesor']);
             $subprofile = $doctrine->getRepository(Subprofile::class)->find($data['profileId']);
             $newCall->setSubprofile($subprofile);
             $newCall->setProfile($profile);
