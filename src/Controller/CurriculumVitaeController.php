@@ -62,9 +62,10 @@ function filesToChangeOrDelete($table) {
 function setTag($status){
     $statusMap = array(
         0 => array('severity' => 'info', 'icon' => 'upload', 'value' => 'Subido'),
-        1 => array('severity' => 'info', 'icon' => 'edit', 'value' => 'Editado'),
-        2 => array('severity' => '', 'icon' => 'check', 'value' => 'Aprobado'),
+        1 => array('severity' => '', 'icon' => 'check', 'value' => 'Aprobado'),
+        2 => array('severity' => 'danger', 'icon' => 'close', 'value' => 'Pendiente'),
         3 => array('severity' => 'warning', 'icon' => 'hourglass_top', 'value' => 'Pendiente'),
+        4 => array('severity' => 'info', 'icon' => 'edit', 'value' => 'Editado'),
     );
     return isset($statusMap[$status])
         ? $statusMap[$status]
@@ -234,7 +235,10 @@ class CurriculumVitaeController extends AbstractController
             }
         }
         date_default_timezone_set('America/Bogota');
-        $initialHistoryArray[] = ['state'=>4,'date'=>date('Y-m-d H:i:s'), 'call'=> NULL];
+        $initialHistoryArray[] = [
+            'state'=>$request->query->get('entity')!== 'ReferencesData' ? 4 : 1,
+            'date'=>date('Y-m-d H:i:s'),
+            'call'=> NULL];
         $newHistory = json_encode($initialHistoryArray);
         $entityObj->setHistory($newHistory);
         $entityManager->persist($entityObj);
@@ -286,7 +290,10 @@ class CurriculumVitaeController extends AbstractController
             }
         }
         date_default_timezone_set('America/Bogota');
-        $jsonHistory = json_encode([['state'=>0,'date'=>date('Y-m-d H:i:s'), 'call'=> NULL]]);
+        $jsonHistory = json_encode([[
+            'state'=>$request->query->get('entity')!== 'ReferencesData' ? 0 : 1,
+            'date'=>date('Y-m-d H:i:s'),
+            'call'=> NULL]]);
         $objEntity->setHistory($jsonHistory);
         $objEntity->setUser($user);
         $entityManager = $doctrine->getManager();
@@ -559,6 +566,78 @@ class CurriculumVitaeController extends AbstractController
         $entityObj->setHistory($newHistory);
         $entityManager->flush();
         return new JsonResponse(['status'=> 'done', 'message' => 'Se ha completado con éxito esta tarea']);
+    }
+
+    // TODO: chat says this is vulnerable to sql injection, so change this when posible
+    #[Route('/curriculum-vitae/get-unqualified-cv', name:'app_curriculum_vitae_unqualified_cv')]
+    public function getUnqualifiedCV(ManagerRegistry $doctrine,Request $request,ValidateToken $vToken): JsonResponse
+    {
+        $queryOneCV = function($class, $id) use ($doctrine){
+            $sql = "
+                SELECT *
+                FROM $class
+                WHERE (
+                    user_id = $id
+                    AND
+                    JSON_EXTRACT(
+                        JSON_EXTRACT(
+                            history,
+                            CONCAT('$[', JSON_LENGTH(history) - 1, ']'))
+                    ,'$.state') IN (0, 4));
+            ";
+            $connectionCV = $doctrine->getManager()->getConnection();
+            $resultSetCV = $connectionCV->executeQuery($sql);
+            return $resultSetCV->fetchAllAssociative();
+        };
+
+        $token = $request->query->get('token');
+        $idOffset = $request->query->get('idOffset');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(!$user){
+            throw new UserNotFoundException('Usuario no encontrado');
+        }
+        if($user->getSpecialUser() !== 'CTH' && $user->getUserType() !== 8){
+            throw new AccessDeniedException('No tiene permisos para realizar esta acción');
+        }
+
+        $sqlEmp = "
+            SELECT id, CONCAT(names, ' ', last_names) as fullname, type_identification as typeIdentification, identification, email, phone
+            FROM `user`
+            WHERE user_type IN (1,2,8);
+        ";
+
+        $connectionEmp = $doctrine->getManager()->getConnection();
+        $resultSetEmp = $connectionEmp->executeQuery($sqlEmp);
+        $allEmployees = $resultSetEmp->fetchAllAssociative(); 
+
+        $filteredEmployees = [];
+        
+        foreach ($allEmployees as &$employee) {
+            $response = [
+                'personalData' => convertDateTimeToString($queryOneCV('personal_data', $employee['id'])),
+                'academicTraining' => convertDateTimeToString($queryOneCV('academic_training', $employee['id'])),
+                'furtherTraining' => convertDateTimeToString($queryOneCV('further_training', $employee['id'])),
+                'language' => convertDateTimeToString($queryOneCV('language', $employee['id'])),
+                'workExperience' => convertDateTimeToString($queryOneCV('work_experience', $employee['id'])),
+                'teachingExperience' => convertDateTimeToString($queryOneCV('teaching_experience', $employee['id'])),
+                'intellectualproduction' => convertDateTimeToString($queryOneCV('intellectual_production', $employee['id'])),
+                // 'references' => convertDateTimeToString($queryOneCV('references_data', $employee['id'])),
+                'records' => convertDateTimeToString($queryOneCV('record', $employee['id']))
+            ];
+
+            $filteredResponse = array_filter($response, function ($value) {
+                return !empty($value);
+            });
+            
+            $employee['unqualifiedCV'] = $filteredResponse;
+
+            if (!empty($employee['unqualifiedCV'])) {
+                $filteredEmployees[] = $employee;
+            }
+        }
+        
+        return new JsonResponse($filteredEmployees);
+        
     }
 
 }
