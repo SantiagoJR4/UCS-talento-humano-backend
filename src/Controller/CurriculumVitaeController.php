@@ -27,6 +27,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 
 //TODO: Hacer global
+
 function convertDateTimeToString($data) {
     foreach ($data as $key => $value) {
         if (is_array($value)) {
@@ -539,7 +540,9 @@ class CurriculumVitaeController extends AbstractController
     #[Route('/curriculum-vitae/qualify-cv', name:'app_curriculum_vitae_qualify_cv')]
     public function qualifyCV(ManagerRegistry $doctrine,Request $request,ValidateToken $vToken): JsonResponse
     {
+        //TODO: I need to let CTH to modify directly on table, and that applies here too
         $state = $request->query->get('state');
+        $newState = $request->query->get('newState');
         if(in_array($state, ['1','2','3'])){
             throw new AccessDeniedException('No tiene permisos para realizar esta acción');
         }
@@ -561,7 +564,7 @@ class CurriculumVitaeController extends AbstractController
         $history = $entityObj->getHistory();
         $historyArray = json_decode($history, true);
         date_default_timezone_set('America/Bogota');
-        $historyArray[] = ['state'=>(int)$state, date('Y-m-d H:i:s'), 'call'=> NULL];
+        $historyArray[] = ['state'=>(int)$newState, date('Y-m-d H:i:s'), 'call'=> NULL];
         $newHistory = json_encode($historyArray);
         $entityObj->setHistory($newHistory);
         $entityManager->flush();
@@ -587,9 +590,21 @@ class CurriculumVitaeController extends AbstractController
             ";
             $connectionCV = $doctrine->getManager()->getConnection();
             $resultSetCV = $connectionCV->executeQuery($sql);
-            return $resultSetCV->fetchAllAssociative();
+            $results = $resultSetCV->fetchAllAssociative();
+            $camelCaseResults = [];
+            foreach ($results as $result) {
+                $camelCaseResult = [];
+                foreach ($result as $key => $value) {
+                    // Convert snake_case to camelCase
+                    $camelCaseKey = lcfirst(str_replace('_', '', ucwords($key, '_')));
+                    $camelCaseResult[$camelCaseKey] = $value;
+                }
+                $camelCaseResults[] = $camelCaseResult;
+            }
+        
+            return $camelCaseResults;
         };
-
+            
         $token = $request->query->get('token');
         $idOffset = $request->query->get('idOffset');
         $user =  $vToken->getUserIdFromToken($token);
@@ -601,7 +616,20 @@ class CurriculumVitaeController extends AbstractController
         }
 
         $sqlEmp = "
-            SELECT id, CONCAT(names, ' ', last_names) as fullname, type_identification as typeIdentification, identification, email, phone
+            SELECT 
+                id,
+                CONCAT(names, ' ', last_names) as fullname,
+                type_identification as typeIdentification,
+                identification,
+                email,
+                phone,
+                user_type,
+                CASE 
+                    WHEN user_type = 1 THEN 'Administrador'
+                    WHEN user_type = 2 THEN 'Profesor'
+                    WHEN user_type = 8 THEN 'Administrador'
+                    ELSE 'Otro'
+                END AS userType
             FROM `user`
             WHERE user_type IN (1,2,8);
         ";
@@ -633,6 +661,14 @@ class CurriculumVitaeController extends AbstractController
 
             if (!empty($employee['unqualifiedCV'])) {
                 $filteredEmployees[] = $employee;
+            }
+
+            foreach($filteredEmployees as &$employee) {
+                $totalLength = 0;
+                foreach($employee['unqualifiedCV'] as $section) {
+                    $totalLength += count($section);
+                }
+                $employee['uCVlength'] = $totalLength;
             }
         }
         
