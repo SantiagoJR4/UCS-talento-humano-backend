@@ -541,11 +541,6 @@ class CurriculumVitaeController extends AbstractController
     public function qualifyCV(ManagerRegistry $doctrine,Request $request,ValidateToken $vToken): JsonResponse
     {
         //TODO: I need to let CTH to modify directly on table, and that applies here too
-        $state = $request->query->get('state');
-        $newState = $request->query->get('newState');
-        if(in_array($state, ['1','2','3'])){
-            throw new AccessDeniedException('No tiene permisos para realizar esta acción');
-        }
         $token = $request->query->get('token');
         $user =  $vToken->getUserIdFromToken($token);
         if(!$user){
@@ -554,20 +549,21 @@ class CurriculumVitaeController extends AbstractController
         if($user->getSpecialUser() !== 'CTH' && $user->getUserType() !== 8){
             throw new AccessDeniedException('No tiene permisos para realizar esta acción');
         }
-        $id = $request->query->get('id');
-        $entity = 'App\\Entity\\'.ucFirst($request->query->get('entity'));
-        $entityManager = $doctrine->getManager();
-        $entityObj = $entityManager->getRepository($entity)->find($id);
-        if (!$entityObj) {
-            throw new NotFoundHttpException('No se encontró la entidad');
-        }
-        $history = $entityObj->getHistory();
-        $historyArray = json_decode($history, true);
         date_default_timezone_set('America/Bogota');
-        $historyArray[] = ['state'=>(int)$newState, date('Y-m-d H:i:s'), 'call'=> NULL];
-        $newHistory = json_encode($historyArray);
-        $entityObj->setHistory($newHistory);
+        $data = json_decode($request->request->get('array'), true);
+        foreach ($data as $key => $value) {
+            $id = $value['id'];
+            $entity = 'App\\Entity\\'.ucFirst($value['entity']);
+            $entityManager = $doctrine->getManager();
+            $entityObj = $entityManager->getRepository($entity)->find($id);
+            $history = $entityObj->getHistory();
+            $historyArray = json_decode($history, true);
+            $historyArray[] = ['state'=>$value['state'], 'reviewText'=>$value['reviewText'], date('Y-m-d H:i:s'), 'call'=> NULL];
+            $newHistory = json_encode($historyArray);
+            $entityObj->setHistory($newHistory);
+        }
         $entityManager->flush();
+        //TODO: Here Email also consider, Return the user with all left unqualified-cv
         return new JsonResponse(['status'=> 'done', 'message' => 'Se ha completado con éxito esta tarea']);
     }
 
