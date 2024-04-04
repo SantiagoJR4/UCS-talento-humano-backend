@@ -644,7 +644,7 @@ class CurriculumVitaeController extends AbstractController
                 'language' => convertDateTimeToString($queryOneCV('language', $employee['id'])),
                 'workExperience' => convertDateTimeToString($queryOneCV('work_experience', $employee['id'])),
                 'teachingExperience' => convertDateTimeToString($queryOneCV('teaching_experience', $employee['id'])),
-                'intellectualproduction' => convertDateTimeToString($queryOneCV('intellectual_production', $employee['id'])),
+                'intellectualProduction' => convertDateTimeToString($queryOneCV('intellectual_production', $employee['id'])),
                 // 'references' => convertDateTimeToString($queryOneCV('references_data', $employee['id'])),
                 'records' => convertDateTimeToString($queryOneCV('record', $employee['id']))
             ];
