@@ -174,7 +174,30 @@ class CurriculumVitaeController extends AbstractController
     #[Route('/curriculum-vitae/testing-cv', name: 'app_curriculum_vitae_testing_cv')]
     public function testingCV(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken, Filesystem $filesystem): JsonResponse
     {
-        return new JsonResponse(null,200,[]);
+        $data = json_decode($request->request->get('array'), true);
+        $qb = function($class, $ids) use ($doctrine) {
+            return $doctrine->getRepository($class)
+                ->createQueryBuilder('e')
+                ->andWhere('e.id IN (:ids)')
+                ->setParameter('ids', $ids)
+                ->getQuery()
+                ->getArrayResult();
+        };
+        $dataForEmail = [
+            'personalData' => $qb(PersonalData::class, array_column($data['personalData'], 'id')),
+            'academicTraining' => $qb(AcademicTraining::class, array_column($data['academicTraining'], 'id')),
+            'furtherTraining' => $qb(FurtherTraining::class, array_column($data['furtherTraining'], 'id')),
+            'language' => $qb(Language::class, array_column($data['language'], 'id')),
+            'workExperience' => $qb(WorkExperience::class, array_column($data['workExperience'], 'id')),
+            'teachingExperience' => $qb(TeachingExperience::class, array_column($data['teachingExperience'], 'id')),
+            'intellectualProduction' => $qb(IntellectualProduction::class, array_column($data['intellectualproduction'], 'id')),
+            'references' => $qb(ReferencesData::class, array_column($data['references'], 'id')),
+            'records' => $qb(Record::class, array_column($data['records'], 'id')),
+        ];
+        $dataForEmail = [
+            $qb(uc)
+        ];
+        return new JsonResponse($dataForEmail,200,[]);
     }
 
     // TODO: add notifications
@@ -551,14 +574,23 @@ class CurriculumVitaeController extends AbstractController
         }
         date_default_timezone_set('America/Bogota');
         $data = json_decode($request->request->get('array'), true);
+        $transformed = [];
         foreach ($data as $key => $value) {
+            foreach ($value as $item) {
+                if ($item['state']) {
+                    $item['entity'] = $key;
+                    $transformed[] = $item;
+                }
+            }
+        }
+        foreach ($transformed as $key => $value) {
             $id = $value['id'];
             $entity = 'App\\Entity\\'.ucFirst($value['entity']);
             $entityManager = $doctrine->getManager();
             $entityObj = $entityManager->getRepository($entity)->find($id);
             $history = $entityObj->getHistory();
             $historyArray = json_decode($history, true);
-            $historyArray[] = ['state'=>$value['state'], 'reviewText'=>$value['reviewText'], date('Y-m-d H:i:s'), 'call'=> NULL];
+            $historyArray[] = ['state'=>$value['state'], 'reviewText'=>$value['reviewText'], 'date'=> date('Y-m-d H:i:s'), 'call'=> NULL];
             $newHistory = json_encode($historyArray);
             $entityObj->setHistory($newHistory);
         }
