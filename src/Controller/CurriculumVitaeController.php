@@ -16,6 +16,7 @@ use App\Service\ValidateToken;
 use DateInterval;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
@@ -23,6 +24,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 
@@ -174,29 +176,32 @@ class CurriculumVitaeController extends AbstractController
     #[Route('/curriculum-vitae/testing-cv', name: 'app_curriculum_vitae_testing_cv')]
     public function testingCV(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken, Filesystem $filesystem): JsonResponse
     {
-        $data = json_decode($request->request->get('array'), true);
-        $qb = function($class, $ids) use ($doctrine) {
-            return $doctrine->getRepository($class)
-                ->createQueryBuilder('e')
-                ->andWhere('e.id IN (:ids)')
-                ->setParameter('ids', $ids)
-                ->getQuery()
-                ->getArrayResult();
-        };
-        $dataForEmail = [
-            'personalData' => $qb(PersonalData::class, array_column($data['personalData'], 'id')),
-            'academicTraining' => $qb(AcademicTraining::class, array_column($data['academicTraining'], 'id')),
-            'furtherTraining' => $qb(FurtherTraining::class, array_column($data['furtherTraining'], 'id')),
-            'language' => $qb(Language::class, array_column($data['language'], 'id')),
-            'workExperience' => $qb(WorkExperience::class, array_column($data['workExperience'], 'id')),
-            'teachingExperience' => $qb(TeachingExperience::class, array_column($data['teachingExperience'], 'id')),
-            'intellectualProduction' => $qb(IntellectualProduction::class, array_column($data['intellectualproduction'], 'id')),
-            'references' => $qb(ReferencesData::class, array_column($data['references'], 'id')),
-            'records' => $qb(Record::class, array_column($data['records'], 'id')),
-        ];
-        $dataForEmail = [
-            $qb(uc)
-        ];
+        $data=['academicTraining' => [['id' => 4, 'state' => 2, 'textReview' => 'Siempre puedo hacerlo, yo nunca me rindo'],['id' => 5555, 'state' => 1, 'textReview' => null]], 'furtherTraining' =>[['id' => 345, 'state' => 3, 'textReview' => 'Alakazan']]];
+        $dataForEmail=['academicTraining' => [['id' => 4, 'surge' => false, 'text' => 'Aloha'],['id' => 5555, 'surge' => true, 'text' => 'faroles']], 'furtherTraining' =>[['id' => 345, 'turbo' => false, 'description' => 'Red is a color']]];
+        $transformed = [];
+        foreach ($data as $key => $value) {
+            foreach ($value as $item) {
+                if ($item['state']) {
+                    $item['entity'] = $key;
+                    $transformed[] = $item;
+                }
+            }
+        }
+
+        foreach($dataForEmail as &$array) {
+            foreach($array as &$item ){
+                $test = array_filter(
+                $transformed,
+                function($element) use ($item){
+                    return $element['id'] === $item['id'];
+                }
+            );
+            $test = array_pop($test);
+            $item['textReview'] = $test['textReview'];
+            $item['state'] = $test['state'];
+            }
+        }
+        var_dump($dataForEmail);
         return new JsonResponse($dataForEmail,200,[]);
     }
 
@@ -561,19 +566,21 @@ class CurriculumVitaeController extends AbstractController
     }
 
     #[Route('/curriculum-vitae/qualify-cv', name:'app_curriculum_vitae_qualify_cv')]
-    public function qualifyCV(ManagerRegistry $doctrine,Request $request,ValidateToken $vToken): JsonResponse
+    public function qualifyCV(ManagerRegistry $doctrine,Request $request,ValidateToken $vToken,MailerInterface $mailer): JsonResponse
     {
         //TODO: I need to let CTH to modify directly on table, and that applies here too
         $token = $request->query->get('token');
-        $user =  $vToken->getUserIdFromToken($token);
-        if(!$user){
+        $userCTH =  $vToken->getUserIdFromToken($token);
+        if(!$userCTH){
             throw new UserNotFoundException('Usuario no encontrado');
         }
-        if($user->getSpecialUser() !== 'CTH' && $user->getUserType() !== 8){
+        if($userCTH->getSpecialUser() !== 'CTH' && $userCTH->getUserType() !== 8){
             throw new AccessDeniedException('No tiene permisos para realizar esta acción');
         }
         date_default_timezone_set('America/Bogota');
         $data = json_decode($request->request->get('array'), true);
+        $userID = $request->request->get('userID');
+        $user = $doctrine->getRepository(User::class)->find($userID);
         $transformed = [];
         foreach ($data as $key => $value) {
             foreach ($value as $item) {
@@ -594,8 +601,55 @@ class CurriculumVitaeController extends AbstractController
             $newHistory = json_encode($historyArray);
             $entityObj->setHistory($newHistory);
         }
-        $entityManager->flush();
         //TODO: Here Email also consider, Return the user with all left unqualified-cv
+        $qb = function($class, $ids) use ($doctrine) {
+            return $doctrine->getRepository($class)
+                ->createQueryBuilder('e')
+                ->andWhere('e.id IN (:ids)')
+                ->setParameter('ids', $ids)
+                ->getQuery()
+                ->getArrayResult();
+        };
+        $dataForEmail = [
+            'personalData' => $qb(PersonalData::class, array_column($data['personalData'], 'id')),
+            'academicTraining' => $qb(AcademicTraining::class, array_column($data['academicTraining'], 'id')),
+            'furtherTraining' => $qb(FurtherTraining::class, array_column($data['furtherTraining'], 'id')),
+            'language' => $qb(Language::class, array_column($data['language'], 'id')),
+            'workExperience' => $qb(WorkExperience::class, array_column($data['workExperience'], 'id')),
+            'teachingExperience' => $qb(TeachingExperience::class, array_column($data['teachingExperience'], 'id')),
+            'intellectualProduction' => $qb(IntellectualProduction::class, array_column($data['intellectualproduction'], 'id')),
+            'references' => $qb(ReferencesData::class, array_column($data['references'], 'id')),
+            'records' => $qb(Record::class, array_column($data['records'], 'id')),
+        ];
+        foreach($dataForEmail as &$array) {
+            foreach($array as &$item ){
+                $found = array_filter(
+                $transformed,
+                function($element) use ($item){
+                    return $element['id'] === $item['id'];
+                }
+            );
+            $found = array_pop($found);
+                $item['textReview'] = $found['textReview'];
+            }
+        }
+        try{
+            $email = (new TemplatedEmail())
+                ->from('convocatorias@unicatolicadelsur.edu.co')
+                ->to($user['email'])
+                ->subject('Revisión')
+                ->htmlTemplate('email/qualifyEmployeeCVEmail.html.twig')
+                ->context([
+                    'user' => $user,
+                    'dataForEmail' => $dataForEmail
+                ]);         
+            $mailer->send($email);
+            $message = 'La revisión fue enviada con éxito';
+        } catch (\Throwable $th) {
+            $message = 'Error al enviar el correo:'.$th->getMessage();
+            return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
+        $entityManager->flush();
         return new JsonResponse(['status'=> 'done', 'message' => 'Se ha completado con éxito esta tarea']);
     }
 
