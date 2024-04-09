@@ -198,10 +198,9 @@ class CurriculumVitaeController extends AbstractController
             );
             $test = array_pop($test);
             $item['textReview'] = $test['textReview'];
-            $item['state'] = $test['state'];
+            $item['state'] = $test['state'] === 1 ? 'Aprobado' : ($test['state'] === 2 ? 'Rechazado' : 'Revisar');
             }
         }
-        var_dump($dataForEmail);
         return new JsonResponse($dataForEmail,200,[]);
     }
 
@@ -601,7 +600,6 @@ class CurriculumVitaeController extends AbstractController
             $newHistory = json_encode($historyArray);
             $entityObj->setHistory($newHistory);
         }
-        //TODO: Here Email also consider, Return the user with all left unqualified-cv
         $qb = function($class, $ids) use ($doctrine) {
             return $doctrine->getRepository($class)
                 ->createQueryBuilder('e')
@@ -617,8 +615,8 @@ class CurriculumVitaeController extends AbstractController
             'language' => $qb(Language::class, array_column($data['language'], 'id')),
             'workExperience' => $qb(WorkExperience::class, array_column($data['workExperience'], 'id')),
             'teachingExperience' => $qb(TeachingExperience::class, array_column($data['teachingExperience'], 'id')),
-            'intellectualProduction' => $qb(IntellectualProduction::class, array_column($data['intellectualproduction'], 'id')),
-            'references' => $qb(ReferencesData::class, array_column($data['references'], 'id')),
+            'intellectualProduction' => $qb(IntellectualProduction::class, array_column($data['intellectualProduction'], 'id')),
+            // 'references' => $qb(ReferencesData::class, array_column($data['references'], 'id')),
             'records' => $qb(Record::class, array_column($data['records'], 'id')),
         ];
         foreach($dataForEmail as &$array) {
@@ -630,13 +628,14 @@ class CurriculumVitaeController extends AbstractController
                 }
             );
             $found = array_pop($found);
-                $item['textReview'] = $found['textReview'];
+            $item['reviewText'] = $found['reviewText'];
+            $item['state'] = $found['state'] === 1 ? 'Aprobado' : ($found['state'] === 2 ? 'Rechazado' : 'Revisar');
             }
         }
         try{
             $email = (new TemplatedEmail())
                 ->from('convocatorias@unicatolicadelsur.edu.co')
-                ->to($user['email'])
+                ->to($user->getEmail())
                 ->subject('Revisión')
                 ->htmlTemplate('email/qualifyEmployeeCVEmail.html.twig')
                 ->context([
