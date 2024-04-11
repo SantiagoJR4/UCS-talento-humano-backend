@@ -110,6 +110,13 @@ class Contract
     /**
      * @var string|null
      *
+     * @ORM\Column(name="contract_file_pdf", type="text", length=0, nullable=true)
+     */
+    private $contractFilePdf;
+
+    /**
+     * @var string|null
+     *
      * @ORM\Column(name="workload", type="text", length=0, nullable=true)
      */
     private $workload;
@@ -269,6 +276,18 @@ class Contract
     public function setContractFile(string $contractFile): self
     {
         $this->contractFile = $contractFile;
+
+        return $this;
+    }
+
+    public function getContractFilePdf(): ?string
+    {
+        return $this->contractFilePdf;
+    }
+
+    public function setContractFilePdf(?string $contractFilePdf): self
+    {
+        $this->contractFilePdf = $contractFilePdf;
 
         return $this;
     }
