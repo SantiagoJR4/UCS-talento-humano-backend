@@ -30,6 +30,13 @@ class Contract
     private $typeContract;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="period", type="string", length=255, nullable=false)
+     */
+    private $period;
+
+    /**
      * @var \DateTime
      *
      * @ORM\Column(name="work_start", type="date", nullable=false)
@@ -86,6 +93,14 @@ class Contract
     private $specificFunctions;
 
     /**
+     * @var int
+     *
+     * @ORM\Column(name="state", type="smallint", nullable=false, options={"comment"="0:Inactivo
+1:Activo"})
+     */
+    private $state;
+
+    /**
      * @var string
      *
      * @ORM\Column(name="contract_file", type="text", length=0, nullable=false)
@@ -122,6 +137,18 @@ class Contract
     public function setTypeContract(string $typeContract): self
     {
         $this->typeContract = $typeContract;
+
+        return $this;
+    }
+
+    public function getPeriod(): ?string
+    {
+        return $this->period;
+    }
+
+    public function setPeriod(string $period): self
+    {
+        $this->period = $period;
 
         return $this;
     }
@@ -218,6 +245,18 @@ class Contract
     public function setSpecificFunctions(string $specificFunctions): self
     {
         $this->specificFunctions = $specificFunctions;
+
+        return $this;
+    }
+
+    public function getState(): ?int
+    {
+        return $this->state;
+    }
+
+    public function setState(int $state): self
+    {
+        $this->state = $state;
 
         return $this;
     }
