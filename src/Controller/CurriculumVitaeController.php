@@ -66,7 +66,7 @@ function setTag($status){
     $statusMap = array(
         0 => array('severity' => 'info', 'icon' => 'upload', 'value' => 'Subido'),
         1 => array('severity' => '', 'icon' => 'check', 'value' => 'Aprobado'),
-        2 => array('severity' => 'danger', 'icon' => 'close', 'value' => 'Pendiente'),
+        2 => array('severity' => 'danger', 'icon' => 'close', 'value' => 'Rechazado'),
         3 => array('severity' => 'warning', 'icon' => 'hourglass_top', 'value' => 'Pendiente'),
         4 => array('severity' => 'info', 'icon' => 'edit', 'value' => 'Editado'),
     );
@@ -219,8 +219,8 @@ class CurriculumVitaeController extends AbstractController
         }
         $initialHistory = $entityObj->getHistory();
         $initialHistoryArray = json_decode($initialHistory, true);
-        if(!in_array(end($initialHistoryArray)['state'], [0,4])){
-            throw new AccessDeniedException('No tiene autorización realizar este cambio');
+        if(!in_array(end($initialHistoryArray)['state'], [0,3,4])){
+            throw new AccessDeniedException('No tiene autorización realizar este cambio, por favor comuniquese con Coordinación de talento humano');
         }
         $fieldsToUpdate = $request->request->all();
         $files = $request->files->all();

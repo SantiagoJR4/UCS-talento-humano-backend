@@ -42,7 +42,7 @@ class InterviewController extends AbstractController
             'id' => $newQuestion->getId(),
             'statement' => $newQuestion->getStatement(),
             'development' => $newQuestion->isDevelopment(),
-            'competenciesIds' => isset($data['competenciesIds']) ? $data['competenciesIds'] : []
+            'competenciesIds' => isset($data['competenciesIds']) ? json_decode($data['competenciesIds'], true) : []
         ];
         return new JsonResponse($response, 200, []);
     }
@@ -100,7 +100,13 @@ class InterviewController extends AbstractController
             }
         }
         $entityManager->flush();
-        return new JsonResponse(['message' => 'Se ha modificado la pregunta'], 200, []);
+        $response = [
+            'id' => $question->getId(),
+            'statement' => $question->getStatement(),
+            'development' => $question->isDevelopment(),
+            'competenciesIds' => isset($data['competenciesIds']) ? json_decode($data['competenciesIds'], true) : []
+        ];
+        return new JsonResponse($response, 200, []);
     }
 
     #[Route('/interview/delete-question', name: 'app_interview_delete_question')]
