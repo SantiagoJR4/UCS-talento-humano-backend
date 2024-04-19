@@ -22,5 +22,4 @@
 /public/uploads
 /public/hv
 /public/contracts
-/src/Entity
-/src/Entity/AcademicTraining.php
+/src/Entity/*
