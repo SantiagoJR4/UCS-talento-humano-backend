@@ -2281,7 +2281,7 @@ class ContractController extends AbstractController
 				$reemployment -> setInitialDate($dateTimeInitial);
 			}	
 
-			if(preg_match('/^\d{4}-\d{2}-\d{2	}$/',$finalDate)){
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$finalDate)){
 				$dateTimeFinal = new DateTime($finalDate);
  				$reemployment -> setFinalDate($dateTimeFinal);
 			}
@@ -2313,7 +2313,7 @@ class ContractController extends AbstractController
 				'user' => $userLogueado->getId(),
 				'responsible' => $userLogueado->getSpecialUser(),
 				'state' => $specialUser === 'VF' ? 1 : 0,
-				'message' => 'La solicitud de revinculación de personal administrativo fue solicitado por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
+				'message' => 'La solicitud de revinculación del personal fue solicitado por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
 				'date' => date('Y-m-d H:i:s'),
 			)));
 			$reemployment->setHistory($addToHistory);
@@ -2391,7 +2391,7 @@ class ContractController extends AbstractController
 				'user' => $userLogueado->getId(),
 				'responsible' => $userLogueado->getSpecialUser(),
 				'state' =>  $specialUser === 'VF' ? 1 : 0,
-				'message' => 'Actualización de revinculación de personal administrativo fue solicitado por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
+				'message' => 'Actualización de revinculación del personal fue solicitado por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
 				'date' => date('Y-m-d H:i:s'),
 			)));
 			$reemployment->setHistory($addToHistory);
@@ -2431,7 +2431,7 @@ class ContractController extends AbstractController
 		$token = $request->query->get('token');
 		$typeReemployment = $request->query->get('typeReemployment');
 
-		$userLogueado = $vToken->getUserIdFromToken($token);
+		$userLogueado = $vToken->	getUserIdFromToken($token);
 		$specialUser = $userLogueado->getSpecialUser();
 
 		if($token === false){
@@ -2488,7 +2488,6 @@ class ContractController extends AbstractController
 				'email' => $user->getEmail(),
 				'phone' => $user->getPhone(),
 				'history' => json_decode($reemployment->getHistory(), true)
-
 			];
 		}
 		$filtered =  array_filter($response, function($var) use($typeReemployment){
@@ -2638,7 +2637,7 @@ class ContractController extends AbstractController
 					'state' => $reemployment->getState(),
 					'stateUser' => $reemployment->getStateUser(),
 					'stateContract' => $reemployment->getStateContract(),
-					'history' => $reemployment->getHistory(),
+					'history' => json_decode($reemployment->getHistory(), true),
 					'chargeId' => $reemployment->getCharges()->getId(),
 					'chargeName' => $reemployment->getCharges()->getName(),
 					'typeEmployee' => $reemployment->getCharges()->getTypeEmployee(),
@@ -2713,17 +2712,16 @@ class ContractController extends AbstractController
 		$applicantId = $request->query->get('applicantId');
 		$user = $vToken->getUserIdFromToken($token);
 		$specialUser = $user->getSpecialUser();
-		$idsToChange = json_decode($request->getContent(), true);
-		
-		foreach ($idsToChange as $id) {
-			$reemployment = $doctrine->getRepository(Reemployment::class)->find($id);
-		
-			if (!$reemployment) {
-				return new JsonResponse(['status' => false, 'message' => 'No se encontró solicitud de revinculación para el id ' . $id]);
-			}
-			$reemployment->setState(1);
-			$reemployment->setStateUser(3);
+		$idReemployment = json_decode($request->getContent(), true);
+
+		$reemployment = $doctrine->getRepository(Reemployment::class)->find($idReemployment);
+	
+		if (!$reemployment) {
+			return new JsonResponse(['status' => false, 'message' => 'No se encontró solicitud de revinculación para el id ' . $idReemployment]);
 		}
+		$reemployment->setState(1);
+		$reemployment->setStateUser(3);
+
 		$newNotification = new Notification();
 		$newNotification->setSeen(0);
 		$userNames = $doctrine->getRepository(User::class)->find($applicantId);
@@ -2741,24 +2739,24 @@ class ContractController extends AbstractController
 			case 'VAE':
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType'=>1]);
 				$newNotification->setUser($userForNotification);
-				$newNotification->setMessage('Solicita la aprobación del listado de revinculación del personal docente por parte de Vicerrectoría Financiera.');
+				$newNotification->setMessage('Solicita la aprobación del profesor.'. $reemployment->getNames());
 				break;
 			case 'VF':
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType'=>8]);
 				$newNotification->setUser($userForNotification);
-				$newNotification->setMessage('Envia el listado de revinculación del personal docente APROBADO por parte de Vicerrectoría Financiera.');
+				$newNotification->setMessage('Aprobación del usuario.'. $idReemployment);
 				break;
 			return new JsonResponse(['message'=>'Usuario no autorizado'],403,[]);
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
-		$notification->setSeen(1);
+		$notification->setSeen(0);
 		$history = $reemployment->getHistory();
 		date_default_timezone_set('America/Bogota');
 		$addToHistory = json_encode(array(
 			'user' => $user->getId(),
 			'responsible' => $user->getSpecialUser(),
 			'state' => 1, //Aprobado por VF
-			'message' => 'La lista de revinculación del personal docente fue aprobada por '.$user->getNames()." ".$user->getLastNames(),
+			'message' => 'La revinculación del trabajador fue aprobado por '.$user->getNames()." ".$user->getLastNames(),
 			'date' => date('Y-m-d H:i:s'),
 		));
 		$newHistory = rtrim($history, ']').','.$addToHistory.']';
@@ -2766,7 +2764,7 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
 		$entityManager->persist($newNotification);
 		$entityManager->flush();
-		return new JsonResponse(['message'=>'Se ha aprobado el listado de revinculación del personal docente']);
+		return new JsonResponse(['message'=>'Se ha aprobado la revinculación exitosamente']);
 
 	}
 	#[Route('contract/reject-reemploymentsTeachers', name:'app_reject_reemploymentsTeachers')]
@@ -2779,16 +2777,15 @@ class ContractController extends AbstractController
 
 		$user = $vToken->getUserIdFromToken($token);
 		$specialUser = $user->getSpecialUser();
-		$idsToChange = json_decode($request->request->get('idsToChange'), true);
-		
-		foreach ($idsToChange as $key => $value) {
-			$reemployment = $doctrine->getRepository(Reemployment::class)->find($value);
-		
-			if (!$reemployment) {
-				return new JsonResponse(['status' => false, 'message' => 'No se encontró solicitud de revinculación para el id ' . $value]);
-			}
-			$reemployment->setState(3); //Rechazado por VF
+		$idRejected = $request->request->get('idRejected');
+
+		$reemployment = $doctrine->getRepository(Reemployment::class)->find($idRejected);
+	
+		if (!$reemployment) {
+			return new JsonResponse(['status' => false, 'message' => 'No se encontró solicitud de revinculación para el id ' . $idRejected]);
 		}
+
+		$reemployment->setState(3); //Rechazado por VF
 		$newNotification = new Notification();
 		$newNotification->setSeen(0);
 		$userNames = $doctrine->getRepository(User::class)->find($applicantId);
@@ -2804,18 +2801,18 @@ class ContractController extends AbstractController
 			case 'VF':
 				$userForNotification = $doctrine->getRepository(User::class)->find($applicantId);
 				$newNotification->setUser($userForNotification);
-				$newNotification->setMessage('Lista de revinculación del personal docente rechazada');
+				$newNotification->setMessage('Revinculación del trabajador.'.$reemployment->getUser()->getNames().' rechazada');
 				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
-		$notification->setSeen(1);
+		$notification->setSeen(0);
 		$history = $reemployment->getHistory();
 		date_default_timezone_set('America/Bogota');
 		$addToHistory = json_encode(array(
 			'user' => $user->getId(),
 			'responsible' => $user->getSpecialUser(),
-			'state' => 2, //Rechazado por VF
-			'message' => 'La lista de revinculación del personal docente fue rechazada por '.$user->getNames()." ".$user->getLastNames(),
+			'state' => 3, //Rechazado por VF
+			'message' => 'La revinculación del trabajador fue rechazada por '.$user->getNames()." ".$user->getLastNames(),
 			'userInput'=> $rejectText,
 			'date' => date('Y-m-d H:i:s'),
 		));
@@ -2824,7 +2821,7 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
 		$entityManager->persist($newNotification);
 		$entityManager->flush();
-		return new JsonResponse(['message'=>'Se ha rechazado el listado de revinculación del personal docente']);
+		return new JsonResponse(['message'=>'Se ha rechazado la revinculación del personal docente']);
 	}
 
 	#[Route('/contract/listWorkers/{typeId}', name: 'app_list_teachers')]
