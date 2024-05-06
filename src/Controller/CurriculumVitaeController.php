@@ -6,6 +6,7 @@ use App\Entity\AcademicTraining;
 use App\Entity\FurtherTraining;
 use App\Entity\IntellectualProduction;
 use App\Entity\Language;
+use App\Entity\Notification;
 use App\Entity\PersonalData;
 use App\Entity\Record;
 use App\Entity\ReferencesData;
@@ -757,4 +758,31 @@ class CurriculumVitaeController extends AbstractController
         
     }
 
+    #[Route('/curriculum-vitae/request-change-cv', name: 'app_curriculum_vitae_request_change_cv')]
+    public function requestChangeCv(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if (!$user) {
+            throw new UserNotFoundException('Usuario no encontrado');
+        }
+        $data = $request->request->all();
+        $newNotification = new Notification();
+        $newNotification->setSeen(0);
+        $newNotification->setUser($doctrine->getRepository(User::class)->findOneBy(['specialUser' => 'CTH', 'userType' => '8']));
+        $relatedEntity = array(
+            'applicantId' => $user->getId(),
+            'applicantName' => $user->getNames() . ' ' . $user->getLastNames(),
+            'entity' => $data['entity'],
+            'message' => $data['message'] ?? NULL
+        );
+        $newNotification->setRelatedEntity(json_encode($relatedEntity));
+        $newNotification->setMessage('solicita acceso para cambiar su hoja de vida');
+        // TODO: consider send email
+        $entityManager = $doctrine->getManager();
+        $entityManager->persist($newNotification);
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'Se ha enviado una notificación a Coordinación de Talento humano'
+        . ', quién decidirá el futuro de esta consulta.']);
+    }
 }
