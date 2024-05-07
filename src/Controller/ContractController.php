@@ -1806,8 +1806,8 @@ class ContractController extends AbstractController
 			if(!$user){
 				throw $this->createNotFoundException('No user found for id' . $data['id']);
 			}
-			$chargeId = $data['charge'];
-			$charge = $entityManager->getRepository(ContractCharges::class)->find($chargeId);
+			// $chargeId = $data['charge'];
+			// $charge = $entityManager->getRepository(ContractCharges::class)->find($chargeId);
 
 			$requisition = new Requisition();
 			
@@ -1819,30 +1819,30 @@ class ContractController extends AbstractController
 			$requisition->setTypeAnotherif($data['type_anotherIf'] ?? NULL);
 			$requisition->setNamesCharge($data['names_charge']);
 			$requisition->setJustification($data['justification']);
-			$requisition->setWorkDedication($data['work_dedication']);
-			$requisition->setHours($data['hours']);
-			$requisition->setDurationContract($data['duration']);
-			$requisition->setSpecificFunctions($data['specific_functions']);
-			$requisition->setSalary($data['salary']);
+			// $requisition->setWorkDedication($data['work_dedication']);
+			// $requisition->setHours($data['hours']);
+			// $requisition->setDurationContract($data['duration']);
+			// $requisition->setSpecificFunctions($data['specific_functions']);
+			// $requisition->setSalary($data['salary']);
 			$requisition->setApprobationDirective($data['approbation_directive']);
 			$requisition->setApprobationRector($data['approbation_rector']);
 			$requisition->setNumberAct($data['number_act']);
 			$requisition->setState(0); //Pendiente
-			$requisition->setCharge($charge);
+			$requisition->setCharge(NULL);
 			$requisition->setUser($user);
 
-			$initialDate = $data['initial_date'];
-			$finalDate = $data['final_date'];
+			// $initialDate = $data['initial_date'];
+			// $finalDate = $data['final_date'];
 
-			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$initialDate)){
-				$dateTimeInitial = new DateTime($initialDate);
-				$requisition -> setInitialDate($dateTimeInitial);
-			}	
+			// if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$initialDate)){
+			// 	$dateTimeInitial = new DateTime($initialDate);
+			// 	$requisition -> setInitialDate($dateTimeInitial);
+			// }	
 
-			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$finalDate)){
-				$dateTimeFinal = new DateTime($finalDate);
- 				$requisition -> setFinalDate($dateTimeFinal);
-			}
+			// if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$finalDate)){
+			// 	$dateTimeFinal = new DateTime($finalDate);
+ 			// 	$requisition -> setFinalDate($dateTimeFinal);
+			// }
 			
 			date_default_timezone_set('America/Bogota');
 			$addToHistory = json_encode(array(array(
@@ -1897,23 +1897,22 @@ class ContractController extends AbstractController
 
 			//--------------------------------------------------------------------------------
 			//----------------------- USERS IN REQUISITION
-			// $requisitionId = $requisition->getId();
-			// $requisitionEntity = $entityManager->getRepository(Requisition::class)->find($requisitionId);
+			$requisitionId = $requisition->getId();
+			$requisitionEntity = $entityManager->getRepository(Requisition::class)->find($requisitionId);
 
-			// $dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user_requisition']);
+			$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user_requisition']);
 			
-			// $userInRequisition = new UsersInRequisition();
-			// $userInRequisition->setRequisition($requisitionEntity);
-			// $userInRequisition->setUser($dataUserRequisition);
+			$userInRequisition = new UsersInRequisition();
+			$userInRequisition->setRequisition($requisitionEntity);
+			$userInRequisition->setUser($dataUserRequisition);
 			
-			// $entityManager->persist($userInRequisition);
-			// $entityManager->flush();
+			$entityManager->persist($userInRequisition);
+			$entityManager->flush();
 		}
 
 		return new JsonResponse(['status'=>'Success','message'=>'Requisición creada con éxito']);
 	}
 	
-
 	// LISTAR REQUISICIÓN CON EL ID DEL USUARIO SOLICITANTE
 	#[Route('contract/list-requisition/{id}', name:'app_contract_list_requisition')]
 	public function listRequisition(ManagerRegistry $doctrine, int $id): JsonResponse
@@ -1941,7 +1940,9 @@ class ContractController extends AbstractController
 			// 	}
 			// }
 
-			$charge = $requisition->getCharge();
+			//---------------------------------------------------------------------------------
+			//----------------------------- CAMBIOS DE REQUISICIÓN ----------------------------
+			//$charge = $requisition->getCharge();
 			$user = $requisition->getUser();
 
 			$requisitionData[] = [
@@ -1953,19 +1954,19 @@ class ContractController extends AbstractController
 					'type_anotherIF' => $requisition->getTypeAnotherif(),
 					'names_charge' => $requisition->getNamesCharge(),
 					'justification' => $requisition->getJustification(),
-					'work_dedication' => $requisition->getWorkDedication(),
-					'hours' => $requisition->getHours(),
-					'initial_date' => $requisition->getInitialDate()->format('Y-m-d'),
-					'final_date' => $requisition->getFinalDate()->format('Y-m-d'),
-					'duration' => $requisition->getDurationContract(),
-					'specific_functions' => $requisition->getSpecificFunctions(),
-					'salary' => $requisition->getSalary(),
+					// 'work_dedication' => $requisition->getWorkDedication(),
+					// 'hours' => $requisition->getHours(),
+					// 'initial_date' => $requisition->getInitialDate()->format('Y-m-d'),
+					// 'final_date' => $requisition->getFinalDate()->format('Y-m-d'),
+					// 'duration' => $requisition->getDurationContract(),
+					// 'specific_functions' => $requisition->getSpecificFunctions(),
+					// 'salary' => $requisition->getSalary(),
 					'approbation_directive' => $requisition->getApprobationDirective(),
 					'approbation_rector' => $requisition->getApprobationRector(),
 					'number_act' => $requisition->getNumberAct(),
 					'state' => $requisition->getState(),
 					'history' => $requisition->getHistory(),
-					'chargeName' => $charge->getName(),
+					//'chargeName' => $charge->getName(),
 					'username' => $user->getNames().' '.$user->getLastNames(),
 					'userIdentification' => $user->getIdentification(),
 					'idUserRequisition' => $user->getId()
@@ -2001,7 +2002,7 @@ class ContractController extends AbstractController
 		// 	}
 		// }
 
-		$charge = $requisition->getCharge();
+		//$charge = $requisition->getCharge();
 		$user = $requisition->getUser();
 
 		$requisitionData = [
@@ -2013,19 +2014,19 @@ class ContractController extends AbstractController
 				'type_anotherIF' => $requisition->getTypeAnotherif(),
 				'names_charge' => $requisition->getNamesCharge(),
 				'justification' => $requisition->getJustification(),
-				'work_dedication' => $requisition->getWorkDedication(),
-				'hours' => $requisition->getHours(),
-				'initial_date' => $requisition->getInitialDate()->format('Y-m-d'),
-				'final_date' => $requisition->getFinalDate()->format('Y-m-d'),
-				'duration' => $requisition->getDurationContract(),
-				'specific_functions' => $requisition->getSpecificFunctions(),
-				'salary' => $requisition->getSalary(),
+				// 'work_dedication' => $requisition->getWorkDedication(),
+				// 'hours' => $requisition->getHours(),
+				// 'initial_date' => $requisition->getInitialDate()->format('Y-m-d'),
+				// 'final_date' => $requisition->getFinalDate()->format('Y-m-d'),
+				// 'duration' => $requisition->getDurationContract(),
+				// 'specific_functions' => $requisition->getSpecificFunctions(),
+				// 'salary' => $requisition->getSalary(),
 				'approbation_directive' => $requisition->getApprobationDirective(),
 				'approbation_rector' => $requisition->getApprobationRector(),
 				'number_act' => $requisition->getNumberAct(),
 				'state' => $requisition->getState(),
 				'history' => $requisition->getHistory(),
-				'chargeName' => $charge->getName(),
+				//'chargeName' => $charge->getName(),
 				'username' => $user->getNames().' '.$user->getLastNames(),
 				'userIdentification' => $user->getIdentification(),
 				'idUserRequisition' => $user->getId()
@@ -2196,7 +2197,7 @@ class ContractController extends AbstractController
 			}
 	
 			foreach ($requisitions as $requisition) {
-				//$requisitionUser = [];
+				// $requisitionUser = [];
 				// $userInRequisitions = $doctrine->getRepository(UsersInRequisition::class)->findBy(['requisition' => $requisition->getId()]);
 	
 				// foreach ($userInRequisitions as $userInRequisition) {
@@ -2206,11 +2207,12 @@ class ContractController extends AbstractController
 				// 				$requisitionUser[] = [
 				// 						'names' => $userName->getNames(),
 				// 						'lastNames' => $userName->getLastNames(),
+				// 						'id' => $userName->getId()
 				// 				];
 				// 		}
 				// }
 	
-				$charge = $requisition->getCharge();
+				//$charge = $requisition->getCharge();
 				$user = $requisition->getUser();
 	
 				$requisitionData[] = [
@@ -2221,25 +2223,52 @@ class ContractController extends AbstractController
 					'type_anotherIF' => $requisition->getTypeAnotherif(),
 					'names_charge' => $requisition->getNamesCharge(),
 					'justification' => $requisition->getJustification(),
-					'work_dedication' => $requisition->getWorkDedication(),
-					'hours' => $requisition->getHours(),
-					'initial_date' => $requisition->getInitialDate()->format('Y-m-d'),
-					'final_date' => $requisition->getFinalDate()->format('Y-m-d'),
-					'duration' => $requisition->getDurationContract(),
-					'specific_functions' => $requisition->getSpecificFunctions(),
-					'salary' => $requisition->getSalary(),
+					// 'work_dedication' => $requisition->getWorkDedication(),
+					// 'hours' => $requisition->getHours(),
+					// 'initial_date' => $requisition->getInitialDate()->format('Y-m-d'),
+					// 'final_date' => $requisition->getFinalDate()->format('Y-m-d'),
+					// 'duration' => $requisition->getDurationContract(),
+					// 'specific_functions' => $requisition->getSpecificFunctions(),
+					// 'salary' => $requisition->getSalary(),
 					'approbation_directive' => $requisition->getApprobationDirective(),
 					'approbation_rector' => $requisition->getApprobationRector(),
 					'number_act' => $requisition->getNumberAct(),
 					'state' => $requisition->getState(),
 					'history' => $requisition->getHistory(),
-					'chargeName' => $charge->getName(),
+					//'chargeName' => $charge->getName(),
 					'username' => $user->getNames().' '.$user->getLastNames(),
 					'userIdentification' => $user->getIdentification()
 				];
 			}
 		}
 		return new JsonResponse(['status' => true, 'requisition_data' => $requisitionData]);
+	}
+
+	#[Route('contract/all-user-in-requisition', name:'app_contract_all_user_in_requisition')]
+	public function allUserInRequisition(ManagerRegistry $doctrine, Request $request): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$UserInRequisitions = $doctrine->getRepository(UsersInRequisition::class)->findAll();
+
+		if($token === false){
+			return new JsonResponse(['ERROR'=>'Token no válido']);
+		}else{
+			if (empty($UserInRequisitions)) {
+				return new JsonResponse(['status' => false, 'message' => 'No se encontraron usuarios en requisiciones.']);
+			}
+			foreach ($UserInRequisitions as $userInRequisition) {
+				$userName = $userInRequisition->getUser();
+
+				if ($userName) {
+						$requisitionUser[] = [
+							'names' => $userName->getNames(),
+							'lastNames' => $userName->getLastNames(),
+							'id' => $userName->getId()
+						];
+				}
+			}
+		}
+		return new JsonResponse(['status' => true, 'requisition_data' => $requisitionUser]);
 	}
 	//-------------------------------------------------------------------------------------------
 	//-----------------------------Reemployment-------------------------------------------------
