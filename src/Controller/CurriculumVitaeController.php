@@ -6,6 +6,7 @@ use App\Entity\AcademicTraining;
 use App\Entity\FurtherTraining;
 use App\Entity\IntellectualProduction;
 use App\Entity\Language;
+use App\Entity\Notification;
 use App\Entity\PersonalData;
 use App\Entity\Record;
 use App\Entity\ReferencesData;
@@ -66,7 +67,7 @@ function setTag($status){
     $statusMap = array(
         0 => array('severity' => 'info', 'icon' => 'upload', 'value' => 'Subido'),
         1 => array('severity' => '', 'icon' => 'check', 'value' => 'Aprobado'),
-        2 => array('severity' => 'danger', 'icon' => 'close', 'value' => 'Pendiente'),
+        2 => array('severity' => 'danger', 'icon' => 'close', 'value' => 'Rechazado'),
         3 => array('severity' => 'warning', 'icon' => 'hourglass_top', 'value' => 'Pendiente'),
         4 => array('severity' => 'info', 'icon' => 'edit', 'value' => 'Editado'),
     );
@@ -219,8 +220,8 @@ class CurriculumVitaeController extends AbstractController
         }
         $initialHistory = $entityObj->getHistory();
         $initialHistoryArray = json_decode($initialHistory, true);
-        if(!in_array(end($initialHistoryArray)['state'], [0,4])){
-            throw new AccessDeniedException('No tiene autorización realizar este cambio');
+        if(!in_array(end($initialHistoryArray)['state'], [0,3,4])){
+            throw new AccessDeniedException('No tiene autorización realizar este cambio, por favor comuniquese con Coordinación de talento humano');
         }
         $fieldsToUpdate = $request->request->all();
         $files = $request->files->all();
@@ -757,4 +758,58 @@ class CurriculumVitaeController extends AbstractController
         
     }
 
+    //TODO: create a state 5 for CV
+
+    #[Route('/curriculum-vitae/request-change-cv', name: 'app_curriculum_vitae_request_change_cv')]
+    public function requestChangeCv(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if (!$user) {
+            throw new UserNotFoundException('Usuario no encontrado');
+        }
+        $data = $request->request->all();
+        $newNotification = new Notification();
+        $newNotification->setSeen(0);
+        $newNotification->setUser($doctrine->getRepository(User::class)->findOneBy(['specialUser' => 'CTH', 'userType' => '8']));
+        $relatedEntity = array(
+            'id' => $data['id'],
+            'applicantId' => $user->getId(),
+            'applicantName' => $user->getNames() . ' ' . $user->getLastNames(),
+            'entity' => 'requestCV',
+            'cvSection' => $data['entity'],
+            'message' => $data['message'] ?? NULL
+        );
+        $newNotification->setRelatedEntity(json_encode($relatedEntity));
+        $newNotification->setMessage('solicita acceso para cambiar su hoja de vida');
+        // TODO: consider send email
+        $entityManager = $doctrine->getManager();
+        $entityManager->persist($newNotification);
+        $entityManager->flush();
+        return new JsonResponse(['message' => 'Se ha enviado una notificación a Coordinación de Talento humano'
+        . ', quién decidirá el futuro de esta consulta.']);
+    }
+
+    #[Route('/curriculum-vitae/get-single-item-cv', name: 'app_curriculum_vitae_get_single_item_cv')]
+    public function getSingleItemCV(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $entityName = $request->query->get('entityName');
+        $entityId = $request->query->get('entityId');
+        $user =  $vToken->getUserIdFromToken($token);
+        if (!$user) {
+            throw new UserNotFoundException('Usuario no encontrado');
+        }
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query
+            ->select('e')
+            ->from('App\Entity\\'.$entityName, 'e')
+            ->where('e.id = :id')
+            ->setParameter('id', $entityId);
+        $item = $query->getQuery()->getArrayResult();
+        $item = $item[0];
+        $item['history'] = json_decode($item['history'], true);
+        $item['history'] = end($item['history']);
+        return new JsonResponse($item);
+    }
 }

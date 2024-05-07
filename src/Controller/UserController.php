@@ -30,7 +30,8 @@ function createJwtResponse($user, $isUserInOpenCall) {
         'email' => $user->getEmail(),
         'alternate_email' => $user->getAlternateEmail(),
         'identification' => $user->getIdentification(),
-        'typeIdentification' => $user->getTypeIdentification()
+        'typeIdentification' => $user->getTypeIdentification(),
+        'userPhoto' => $user->getUrlPhoto()
     ];
     $payload = [
         'sub' => $user->getSub(),

@@ -28,7 +28,10 @@ class NotificationController extends AbstractController
         $query->select('n.id', 'n.message', 'n.seen', 'n.relatedEntity', 'u.names', 'u.lastNames')
             ->from('App\Entity\Notification', 'n')
             ->leftJoin('n.user', 'u')
-            ->where('n.user = :user')
+            ->andWhere('n.user = :user')
+            ->andWhere('n.seen = false')
+            ->orderBy('n.id', 'DESC')
+            ->setMaxResults(5)
             ->setParameter('user', $user);
         $allNotification = $query->getQuery()->getArrayResult();
         foreach($allNotification as &$value)
