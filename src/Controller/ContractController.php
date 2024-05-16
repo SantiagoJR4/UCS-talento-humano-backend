@@ -377,9 +377,17 @@ class ContractController extends AbstractController
 			$entityManager->flush();
 
 			$activedReemployment = $doctrine->getRepository(Reemployment::class)->findOneBy(['user' => $user]);
-			$activedReemployment->setState(2);
-			$doctrine->getManager()->persist($activedReemployment);
-			$doctrine->getManager()->flush();
+			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy(['user' => $user]);
+			
+			if ($activedReemployment !== null) {
+				$activedReemployment->setState(2);
+				$doctrine->getManager()->persist($activedReemployment);
+				$doctrine->getManager()->flush();
+			} elseif ($activedDirectContract !== null) {
+				$activedDirectContract->setState(3);
+				$doctrine->getManager()->persist($activedDirectContract);
+				$doctrine->getManager()->flush();
+			}
 
 			return new JsonResponse(['status' => 'Success', 'Code' => '200', 'message' => 'Contrato y asignación generados con éxito']);
 		}
@@ -1895,22 +1903,25 @@ class ContractController extends AbstractController
 			$entityManager->persist($newNotification);
 			$entityManager->flush();
 
-			//--------------------------------------------------------------------------------
-			//----------------------- USERS IN REQUISITION
-			$requisitionId = $requisition->getId();
-			$requisitionEntity = $entityManager->getRepository(Requisition::class)->find($requisitionId);
+			if (isset($data['user_requisition']) && $data['user_requisition'] !== null) {
+				// Obtenemos la requisición y el usuario
+				$requisitionId = $requisition->getId();
+				$requisitionEntity = $entityManager->getRepository(Requisition::class)->find($requisitionId);
+				$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user_requisition']);
+			
+				// Creamos el objeto UsersInRequisition y lo configuramos
+				$userInRequisition = new UsersInRequisition();
+				$userInRequisition->setRequisition($requisitionEntity);
+				$userInRequisition->setUser($dataUserRequisition);
+			
+				// Persistimos los datos si todo está bien
+				$entityManager->persist($userInRequisition);
+				$entityManager->flush();
+			}
 
-			$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user_requisition']);
-			
-			$userInRequisition = new UsersInRequisition();
-			$userInRequisition->setRequisition($requisitionEntity);
-			$userInRequisition->setUser($dataUserRequisition);
-			
-			$entityManager->persist($userInRequisition);
-			$entityManager->flush();
 		}
 
-		return new JsonResponse(['status'=>'Success','message'=>'Requisición creada con éxito']);
+		return new JsonResponse(['status'=>'Success','message'=>'Requisición creada con éxito', 'idRequisition' => $requisition->getId()]);
 	}
 	
 	// LISTAR REQUISICIÓN CON EL ID DEL USUARIO SOLICITANTE
@@ -2899,6 +2910,16 @@ class ContractController extends AbstractController
 			if(!$user){
 				throw $this->createNotFoundException('No user found for id' . $data['id']);
 			}
+
+			$chargeId = $entityManager->getRepository(ContractCharges::class)->find($data['chargeId']);
+			if(!$chargeId){
+				throw $this->createNotFoundException('No level found for id' . $data['id']);
+			}
+			$profileId = $entityManager->getRepository(Profile::class)->find($data['profileId']);
+			if(!$profileId){
+				throw $this->createNotFoundException('No profile found for id' . $data['id']);
+			}
+
 			$requisitionId = $data['requisitionId'];
 			$requisition = $entityManager->getRepository(Requisition::class)->find($requisitionId);
 
@@ -2907,9 +2928,32 @@ class ContractController extends AbstractController
 			$directContract = new DirectContract();
 			$currentDate = new DateTime();
 
+			$initialDate = $data['initial_date'];
+			$finalDate = $data['final_date'];
+
+			$solicitudeDate = new DateTime();
+			$directContract -> setSolicitudeDate($solicitudeDate);
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$initialDate)){
+				$dateTimeInitial = new DateTime($initialDate);
+				$directContract -> setInitialDate($dateTimeInitial);
+			}	
+
+			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$finalDate)){
+				$dateTimeFinal = new DateTime($finalDate);
+ 				$directContract -> setFinalDate($dateTimeFinal);
+			}
+
 			$directContract->setSolicitudeDate($currentDate);
+			$directContract->setWorkDedication($data['work_dedication']);
+			$directContract->setHours($data['hours']);
+			$directContract->setDurationContract($data['duration']);
+			$directContract->setSalary($data['salary']);
+			$directContract->setSpecificFunctions($data['specific_functions']);
 			$directContract->setUser($user);
 			$directContract->setRequisition($requisition);
+			$directContract->setCharge($chargeId);
+			$directContract->setProfile($profileId);
 			$directContract->setState(1); //Activa
       
       		date_default_timezone_set('America/Bogota');
@@ -2952,32 +2996,34 @@ class ContractController extends AbstractController
 
 					$directContract = [
 						'id' => $directContract->getId(),
+						'work_dedication' => $directContract->getWorkDedication(),
+						'hours' => $directContract->getHours(),
+						'initial_date' => $directContract->getInitialDate()->format('Y-m-d'),
+						'final_date' => $directContract->getFinalDate()->format('Y-m-d'),
+						'duration' => $directContract->getDurationContract(),
+						'specific_functions' => $directContract->getSpecificFunctions(),
+						'salary' => $directContract->getSalary(),
 						'solicitude_date' => $directContract->getSolicitudeDate()->format('Y-m-d'),
 						'state' => $directContract->getState(),
 						'history' => $directContract->getHistory(),
+						'chargeId' => $directContract->getCharge()->getId(),
+						'chargeName' => $directContract->getCharge()->getName(),
+						'typeEmployee' => $directContract->getCharge()->getTypeEmployee(),
+						'profileId' => $directContract->getProfile()->getId(),
+						'profileName' => $directContract->getProfile()->getName(),
+
 						'type_requisition' => $requisition->getTypeRequisition(),
 						'type_contract' => $requisition->getTypeContract(),
 						'type_anotherIF' => $requisition->getTypeAnotherif(),
 						'names_charge' => $requisition->getNamesCharge(),
-						'chargeId' => $requisition->getCharge()->getId(),
-						'chargeName' => $requisition->getCharge()->getName(),
-						'chargeWorkDedication' => $requisition->getCharge()->getWorkDedication(),
-						'chargeSalary' => $requisition->getCharge()->getSalary(),
-						'typeEmployee' => $requisition->getCharge()->getTypeEmployee(),
 						'justification' => $requisition->getJustification(),
-						'work_dedication' => $requisition->getWorkDedication(),
-						'hours' => $requisition->getHours(),
-						'initial_date' => $requisition->getInitialDate()->format('Y-m-d'),
-						'final_date' => $requisition->getFinalDate()->format('Y-m-d'),
-						'duration' => $requisition->getDurationContract(),
-						'specific_functions' => $requisition->getSpecificFunctions(),
-						'salary' => $requisition->getSalary(),
-						'username' => $user->getNames().' '.$user->getLastNames(),
-						'userTypeIdentification' => $user->getTypeIdentification(),
-						'userIdentification' => $user->getIdentification(),
-						'idUserRequisition' => $user->getId(),
-						'userEmail' => $user->getEmail(),
-						'userPhone' => $user->getPhone()
+
+						'user' => $user->getNames().' '.$user->getLastNames(),
+						'typeIdentification' => $user->getTypeIdentification(),
+						'identification' => $user->getIdentification(),
+						'userId' => $user->getId(),
+						'email' => $user->getEmail(),
+						'phone' => $user->getPhone()
 					];
 				}
 			}
@@ -2998,27 +3044,34 @@ class ContractController extends AbstractController
 
 		$directContractData = [
 			'id' => $directContract->getId(),
+			'work_dedication' => $directContract->getWorkDedication(),
+			'hours' => $directContract->getHours(),
+			'initial_date' => $directContract->getInitialDate()->format('Y-m-d'),
+			'final_date' => $directContract->getFinalDate()->format('Y-m-d'),
+			'duration' => $directContract->getDurationContract(),
+			'specific_functions' => $directContract->getSpecificFunctions(),
+			'salary' => $directContract->getSalary(),
 			'solicitude_date' => $directContract->getSolicitudeDate()->format('Y-m-d'),
 			'state' => $directContract->getState(),
 			'history' => $directContract->getHistory(),
+			'chargeId' => $directContract->getCharge()->getId(),
+			'chargeName' => $directContract->getCharge()->getName(),
+			'typeEmployee' => $directContract->getCharge()->getTypeEmployee(),
+			'profileId' => $directContract->getProfile()->getId(),
+			'profileName' => $directContract->getProfile()->getName(),
+
 			'type_requisition' => $requisition->getTypeRequisition(),
 			'type_contract' => $requisition->getTypeContract(),
 			'type_anotherIF' => $requisition->getTypeAnotherif(),
 			'names_charge' => $requisition->getNamesCharge(),
 			'justification' => $requisition->getJustification(),
-			'work_dedication' => $requisition->getWorkDedication(),
-			'hours' => $requisition->getHours(),
-			'initial_date' => $requisition->getInitialDate()->format('Y-m-d'),
-			'final_date' => $requisition->getFinalDate()->format('Y-m-d'),
-			'duration' => $requisition->getDurationContract(),
-			'specific_functions' => $requisition->getSpecificFunctions(),
-			'salary' => $requisition->getSalary(),
-			'username' => $user->getNames().' '.$user->getLastNames(),
-			'userTypeIdentification' => $user->getTypeIdentification(),
-			'userIdentification' => $user->getIdentification(),
-			'idUserRequisition' => $user->getId(),
-			'userEmail' => $user->getEmail(),
-			'userPhone' => $user->getPhone()
+
+			'user' => $user->getNames().' '.$user->getLastNames(),
+			'typeIdentification' => $user->getTypeIdentification(),
+			'identification' => $user->getIdentification(),
+			'userId' => $user->getId(),
+			'email' => $user->getEmail(),
+			'phone' => $user->getPhone()
 		];
 		return new JsonResponse(['status' => true, 'directContract_data' => $directContractData]);
 	}
@@ -3042,23 +3095,29 @@ class ContractController extends AbstractController
 
    			 $directContractData[] = [
 				'id' => $allDirectContract->getId(),
+				'work_dedication' => $allDirectContract->getWorkDedication(),
+				'hours' => $allDirectContract->getHours(),
+				'initial_date' => $allDirectContract->getInitialDate()->format('Y-m-d'),
+				'final_date' => $allDirectContract->getFinalDate()->format('Y-m-d'),
+				'duration' => $allDirectContract->getDurationContract(),
+				'specific_functions' => $allDirectContract->getSpecificFunctions(),
+				'salary' => $allDirectContract->getSalary(),
 				'solicitude_date' => $allDirectContract->getSolicitudeDate()->format('Y-m-d'),
 				'state' => $allDirectContract->getState(),
 				'history' => $allDirectContract->getHistory(),
+				'chargeId' => $allDirectContract->getCharge()->getId(),
+				'chargeName' => $allDirectContract->getCharge()->getName(),
+				'typeEmployee' => $allDirectContract->getCharge()->getTypeEmployee(),
+				'profileId' => $allDirectContract->getProfile()->getId(),
+				'profileName' => $allDirectContract->getProfile()->getName(),
 				'type_requisition' => $requisition->getTypeRequisition(),
 				'type_contract' => $requisition->getTypeContract(),
 				'type_anotherIF' => $requisition->getTypeAnotherif(),
 				'names_charge' => $requisition->getNamesCharge(),
 				'justification' => $requisition->getJustification(),
-				'work_dedication' => $requisition->getWorkDedication(),
-				'hours' => $requisition->getHours(),
-				'initial_date' => $requisition->getInitialDate()->format('Y-m-d'),
-				'final_date' => $requisition->getFinalDate()->format('Y-m-d'),
-				'duration' => $requisition->getDurationContract(),
-				'specific_functions' => $requisition->getSpecificFunctions(),
-				'salary' => $requisition->getSalary(),
+
 				'user' => $user->getNames().' '.$user->getLastNames(),
-				'userTypeIdentification' => $user->getTypeIdentification(),
+				'typeIdentification' => $user->getTypeIdentification(),
 				'identification' => $user->getIdentification(),
 				'userId' => $user->getId(),
 				'email' => $user->getEmail(),
