@@ -2936,12 +2936,12 @@ class ContractController extends AbstractController
 
 			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$initialDate)){
 				$dateTimeInitial = new DateTime($initialDate);
-				$directContract -> setInitialDate($dateTimeInitial);
+				$directContract -> setInitialDate($dateTimeInitial ?? NULL);
 			}	
 
 			if(preg_match('/^\d{4}-\d{2}-\d{2}$/',$finalDate)){
 				$dateTimeFinal = new DateTime($finalDate);
- 				$directContract -> setFinalDate($dateTimeFinal);
+ 				$directContract -> setFinalDate($dateTimeFinal ?? NULL);
 			}
 
 			$directContract->setSolicitudeDate($currentDate);
