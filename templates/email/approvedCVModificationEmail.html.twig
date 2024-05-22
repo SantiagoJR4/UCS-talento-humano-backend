@@ -32,39 +32,84 @@
     <div class="container">
         <img src="{{asset('http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/uploads/imagenes/logo_institucional_UniCat%c3%b3lica-02.png')}}"
             alt="logo Institucional" style="display: block; margin: 0 auto; max-width: 100%;">
-        <h1>Revisión de Hoja de Vida</h1>
+        <h1>Cambio en Hoja de Vida aprobado</h1>
         <p>
-        <span>Estimado/a {{ user.names }},</span>
-        <span>A continuación le informamos que se ha revisado su hoja de vida y se han encontrado los siguientes resultados de los ítems revisados.</span>
-        <span>Las encontrarás aquí abajo:</span>
-        {% if dataForEmail.personalData and && dataForEmail.personalData[0].state != 'Aprobado' %}
+        <span>Estimado/a {{user.names}} {{user.lastNames}},</span>
+        <span>A continuación le informamos que Coordinación de talento humano ha aprobado el cambio del ítem solicitado de la hoja de vida.</span>
+
+        {% switch entityName %}
+            {% case 'PersonalData' %}
+                <h3><strong>Datos Personales</strong></h3>
+                <p><i>Cambio de datos aprobado.</i></p>
+            {% case 'AcademicTraining' %}
+                <h3><strong>Formación Academica</strong></h3>
+                <p>{{item.titleName}} - {{item.nameUniversity}}</p>
+            {% case 'FurtherTraining' %}
+                <h3><strong>Formación Complementaria</strong></h3>
+                <p>{{item.titleName}} - {{item.institution}}</p>
+            {% case 'Language' %}
+                <h3><strong>Segunda Lengua</strong></h3>
+                <p>{{item.nameLanguage}}</p>
+            {% case 'WorkExperience' %}
+                <h3><strong>Experiencia Laboral</strong></h3>
+                <p>
+                    {{item.companyName}} - {{item.admissionDate|date('d/m/Y')}} a 
+                    {% if item.isWorking %}
+                        actualmente
+                    {% else %}
+                        {{item.retirementDate|date('d/m/Y')}}
+                    {% endif %}
+                </p>
+            {% case 'TeachingExperience' %}
+                <h3><strong>Experiencia Docente</strong></h3>
+                <p>
+                    {{item.nameUniversity}} - {{item.admissionDate|date('d/m/Y')}} a 
+                    {% if item.isActive %}
+                        actualmente
+                    {% else %}
+                        {{item.retirementDate|date('d/m/Y')}}
+                    {% endif %}
+                </p>
+            {% case 'IntellectualProduction' %}
+                <h3><strong>Producción Intelectual</strong></h3>
+                <p>{{item.titleProd ? (item.titleProd ~ ' - ' ~ item.urlVerification) : item.cvlac}}</p>
+            {% case 'References' %}
+                <h3><strong>Referencias</strong></h3>
+                <p>{{loop.index}}. {{item.names}}</p>
+            {% case 'Records' %}
+                <p><i>Cambio de datos aprobado.</i></p>
+            {% default %}
+                <p>ERROR... comuniquese con Talento Humano</p>
+        {% endswitch %}
+        {# <span>Las encontrarás aquí abajo:</span>
+        {% if dataForEmail.personalData %}
             <h3><strong>Datos Personales</strong></h3>
             <p><i>{{dataForEmail.personalData[0].state}}{{dataForEmail.personalData[0].reviewText ? ' - ' ~ dataForEmail.personalData[0].reviewText : null}}</i></p>
         {% endif %}
         {% if dataForEmail.academicTraining %}
             <h3><strong>Formación Academica</strong></h3>
-            {% for element in dataForEmail.academicTraining if element.state != 'Aprobado' %}
+            {% for element in dataForEmail.academicTraining %}
                 <p>{{loop.index}}. {{element.titleName}} - {{element.nameUniversity}}</p>
                 <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
             {% endfor %}
         {% endif %}
         {% if dataForEmail.furtherTraining %}
             <h3><strong>Formación Complementaria</strong></h3>
-            {% for element in dataForEmail.furtherTraining if element.state != 'Aprobado' %}
+            {% for element in dataForEmail.furtherTraining %}
                 <p>{{loop.index}}. {{element.titleName}} - {{element.institution}}</p>
                 <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
             {% endfor %}
         {% endif %}
         {% if dataForEmail.language %}
             <h3><strong>Segunda Lengua</strong></h3>
-            {% for element in dataForEmail.language if element.state != 'Aprobado' %}
+            {% for element in dataForEmail.language %}
                 <p>{{loop.index}}. {{element.nameLanguage}}</p>
                 <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
             {% endfor %}
         {% endif %}
         {% if dataForEmail.workExperience %}
             <h3><strong>Experiencia Laboral</strong></h3>
-            {% for element in dataForEmail.workExperience if element.state != 'Aprobado' %}
+            {% for element in dataForEmail.workExperience %}
                 <p>{{loop.index}}. {{element.companyName}} - {{element.admissionDate|date('d/m/Y')}} a 
                 {% if element.isWorking %}
                     actualmente
@@ -77,7 +122,7 @@
         {% endif %}
         {% if dataForEmail.teachingExperience %}
             <h3><strong>Experiencia Docente</strong></h3>
-            {% for element in dataForEmail.teachingExperience if element.state != 'Aprobado' %}
+            {% for element in dataForEmail.teachingExperience %}
                 <p>{{loop.index}}. {{element.nameUniversity}} - {{element.admissionDate|date('d/m/Y')}} a 
                 {% if element.isActive %}
                     actualmente
@@ -90,22 +135,22 @@
         {% endif %}
         {% if dataForEmail.intellectualProduction %}
             <h3><strong>Producción Intelectual</strong></h3>
-            {% for element in dataForEmail.intellectualProduction if element.state != 'Aprobado' %}
+            {% for element in dataForEmail.intellectualProduction %}
                 <p>{{loop.index}}. {{element.titleProd ? (element.titleProd ~ ' - ' ~ element.urlVerification) : element.cvlac}}</p>
                 <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
             {% endfor %}
-        {% endif %}
+        {% endif %} #}
         {# {% if dataForEmail.references %}
             <h3><strong>Referencias</strong></h3>
-            {% for element in dataForEmail.references if element.state != 'Aprobado' %}
+            {% for element in dataForEmail.references %}
                 <p>{{loop.index}}. {{element.names}}</p>
                 <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
             {% endfor %}
         {% endif %} #}
-        {% if dataForEmail.records && dataForEmail.records[0].state != 'Aprobado' %}
+        {# {% if dataForEmail.records %}
             <h3><strong>Antecedentes</strong></h3>
             <p><i>{{dataForEmail.records[0].state}}{{dataForEmail.records[0].reviewText ? ' - ' ~ dataForEmail.records[0].reviewText : null}}</i></p>
-        {% endif %}
+        {% endif %} #}
         </p>
         <p>Atentamente,</p>
         <p>Fundación Universitaria Católica del Sur.</p>

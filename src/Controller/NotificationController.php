@@ -21,7 +21,7 @@ class NotificationController extends AbstractController
         $token= $request->query->get('token');
         if($token === 'null' || $token === NULL || $token ==='')
         {
-            return new JsonResponse(['message' => 'There is not Token'], 200, []);
+            return new JsonResponse([], 200, []);
         }
         $user =  $vToken->getUserIdFromToken($token);
         $query = $doctrine->getManager()->createQueryBuilder();

@@ -761,7 +761,7 @@ class CurriculumVitaeController extends AbstractController
     //TODO: create a state 5 for CV
 
     #[Route('/curriculum-vitae/request-change-cv', name: 'app_curriculum_vitae_request_change_cv')]
-    public function requestChangeCv(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    public function requestChangeCv(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken, MailerInterface $mailer): JsonResponse
     {
         $token = $request->query->get('token');
         $user =  $vToken->getUserIdFromToken($token);
@@ -780,6 +780,21 @@ class CurriculumVitaeController extends AbstractController
             'cvSection' => $data['entity'],
             'message' => $data['message'] ?? NULL
         );
+        try{
+            $email = (new TemplatedEmail())
+                ->from('talento.humano@unicatolicadelsur.edu.co')
+                ->to('talento.humano@unicatolicadelsur.edu.co')
+                ->subject('Revisión de Hoja de vida')
+                ->htmlTemplate('email/requestForCVModificationEmail.html.twig')
+                ->context([
+                    'user' => $user,
+                ]); 
+            $mailer->send($email);
+            $message = 'La revisión fue enviada con éxito';
+        } catch (\Throwable $th){
+            $message = 'Error al enviar el correo:'.$th->getMessage();
+            return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
         $newNotification->setRelatedEntity(json_encode($relatedEntity));
         $newNotification->setMessage('solicita acceso para cambiar su hoja de vida');
         // TODO: consider send email
@@ -807,9 +822,91 @@ class CurriculumVitaeController extends AbstractController
             ->where('e.id = :id')
             ->setParameter('id', $entityId);
         $item = $query->getQuery()->getArrayResult();
+        $item = convertDateTimeToString($item);
         $item = $item[0];
-        $item['history'] = json_decode($item['history'], true);
-        $item['history'] = end($item['history']);
+        // $item['history'] = json_decode($item['history'], true);
+        // $item['history'] = end($item['history']);
         return new JsonResponse($item);
+    }
+
+    #[Route('/curriculum-vitae/approve-change-in-cv', name: 'app_curriculum_vitae_approve_change_in_cv')]
+    public function approveChangeInCV(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken, MailerInterface $mailer): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(!$user) {
+            throw new UserNotFoundException('Usuario no encontrado');
+        }
+        if(!($user->getSpecialUser() === 'CTH' || $user->getUserType() === 8)){
+            throw new AccessDeniedException('El usuario no tiene autorización para realizar este cambio');
+        }
+        $entityName = $request->request->get('entityName');
+        $entityId = $request->request->get('entityId');
+        $notificationId = $request->request->get('notificationId');
+        $item = $doctrine->getRepository('App\Entity\\'.$entityName)->find($entityId);
+        $targetUser = $item->getUser();
+        try{
+            $email = (new TemplatedEmail())
+                ->from('talento.humano@unicatolicadelsur.edu.co')
+                ->to('talento.humano@unicatolicadelsur.edu.co')
+                ->subject('Revisión de Hoja de vida')
+                ->htmlTemplate('email/requestForCVModificationEmail.html.twig')
+                ->context([
+                    'user' => $targetUser,
+                    'entityName' => $entityName,
+                    'item' => $item
+                ]); 
+            $mailer->send($email);
+            $message = 'La revisión fue enviada con éxito';
+        } catch (\Throwable $th){
+            $message = 'Error al enviar el correo:'.$th->getMessage();
+            return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
+        $notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+        $itemHistory = $item->getHistory();
+        $itemHistory = json_decode($itemHistory, true);
+        $itemHistory[] = [
+            'state' => 3,
+            'reviewText' => 'A la espera de un cambio',
+            'date'=>date('Y-m-d H:i:s'),
+            'call'=> NULL
+        ];
+        $item->setHistory(json_encode($itemHistory));
+        $notification->setSeen(1);
+        $entityManager = $doctrine->getManager();
+        $entityManager->flush();       
+        return new JsonResponse(['message' => 'El cambio de este ítem fue aprobado con éxito.']);
+    }
+
+    #[Route('/curriculum-vitae/reject-change-in-cv', name: 'app_curriculum_vitae_reject_change_in_cv')]
+    public function rejectChangeInCV(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken, MailerInterface $mailer): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(!$user) {
+            throw new UserNotFoundException('Usuario no encontrado');
+        }
+        if(!($user->getSpecialUser() === 'CTH' || $user->getUserType() === 8)){
+            throw new AccessDeniedException('El usuario no tiene autorización para realizar este cambio');
+        }
+        $entityName = $request->request->get('entityName');
+        $entityId = $request->request->get('entityId');
+        $notificationId = $request->request->get('notificationId');
+        $item = $doctrine->getRepository('App\Entity\\'.$entityName)->find($entityId);
+        $targetUser = $item->getUser();
+        $notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+        $itemHistory = $item->getHistory();
+        $itemHistory = json_decode($itemHistory, true);
+        $itemHistory[] = [
+            'state' => end($itemHistory)['state'],
+            'reviewText' => 'Se ha rechazado el cambio de este ítem',
+            'date'=>date('Y-m-d H:i:s'),
+            'call'=> NULL
+        ];
+        $item->setHistory(json_encode($itemHistory));
+        $notification->setSeen(1);
+        $entityManager = $doctrine->getManager();
+        $entityManager->flush();       
+        return new JsonResponse(['message' => 'El cambio de este ítem fue rechazado por Coordinación de talento humano.']);
     }
 }
