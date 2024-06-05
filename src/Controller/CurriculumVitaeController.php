@@ -44,6 +44,8 @@ function convertDateTimeToString($data) {
         } elseif($key === 'timeWorked'){
             $decodedValue = json_decode($value, true);
             $data[$key] = formatTimeWorked($decodedValue);
+        } elseif(in_array($key, ['placeOfResidence', 'placeOfBirth', 'placeOfExpedition'])){
+            $data[$key] = json_decode($value, true);
         }
     }
     return $data;
@@ -592,7 +594,12 @@ class CurriculumVitaeController extends AbstractController
         }
         foreach ($transformed as $key => $value) {
             $id = $value['id'];
-            $entity = 'App\\Entity\\'.ucFirst($value['entity']);
+            // TODO: Fucking fix this in frontend
+            if($value['entity'] === 'Records' || $value['entity'] === 'records'){
+                $entity = 'App\\Entity\\Record';
+            } else {
+                $entity = 'App\\Entity\\'.ucFirst($value['entity']);
+            }
             $entityManager = $doctrine->getManager();
             $entityObj = $entityManager->getRepository($entity)->find($id);
             $history = $entityObj->getHistory();
