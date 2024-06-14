@@ -1810,10 +1810,7 @@ class ContractController extends AbstractController
 		if($token === false){
 			return new JsonResponse(['error' => 'Token no válido']);
 		}else{
-			$user = $entityManager->getRepository(User::class)->find($data['user']);
-			if(!$user){
-				throw $this->createNotFoundException('No user found for id' . $data['id']);
-			}
+
 			// $chargeId = $data['charge'];
 			// $charge = $entityManager->getRepository(ContractCharges::class)->find($chargeId);
 
@@ -1837,7 +1834,7 @@ class ContractController extends AbstractController
 			$requisition->setNumberAct($data['number_act']);
 			$requisition->setState(0); //Pendiente
 			$requisition->setCharge(NULL);
-			$requisition->setUser($user);
+			$requisition->setUser($userLogueado);
 
 			// $initialDate = $data['initial_date'];
 			// $finalDate = $data['final_date'];
@@ -1854,10 +1851,10 @@ class ContractController extends AbstractController
 			
 			date_default_timezone_set('America/Bogota');
 			$addToHistory = json_encode(array(array(
-				'user' => $user->getId(),
-				'responsible' => $user->getSpecialUser(),
+				'user' => $userLogueado->getId(),
+				'responsible' => $userLogueado->getSpecialUser(),
 				'state' => 0,
-				'message' => 'La requisición fue solicitada por '.$user->getNames()." ".$user->getLastNames(),
+				'message' => 'La requisición fue solicitada por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
 				'date' => date('Y-m-d H:i:s'),
 			)));
 			$requisition->setHistory($addToHistory);
@@ -1865,43 +1862,43 @@ class ContractController extends AbstractController
 			$entityManager->persist($requisition);
 			$entityManager->flush();
 
-			$newNotification = new Notification();
-			$newNotification->setSeen(0);
-			$relatedEntity = array(	
-				'id' => $requisition->getId(),
-				'applicantId'=>$user->getId(),
-				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
-				'entity'=>'requisition'
-			);
-			$newNotification->setRelatedEntity(json_encode($relatedEntity));
+			// $newNotification = new Notification();
+			// $newNotification->setSeen(0);
+			// $relatedEntity = array(	
+			// 	'id' => $requisition->getId(),
+			// 	'applicantId'=>$user->getId(),
+			// 	'applicantName'=>$user->getNames()." ".$user->getLastNames(),
+			// 	'entity'=>'requisition'
+			// );
+			// $newNotification->setRelatedEntity(json_encode($relatedEntity));
 
-			switch($specialUser){
-				case 'CPSI':
-				case 'REC':
-				case 'CPB':
-				case 'DIRENF':
-				case 'DIRASS':
-				case 'CRCAD':
-				case 'AOASIC':
-				case 'CTH':
-				case 'VPSB':
-				case 'VAE':
-				case 'VII':
-				case 'ASIAC':
-					$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
-					$newNotification->setUser($userForNotification);
-					$newNotification->setMessage('Solicita la aprobación de una requisición.');
-					break;
-				case 'VF':
-					$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType'=>8]);
-					$newNotification->setUser($userForNotification);
-					$requisition->setState(1);
-					$newNotification->setMessage('Envia la solicitud de revinculación APROBADA por parte de Vicerrectoría Financiera.');
-					break;
-			}
+			// switch($specialUser){
+			// 	case 'CPSI':
+			// 	case 'REC':
+			// 	case 'CPB':
+			// 	case 'DIRENF':
+			// 	case 'DIRASS':
+			// 	case 'CRCAD':
+			// 	case 'AOASIC':
+			// 	case 'CTH':
+			// 	case 'VPSB':
+			// 	case 'VAE':
+			// 	case 'VII':
+			// 	case 'ASIAC':
+			// 		$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
+			// 		$newNotification->setUser($userForNotification);
+			// 		$newNotification->setMessage('Solicita la aprobación de una requisición.');
+			// 		break;
+			// 	case 'VF':
+			// 		$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType'=>8]);
+			// 		$newNotification->setUser($userForNotification);
+			// 		$requisition->setState(1);
+			// 		$newNotification->setMessage('Envia la solicitud de revinculación APROBADA por parte de Vicerrectoría Financiera.');
+			// 		break;
+			// }
 
-			$entityManager->persist($newNotification);
-			$entityManager->flush();
+			// $entityManager->persist($newNotification);
+			// $entityManager->flush();
 
 			if (isset($data['user_requisition']) && $data['user_requisition'] !== null) {
 				// Obtenemos la requisición y el usuario
@@ -1913,6 +1910,7 @@ class ContractController extends AbstractController
 				$userInRequisition = new UsersInRequisition();
 				$userInRequisition->setRequisition($requisitionEntity);
 				$userInRequisition->setUser($dataUserRequisition);
+				$userInRequisition->setState(2); //ganador revinculación
 			
 				// Persistimos los datos si todo está bien
 				$entityManager->persist($userInRequisition);
@@ -2194,36 +2192,27 @@ class ContractController extends AbstractController
 	}
 
 	#[Route('contract/all-requisitions', name: 'app_contract_all_requisitions')]
-	public function allRequisitions(ManagerRegistry $doctrine, Request $request): JsonResponse
+	public function allRequisitions(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
 	{
 		$token = $request->query->get('token');
 		$requisitionData = [];
-		$requisitions = $doctrine->getRepository(Requisition::class)->findAll();
 		
-		if($token === false){
+		$userLogueado = $vToken->getUserIdFromToken($token);
+		
+		if($userLogueado === false){
 			return new JsonResponse(['ERROR' => 'Token no válido']);
-		}else{
+		} else {
+			// Obtén el repositorio de la entidad Requisition
+			$requisitionRepository = $doctrine->getRepository(Requisition::class);
+			
+			// Filtra las requisiciones del usuario logueado
+			$requisitions = $requisitionRepository->findBy(['user' => $userLogueado]);
+			
 			if (empty($requisitions)) {
-					return new JsonResponse(['status' => false, 'message' => 'No se encontraron requisiciones.']);
+				return new JsonResponse(['status' => false, 'message' => 'No se encontraron requisiciones.']);
 			}
 	
 			foreach ($requisitions as $requisition) {
-				// $requisitionUser = [];
-				// $userInRequisitions = $doctrine->getRepository(UsersInRequisition::class)->findBy(['requisition' => $requisition->getId()]);
-	
-				// foreach ($userInRequisitions as $userInRequisition) {
-				// 		$userName = $userInRequisition->getUser();
-	
-				// 		if ($userName) {
-				// 				$requisitionUser[] = [
-				// 						'names' => $userName->getNames(),
-				// 						'lastNames' => $userName->getLastNames(),
-				// 						'id' => $userName->getId()
-				// 				];
-				// 		}
-				// }
-	
-				//$charge = $requisition->getCharge();
 				$user = $requisition->getUser();
 	
 				$requisitionData[] = [
@@ -2234,19 +2223,11 @@ class ContractController extends AbstractController
 					'type_anotherIF' => $requisition->getTypeAnotherif(),
 					'names_charge' => $requisition->getNamesCharge(),
 					'justification' => $requisition->getJustification(),
-					// 'work_dedication' => $requisition->getWorkDedication(),
-					// 'hours' => $requisition->getHours(),
-					// 'initial_date' => $requisition->getInitialDate()->format('Y-m-d'),
-					// 'final_date' => $requisition->getFinalDate()->format('Y-m-d'),
-					// 'duration' => $requisition->getDurationContract(),
-					// 'specific_functions' => $requisition->getSpecificFunctions(),
-					// 'salary' => $requisition->getSalary(),
 					'approbation_directive' => $requisition->getApprobationDirective(),
 					'approbation_rector' => $requisition->getApprobationRector(),
 					'number_act' => $requisition->getNumberAct(),
 					'state' => $requisition->getState(),
 					'history' => $requisition->getHistory(),
-					//'chargeName' => $charge->getName(),
 					'username' => $user->getNames().' '.$user->getLastNames(),
 					'userIdentification' => $user->getIdentification()
 				];
@@ -2254,28 +2235,136 @@ class ContractController extends AbstractController
 		}
 		return new JsonResponse(['status' => true, 'requisition_data' => $requisitionData]);
 	}
-
+	
 	#[Route('contract/all-user-in-requisition', name:'app_contract_all_user_in_requisition')]
 	public function allUserInRequisition(ManagerRegistry $doctrine, Request $request): JsonResponse
 	{
 		$token = $request->query->get('token');
 		$UserInRequisitions = $doctrine->getRepository(UsersInRequisition::class)->findAll();
-
+		$entityManager = $doctrine->getManager();
+	
 		if($token === false){
 			return new JsonResponse(['ERROR'=>'Token no válido']);
 		}else{
 			if (empty($UserInRequisitions)) {
 				return new JsonResponse(['status' => false, 'message' => 'No se encontraron usuarios en requisiciones.']);
 			}
+	
+			$requisitionUser = [];
 			foreach ($UserInRequisitions as $userInRequisition) {
-				$userName = $userInRequisition->getUser();
+				$user = $userInRequisition->getUser();
+				$requisition = $userInRequisition->getRequisition();
+				$state = $userInRequisition->getState();
+	
+				$existingDirectContract = $entityManager->getRepository(DirectContract::class)->findOneBy([
+					'requisition' => $requisition
+				]);
+	
+				if ($user) {
+					$userData = [
+						'user' => $user->getNames().' '.$user->getLastNames(),
+						'userId' => $user->getId(),
+						'email' => $user->getEmail(),
+						'phone' => $user->getPhone(),
+						'typeIdentification' => $user->getTypeIdentification(),
+						'identification' => $user->getIdentification(),
+						'stateUsersInRequisition' => $state,
+					];
+	
+					if ($existingDirectContract) {
+						$userData = array_merge($userData, [
+							'id' => $existingDirectContract->getId(),
+							'work_dedication' => $existingDirectContract->getWorkDedication(),
+							'hours' => $existingDirectContract->getHours(),
+							'initial_date' => $existingDirectContract->getInitialDate()->format('Y-m-d'),
+							'final_date' => $existingDirectContract->getFinalDate()->format('Y-m-d'),
+							'duration' => $existingDirectContract->getDurationContract(),
+							'specific_functions' => $existingDirectContract->getSpecificFunctions(),
+							'salary' => $existingDirectContract->getSalary(),
+							'solicitude_date' => $existingDirectContract->getSolicitudeDate()->format('Y-m-d'),
+							'state' => $existingDirectContract->getState(),
+							'history' => json_decode($existingDirectContract->getHistory(), true),
+							'chargeId' => $existingDirectContract->getCharge()->getId(),
+							'chargeName' => $existingDirectContract->getCharge()->getName(),
+							'typeEmployee' => $existingDirectContract->getCharge()->getTypeEmployee(),
+							'profileId' => $existingDirectContract->getProfile()->getId(),
+							'profileName' => $existingDirectContract->getProfile()->getName(),
+							'type_requisition' => $requisition->getTypeRequisition(),
+							'type_contract' => $requisition->getTypeContract(),
+							'type_anotherIF' => $requisition->getTypeAnotherif(),
+							'names_charge' => $requisition->getNamesCharge(),
+							'justification' => $requisition->getJustification(),
+						]);
+					}
+	
+					$requisitionUser[] = $userData;
+				}
+			}
+	
+			return new JsonResponse(['status' => true, 'requisition_data' => $requisitionUser]);
+		}
+	}
 
-				if ($userName) {
-						$requisitionUser[] = [
-							'names' => $userName->getNames(),
-							'lastNames' => $userName->getLastNames(),
-							'id' => $userName->getId()
+	#[Route('contract/list-user-in-requisition/{id}', name:'app_contract_list_user_in_requisition')]
+	public function listUserInRequisition(ManagerRegistry $doctrine, Request $request, int $id): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$user = $doctrine->getRepository(User::class)->find($id);
+		$entityManager = $doctrine->getManager();
+
+		if($token === false){
+			return new JsonResponse(['ERROR'=>'Token no válido']);
+		}else{
+			if(!$user){
+				return new JsonResponse(['status'=>false, 'message'=>'No se encontró el usuario']);
+			}
+			$usersInRequisitions = $doctrine->getRepository(UsersInRequisition::class)->findBy(['user' => $user]);
+			if(empty($usersInRequisitions)){
+				return new JsonResponse(['status'=>false,'message'=>'No se encontró usuarios en requisiciones']);
+			}else{
+				foreach ($usersInRequisitions as $userInRequisition) {
+					$user = $userInRequisition->getUser();
+					$requisition = $userInRequisition->getRequisition();
+					$state = $userInRequisition->getState();
+	
+					
+					$existingDirectContract = $entityManager->getRepository(DirectContract::class)->findOneBy([
+						'requisition' => $requisition
+					]);
+	
+					if ($user) {
+						$requisitionUser = [
+							'user' => $user->getNames().' '.$user->getLastNames(),
+							'userId' => $user->getId(),
+							'email' => $user->getEmail(),
+							'phone' => $user->getPhone(),
+							'typeIdentification' => $user->getTypeIdentification(),
+							'identification' => $user->getIdentification(),
+
+							'id' => $existingDirectContract->getId(),
+							'work_dedication' => $existingDirectContract->getWorkDedication(),
+							'hours' => $existingDirectContract->getHours(),
+							'initial_date' => $existingDirectContract->getInitialDate()->format('Y-m-d'),
+							'final_date' => $existingDirectContract->getFinalDate()->format('Y-m-d'),
+							'duration' => $existingDirectContract->getDurationContract(),
+							'specific_functions' => $existingDirectContract->getSpecificFunctions(),
+							'salary' => $existingDirectContract->getSalary(),
+							'solicitude_date' => $existingDirectContract->getSolicitudeDate()->format('Y-m-d'),
+							'state' => $existingDirectContract->getState(),
+							'history' => json_decode($existingDirectContract->getHistory(),true),
+							'chargeId' => $existingDirectContract->getCharge()->getId(),
+							'chargeName' => $existingDirectContract->getCharge()->getName(),
+							'typeEmployee' => $existingDirectContract->getCharge()->getTypeEmployee(),
+							'profileId' => $existingDirectContract->getProfile()->getId(),
+							'profileName' => $existingDirectContract->getProfile()->getName(),
+							'type_requisition' => $requisition->getTypeRequisition(),
+							'type_contract' => $requisition->getTypeContract(),
+							'type_anotherIF' => $requisition->getTypeAnotherif(),
+							'names_charge' => $requisition->getNamesCharge(),
+							'justification' => $requisition->getJustification(),
+							'stateUsersInRequisition' => $state,
 						];
+					}
 				}
 			}
 		}
@@ -2755,6 +2844,8 @@ class ContractController extends AbstractController
 		$idReemployment = json_decode($request->getContent(), true);
 
 		$reemployment = $doctrine->getRepository(Reemployment::class)->find($idReemployment);
+		$userSelected = $reemployment->getUser();
+		$namesUserSelected = $userSelected->getNames().''.$userSelected->getLastNames();
 	
 		if (!$reemployment) {
 			return new JsonResponse(['status' => false, 'message' => 'No se encontró solicitud de revinculación para el id ' . $idReemployment]);
@@ -2779,17 +2870,17 @@ class ContractController extends AbstractController
 			case 'VAE':
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType'=>1]);
 				$newNotification->setUser($userForNotification);
-				$newNotification->setMessage('Solicita la aprobación del profesor.'. $reemployment->getNames());
+				$newNotification->setMessage('Solicita la aprobación del profesor.'. $namesUserSelected);
 				break;
 			case 'VF':
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType'=>8]);
 				$newNotification->setUser($userForNotification);
-				$newNotification->setMessage('Aprobación del usuario.'. $idReemployment);
+				$newNotification->setMessage('Aprobación del usuario.'. $namesUserSelected);
 				break;
 			return new JsonResponse(['message'=>'Usuario no autorizado'],403,[]);
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
-		$notification->setSeen(0);
+		$notification->setSeen(1);
 		$history = $reemployment->getHistory();
 		date_default_timezone_set('America/Bogota');
 		$addToHistory = json_encode(array(
@@ -2902,14 +2993,11 @@ class ContractController extends AbstractController
 		$data = $request->request->all();
 
     	$userLogueado = $vToken->getUserIdFromToken($token);
+		$specialUser = $userLogueado->getSpecialUser();
 
 		if($token === false){
 			return new JsonResponse(['error' => 'Token no válido']);
 		}else{
-			$user = $entityManager->getRepository(User::class)->find($data['user']);
-			if(!$user){
-				throw $this->createNotFoundException('No user found for id' . $data['id']);
-			}
 
 			$chargeId = $entityManager->getRepository(ContractCharges::class)->find($data['chargeId']);
 			if(!$chargeId){
@@ -2949,24 +3037,86 @@ class ContractController extends AbstractController
 			$directContract->setHours($data['hours']);
 			$directContract->setDurationContract($data['duration']);
 			$directContract->setSalary($data['salary']);
-			$directContract->setSpecificFunctions($data['specific_functions']);
-			$directContract->setUser($user);
+			$directContract->setSpecificFunctions($data['specific_functions'] ?? NULL);
+			$directContract->setUser($userLogueado);
 			$directContract->setRequisition($requisition);
 			$directContract->setCharge($chargeId);
 			$directContract->setProfile($profileId);
-			$directContract->setState(1); //Activa
-      
+
+			// Verificamos si el usuario especial es 'VF'
+			if ($specialUser === 'VF') {
+				$directContract->setState(1); //Activa
+				$message = 'La contratación directa fue aprobada por Vicerrectoria Financiera y solicitada por ' . $userLogueado->getNames() . ' ' . $userLogueado->getLastNames();
+			} else {
+				$directContract->setState(0); //Pendiente aprobación por VF
+				$message = 'La contratación directa fue solicitada por ' . $userLogueado->getNames() . ' ' . $userLogueado->getLastNames();
+			}
+
       		date_default_timezone_set('America/Bogota');
 			$addToHistory = json_encode(array(array(
 				'user' => $userLogueado->getId(),
 				'responsible' => $userLogueado->getSpecialUser(),
-				'state' => 0,
-				'message' => 'La contratación directa fue solicitada por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
+				'state' => $specialUser === 'VF' ? 1 : 0,
+				'message' => $message,
 				'date' => date('Y-m-d H:i:s'),
 			)));
 			$directContract->setHistory($addToHistory);
 
 			$entityManager->persist($directContract);
+			$entityManager->flush();
+
+			$newNotification = new Notification();
+			$newNotification->setSeen(0);
+			$relatedEntity = array(
+				'id' => $directContract->getId(),
+				'applicantId' => $userLogueado->getId(),
+				'applicantName'=>$userLogueado->getNames()." ".$userLogueado->getLastNames(),
+				'entity'=>'directContract'
+			);
+			$newNotification->setRelatedEntity(json_encode($relatedEntity));
+			switch($specialUser){
+				case 'CPSI':
+				case 'REC':
+				case 'CPB':
+				case 'DIRENF':
+				case 'DIRASS':
+				case 'CRCAD':
+				case 'AOASIC':
+				case 'CTH':
+				case 'VPSB':
+				case 'VAE':
+				case 'VII':
+				case 'ASIAC':
+					$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
+					$newNotification->setUser($userForNotification);
+					$newNotification->setMessage('Solicita la aprobación de una solicitud de contratación directa.');
+					break;
+				case 'VF':
+					$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType'=>8]);
+					$newNotification->setUser($userForNotification);
+					$newNotification->setMessage('Solicitud de contratación directa APROBADA - Revisar módulo de contratación');
+					break;
+			}
+
+			$entityManager->persist($newNotification);
+
+			// Obtenemos la requisición y el usuario
+			$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user']);
+			$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
+				'requisition' => $requisition
+			]);
+
+			// Si existe la relación, actualizamos el usuario; si no, lanzamos una excepción
+			if ($existingUserInRequisition) {
+				$existingUserInRequisition->setUser($dataUserRequisition);
+				if ($specialUser === 'VF') {
+					$existingUserInRequisition->setState(1);
+				}
+				$entityManager->persist($existingUserInRequisition);
+			} else {
+				throw $this->createNotFoundException('No se encontró UsersInRequisition para la requisición dada.');
+			}
+
 			$entityManager->flush();
 
 		}
@@ -2989,7 +3139,7 @@ class ContractController extends AbstractController
 			$directContract = $doctrine->getRepository(DirectContract::class)->findBy(['user'=>$user]);
 			if(empty($directContract)){
 				return new JsonResponse(['status'=>false, 'message'=>'No se encontró la contratación directa']);
-			}else{
+			}else{ 	
 				foreach($directContract as $directContract){
 					$requisition = $directContract->getRequisition();
 					$user = $directContract->getUser();
@@ -3081,6 +3231,7 @@ class ContractController extends AbstractController
   {
 	$token = $request->query->get('token');
 	$userLogueado = $vToken->getUserIdFromToken($token);
+	$entityManager = $doctrine->getManager();
 
 	if($token === false){
 		return new JsonResponse(['ERROR' => 'Token no Válido']);
@@ -3093,6 +3244,13 @@ class ContractController extends AbstractController
 			$requisition = $allDirectContract->getRequisition();
     		$user = $allDirectContract->getUser();
 
+			$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
+				'requisition' => $requisition
+			]);
+
+			$stateUsersInRequisition = $existingUserInRequisition->getState();
+			$usersInRequisition = $existingUserInRequisition->getUser();
+
    			 $directContractData[] = [
 				'id' => $allDirectContract->getId(),
 				'work_dedication' => $allDirectContract->getWorkDedication(),
@@ -3104,7 +3262,7 @@ class ContractController extends AbstractController
 				'salary' => $allDirectContract->getSalary(),
 				'solicitude_date' => $allDirectContract->getSolicitudeDate()->format('Y-m-d'),
 				'state' => $allDirectContract->getState(),
-				'history' => $allDirectContract->getHistory(),
+				'history' => json_decode($allDirectContract->getHistory(),true),
 				'chargeId' => $allDirectContract->getCharge()->getId(),
 				'chargeName' => $allDirectContract->getCharge()->getName(),
 				'typeEmployee' => $allDirectContract->getCharge()->getTypeEmployee(),
@@ -3115,6 +3273,8 @@ class ContractController extends AbstractController
 				'type_anotherIF' => $requisition->getTypeAnotherif(),
 				'names_charge' => $requisition->getNamesCharge(),
 				'justification' => $requisition->getJustification(),
+				'usersInRequisition' => $usersInRequisition->getId(),
+				'stateUsersInRequisition' => $stateUsersInRequisition,
 
 				'user' => $user->getNames().' '.$user->getLastNames(),
 				'typeIdentification' => $user->getTypeIdentification(),
@@ -3128,4 +3288,157 @@ class ContractController extends AbstractController
 	return new JsonResponse(['status'=>true, 'allDirectContracts' => $directContractData]);
   }
 
+  #[Route('/contract/approve-directContract', name:'app_approve_directContract')]
+  public function approveDirectContract(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request): JsonResponse
+  {
+	$token = $request->query->get('token');
+	$notificationId = $request->query->get('notificationId');
+	$applicantId = $request->query->get('applicantId');
+	$user = $vToken->getUserIdFromToken($token);
+	$specialUser = $user->getSpecialUser();
+	$idDirectContract = json_decode($request->getContent(), true);
+
+	$entityManager = $doctrine->getManager();
+
+	$directContract = $doctrine->getRepository(DirectContract::class)->find($idDirectContract);
+	$userSelected = $directContract->getUser();
+	$idRequisition = $directContract->getRequisition();
+	$requisition = $entityManager->getRepository(Requisition::class)->find($idRequisition);
+	$namesUserSelected = $userSelected->getNames().''.$userSelected->getLastNames();
+
+	if(!$directContract){
+		return new JsonResponse(['status'=>false, 'message'=>'No se encontró solicitud de contratación directa']);
+	}
+
+	$directContract->setState(1);
+
+	$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
+		'requisition' => $requisition
+	]);
+
+	// Si existe la relación, actualizamos el usuario; si no, lanzamos una excepción
+	if ($existingUserInRequisition) {
+		$existingUserInRequisition->setState(1);
+		$entityManager->persist($existingUserInRequisition);
+	} else {
+		throw $this->createNotFoundException('No se encontró UsersInRequisition para la requisición dada.');
+	}
+
+	$newNotification = new Notification();
+	$newNotification->setSeen(0);
+	$userApplicant = $doctrine->getRepository(User::class)->find($applicantId);
+
+	$userNames = $userApplicant->getNames();
+	$relatedEntity = array(
+		'applicantId' => $applicantId,
+		'applicantName' => $userNames,
+		'entity'=>'directContract'
+	);
+	$newNotification->setRelatedEntity(json_encode($relatedEntity));
+	switch($specialUser){
+		case 'DIRENF':
+		case 'DIRASS':
+		case 'VAE':
+		case 'AOASIC':
+		case 'ASIAC':
+			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF', 'userType'=>1]);
+			$newNotification->setUser($userForNotification);
+			$newNotification->setMessage('Solicita la aprobación de una contratación directa de '.$namesUserSelected);
+			break;
+		case 'VF':
+			$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType'=>8]);
+			$newNotification->setUser($userForNotification);
+			$newNotification->setMessage('Aprobación del usuario.'. $namesUserSelected);
+			break;
+	}
+	$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+	$notification->setSeen(1);
+	$history = $directContract->getHistory();
+	date_default_timezone_set('America/Bogota');
+	$addToHistory = json_encode(array(
+		'user' => $user->getId(),
+		'responsible' => $user->getSpecialUser(),
+		'state' => 1, //Aprobado por VF
+		'message' => 'La solicitud de contratación directa del trabajador fue aprobado por '.$user->getNames()." ".$user->getLastNames(),
+		'date' => date('Y-m-d H:i:s'),
+	));
+	$newHistory = rtrim($history, ']').','.$addToHistory.']';
+	$directContract->setHistory($newHistory);
+	$entityManager->persist($newNotification);
+	$entityManager->flush();
+	return new JsonResponse(['message'=>'Se ha aprobado la solicitud de contratación directa exitosamente']);
+  }
+  #[Route('contract/reject-directContract', name:'app_reject_directContract')]
+  public function rejectDirectContract(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+  {
+	$token = $request->query->get('token');
+	$directContractId = $request->query->get('directContractId');
+	$notificationId = $request->query->get('notificationId');
+	$applicantId = $request->query->get('applicantId');
+	$rejectText = $request->request->get('rejectText');
+
+	$entityManager = $doctrine->getManager();
+
+	$user = $vToken->getUserIdFromToken($token);
+	$specialUser = $user->getSpecialUser();
+
+	$directContract = $doctrine->getRepository(DirectContract::class)->find($directContractId);
+	$idRequisition = $directContract->getRequisition();
+	$requisition = $entityManager->getRepository(Requisition::class)->find($idRequisition);
+	$userSelected = $directContract->getUser();
+	$namesUserSelected = $userSelected->getNames().''.$userSelected->getLastNames();
+
+	$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
+		'requisition' => $requisition
+	]);
+
+	// Si existe la relación, actualizamos el usuario; si no, lanzamos una excepción
+	if ($existingUserInRequisition) {
+		$existingUserInRequisition->setState(3);
+		$entityManager->persist($existingUserInRequisition);
+	} else {
+		throw $this->createNotFoundException('No se encontró UsersInRequisition para la requisición dada.');
+	}
+
+	if(!$directContract){
+		return new JsonResponse(['status'=>false,'message'=>'No se encontró solicitud de contratación directa']);
+	}
+	$directContract->setState(4); //Rechazado por VF
+	$newNotification = new Notification();
+	$newNotification->setSeen(0);
+	$userNames = $doctrine->getRepository(User::class)->find($applicantId);
+
+	$userNames= $userNames->getNames();
+	$relatedEntity = array(
+		'id'=>$directContractId,
+		'applicantId'=>$applicantId,
+		'applicantName'=>$userNames,
+		'entity'=>'directContract'
+	);
+	$newNotification->setRelatedEntity(json_encode($relatedEntity));
+	switch($specialUser){
+		case 'VF':
+			$userForNotification = $doctrine->getRepository(User::class)->find($applicantId);
+			$newNotification->setUser($userForNotification);
+			$newNotification->setMessage('Contratación directa del trabajador.'.$namesUserSelected.' rechazada');
+			break;
+	}
+	$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+	$notification->setSeen(0);
+	$history = $directContract->getHistory();
+	date_default_timezone_set('America/Bogota');
+	$addToHistory = json_encode(array(
+		'user' => $user->getId(),
+		'responsible' => $user->getSpecialUser(),
+		'state' => 3, //Rechazado por VF
+		'message' => 'La solicitud de contratación directa del trabajador fue rechazada por '.$user->getNames()." ".$user->getLastNames(),
+		'userInput'=> $rejectText,
+		'date' => date('Y-m-d H:i:s'),
+	));
+	$newHistory = rtrim($history, ']').','.$addToHistory.']';
+	$directContract->setHistory($newHistory);
+	$entityManager->persist($newNotification);
+	$entityManager->flush();
+	return new JsonResponse(['message'=>'Se ha rechazado la solicitud de contratación directa de '.$namesUserSelected]);
+  }
 }
