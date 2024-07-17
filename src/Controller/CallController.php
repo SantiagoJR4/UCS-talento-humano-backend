@@ -864,7 +864,7 @@ class CallController extends AbstractController
         $call = $userInCall->getCall();
         $callId = $call->getId();
         $entityManager->flush();
-        if( $askAgain !== NULL && $callId === 47 ){
+        if( $askAgain !== NULL ){
             $qb = function($class, $ids) use ($doctrine) {
                 return $doctrine->getRepository($class)
                     ->createQueryBuilder('e')
@@ -882,7 +882,7 @@ class CallController extends AbstractController
                 'workExperience' => $qb(WorkExperience::class, array_column($askAgain['workExperience'], 'id')),
                 'teachingExperience' => $qb(TeachingExperience::class, array_column($askAgain['teachingExperience'], 'id')),
                 'intellectualproduction' => $qb(IntellectualProduction::class, array_column($askAgain['intellectualproduction'], 'id')),
-                'references' => $qb(ReferencesData::class, array_column($askAgain['references'], 'id')),
+                // 'references' => $qb(ReferencesData::class, array_column($askAgain['references'], 'id')),
                 'records' => $qb(Record::class, array_column($askAgain['records'], 'id')),
             ];
             foreach ($askAgain as $key => $value) {

@@ -95,13 +95,13 @@
                 <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
             {% endfor %}
         {% endif %}
-        {% if dataForEmail.references %}
+        {# {% if dataForEmail.references %}
             <h3><strong>Revisar Referencias</strong></h3>
             {% for element in dataForEmail.references %}
                 <p>{{loop.index}}. {{element.names}}</p>
                 <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
             {% endfor %}
-        {% endif %}
+        {% endif %} #}
         {% if dataForEmail.records %}
             <h3><strong>Revisar Antecedentes</strong></h3>
             <p>Notas del Revisor: <i>{{dataForEmail.records[0].textReview}}</i></p>

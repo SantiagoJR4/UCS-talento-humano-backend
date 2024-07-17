@@ -215,4 +215,16 @@ class ScheduleController extends AbstractController
         $test = $queryTest->getQuery()->getArrayResult();
         return new JsonResponse($test, 200, []);
     }
+
+    #[Route('schedule/get-teachers', name: 'app_schedule_get_teachers')]
+    public function getTeachers(ManagerRegistry $doctrine, Request $request): JsonResponse
+    {
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query
+            ->select('u.id', "CONCAT(u.names, ' ', u.lastNames) AS fullName")
+            ->from('App\Entity\User', 'u')
+            ->where('u.userType = 2');
+        $teachers = $query->getQuery()->getArrayResult();
+        return new JsonResponse($teachers, 200, []);
+    }
 }
