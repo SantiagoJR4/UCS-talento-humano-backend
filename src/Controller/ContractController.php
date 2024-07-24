@@ -1824,16 +1824,10 @@ class ContractController extends AbstractController
 			$requisition->setTypeAnotherif($data['type_anotherIf'] ?? NULL);
 			$requisition->setNamesCharge($data['names_charge']);
 			$requisition->setJustification($data['justification']);
-			// $requisition->setWorkDedication($data['work_dedication']);
-			// $requisition->setHours($data['hours']);
-			// $requisition->setDurationContract($data['duration']);
-			// $requisition->setSpecificFunctions($data['specific_functions']);
-			// $requisition->setSalary($data['salary']);
 			$requisition->setApprobationDirective($data['approbation_directive']);
 			$requisition->setApprobationRector($data['approbation_rector']);
 			$requisition->setNumberAct($data['number_act']);
 			$requisition->setState(0); //Pendiente
-			$requisition->setCharge(NULL);
 			$requisition->setUser($userLogueado);
 
 			// $initialDate = $data['initial_date'];
@@ -2560,7 +2554,7 @@ class ContractController extends AbstractController
 		$token = $request->query->get('token');
 		$typeReemployment = $request->query->get('typeReemployment');
 
-		$userLogueado = $vToken->	getUserIdFromToken($token);
+		$userLogueado = $vToken->getUserIdFromToken($token);
 		$specialUser = $userLogueado->getSpecialUser();
 
 		if($token === false){
@@ -2842,10 +2836,12 @@ class ContractController extends AbstractController
 		$user = $vToken->getUserIdFromToken($token);
 		$specialUser = $user->getSpecialUser();
 		$idReemployment = json_decode($request->getContent(), true);
+		
+		$entityManager = $doctrine->getManager();
 
 		$reemployment = $doctrine->getRepository(Reemployment::class)->find($idReemployment);
 		$userSelected = $reemployment->getUser();
-		$namesUserSelected = $userSelected->getNames().''.$userSelected->getLastNames();
+		$namesUserSelected = $userSelected->getNames().' '.$userSelected->getLastNames();
 	
 		if (!$reemployment) {
 			return new JsonResponse(['status' => false, 'message' => 'No se encontró solicitud de revinculación para el id ' . $idReemployment]);
@@ -2853,32 +2849,32 @@ class ContractController extends AbstractController
 		$reemployment->setState(1);
 		$reemployment->setStateUser(3);
 
-		$newNotification = new Notification();
-		$newNotification->setSeen(0);
-		$userNames = $doctrine->getRepository(User::class)->find($applicantId);
+		if ($specialUser !== 'VF') {
+			$newNotification = new Notification();
+			$newNotification->setSeen(0);
+			$userNames = $doctrine->getRepository(User::class)->find($applicantId);
+			$userNames = $userNames->getNames();
+			$relatedEntity = array(
+				'id' => $idReemployment,
+				'applicantId' => $applicantId,
+				'applicantName' => $userNames,
+				'entity' => 'reemployment'
+			);
+			$newNotification->setRelatedEntity(json_encode($relatedEntity));
 	
-		$userNames= $userNames->getNames();
-		$relatedEntity = array(
-			'applicantId'=>$applicantId,
-			'applicantName'=>$userNames,
-			'entity'=>'reemployment'
-		);
-		$newNotification->setRelatedEntity(json_encode($relatedEntity));
-		switch($specialUser){
-			case 'DIRENF':
-			case 'DIRASS':
-			case 'VAE':
-				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType'=>1]);
-				$newNotification->setUser($userForNotification);
-				$newNotification->setMessage('Solicita la aprobación del profesor.'. $namesUserSelected);
-				break;
-			case 'VF':
-				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType'=>8]);
-				$newNotification->setUser($userForNotification);
-				$newNotification->setMessage('Aprobación del usuario.'. $namesUserSelected);
-				break;
-			return new JsonResponse(['message'=>'Usuario no autorizado'],403,[]);
+			switch ($specialUser) {
+				case 'DIRENF':
+				case 'DIRASS':
+				case 'VAE':
+					$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser' => 'VF', 'userType' => 1]);
+					$newNotification->setUser($userForNotification);
+					$newNotification->setMessage('Solicita la aprobación del profesor. ' . $namesUserSelected);
+					break;
+			}
+	
+			$entityManager->persist($newNotification);
 		}
+
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
 		$notification->setSeen(1);
 		$history = $reemployment->getHistory();
@@ -2892,8 +2888,8 @@ class ContractController extends AbstractController
 		));
 		$newHistory = rtrim($history, ']').','.$addToHistory.']';
 		$reemployment->setHistory($newHistory);
-		$entityManager = $doctrine->getManager();
-		$entityManager->persist($newNotification);
+		// $entityManager = $doctrine->getManager();
+		// $entityManager->persist($newNotification);
 		$entityManager->flush();
 		return new JsonResponse(['message'=>'Se ha aprobado la revinculación exitosamente']);
 
@@ -3037,7 +3033,13 @@ class ContractController extends AbstractController
 			$directContract->setHours($data['hours']);
 			$directContract->setDurationContract($data['duration']);
 			$directContract->setSalary($data['salary']);
-			$directContract->setSpecificFunctions($data['specific_functions'] ?? NULL);
+
+			$specificFunctions = $data['specific_functions'] ?? null;
+			if ($specificFunctions === 'null') {
+				$specificFunctions = null;
+			}
+
+			$directContract->setSpecificFunctions($specificFunctions);
 			$directContract->setUser($userLogueado);
 			$directContract->setRequisition($requisition);
 			$directContract->setCharge($chargeId);
@@ -3237,6 +3239,7 @@ class ContractController extends AbstractController
 		return new JsonResponse(['ERROR' => 'Token no Válido']);
 	}else{
 		$allDirectContracts = $doctrine->getRepository(DirectContract::class)->findAll();
+
 		if(empty($allDirectContracts)){
 			return new JsonResponse(['status'=>false, 'message'=>'No se encontraron contrataciones directas']);
 		}
@@ -3247,11 +3250,11 @@ class ContractController extends AbstractController
 			$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
 				'requisition' => $requisition
 			]);
-
+			
 			$stateUsersInRequisition = $existingUserInRequisition->getState();
 			$usersInRequisition = $existingUserInRequisition->getUser();
 
-   			 $directContractData[] = [
+			$directContractData[] = [
 				'id' => $allDirectContract->getId(),
 				'work_dedication' => $allDirectContract->getWorkDedication(),
 				'hours' => $allDirectContract->getHours(),
@@ -3274,6 +3277,7 @@ class ContractController extends AbstractController
 				'names_charge' => $requisition->getNamesCharge(),
 				'justification' => $requisition->getJustification(),
 				'usersInRequisition' => $usersInRequisition->getId(),
+				'namesUserInRequisition' => $usersInRequisition->getNames().' '.$usersInRequisition->getLastNames(),
 				'stateUsersInRequisition' => $stateUsersInRequisition,
 
 				'user' => $user->getNames().' '.$user->getLastNames(),
@@ -3301,10 +3305,9 @@ class ContractController extends AbstractController
 	$entityManager = $doctrine->getManager();
 
 	$directContract = $doctrine->getRepository(DirectContract::class)->find($idDirectContract);
-	$userSelected = $directContract->getUser();
 	$idRequisition = $directContract->getRequisition();
 	$requisition = $entityManager->getRepository(Requisition::class)->find($idRequisition);
-	$namesUserSelected = $userSelected->getNames().''.$userSelected->getLastNames();
+
 
 	if(!$directContract){
 		return new JsonResponse(['status'=>false, 'message'=>'No se encontró solicitud de contratación directa']);
@@ -3315,6 +3318,9 @@ class ContractController extends AbstractController
 	$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
 		'requisition' => $requisition
 	]);
+
+	$usersInRequisition = $existingUserInRequisition->getUser();
+	$namesUserSelected = $usersInRequisition->getNames().''.$usersInRequisition->getLastNames();
 
 	// Si existe la relación, actualizamos el usuario; si no, lanzamos una excepción
 	if ($existingUserInRequisition) {
@@ -3330,6 +3336,7 @@ class ContractController extends AbstractController
 
 	$userNames = $userApplicant->getNames();
 	$relatedEntity = array(
+		'id' => $idDirectContract,
 		'applicantId' => $applicantId,
 		'applicantName' => $userNames,
 		'entity'=>'directContract'
