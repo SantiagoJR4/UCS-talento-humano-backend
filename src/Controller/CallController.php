@@ -675,7 +675,7 @@ class CallController extends AbstractController
     #[Route('/assign-percentages-to-call', name: 'app_assign_percentages_to_call')]
     public function assignPercentagesToCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer): JsonResponse
     {
-        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $jwtKey = $_ENV['JWT_SECRET'];
         $token = $request->query->get('token');
         try {
             $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
@@ -836,7 +836,7 @@ class CallController extends AbstractController
     public function testEmailCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
     {
         //Inicio Token
-        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $jwtKey = $_ENV['JWT_SECRET'];
         $token = $request->query->get('token');
         try {
             $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));

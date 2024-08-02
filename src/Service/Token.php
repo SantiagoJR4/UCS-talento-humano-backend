@@ -18,7 +18,7 @@ class ValidateToken
 
     public function getUserIdFromToken(string $token): User
     {
-        $jwtKey = 'Un1c4t0l1c4';
+        $jwtKey = $_ENV['JWT_SECRET'];
         $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
         $sub= $decodedToken->sub;
         $user = $this->doctrine->getRepository(User::class)->findOneBy(['sub' => $sub]);

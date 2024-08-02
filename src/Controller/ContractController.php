@@ -43,7 +43,7 @@ class ContractController extends AbstractController
     //TODO: HACER TOKEN PARA SUPERUSUARIOS
     public function validateTokenSuper(Request $request): JsonResponse
     {
-        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $jwtKey = $_ENV['JWT_SECRET'];
         $token = $request->query->get('token');
         try {
             $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));

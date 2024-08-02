@@ -22,7 +22,7 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 
 function createJwtResponse($user, $isUserInOpenCall) {
-    $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+    $jwtKey = $_ENV['JWT_SECRET'];
     $resp = [
         'names' => $user->getNames(),
         'lastNames' => $user->getLastNames(),
@@ -47,7 +47,7 @@ function createJwtResponse($user, $isUserInOpenCall) {
 }
 
 function createAccountRecoveryLink($userID) {
-    $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+    $jwtKey = $_ENV['JWT_SECRET'];
     $payload = [
         'id' =>  $userID,
         'iat' => time(),
@@ -176,7 +176,7 @@ class UserController extends AbstractController
     #[Route('/login', name: 'login')]
     public function loginJwt(Request $request, ManagerRegistry $doctrine, UserService $userService): JsonResponse
     {
-        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $jwtKey = $_ENV['JWT_SECRET'];
         $data = json_decode($request->request->get('json'), true);
         $passHash = hash('sha256', $data['password']);
         $user = $doctrine->getRepository(User::class)->findOneBy([
@@ -227,7 +227,7 @@ class UserController extends AbstractController
     #[Route('/validate-token', name: 'app_validate_token')]
     public function validateToken(Request $request, ManagerRegistry $doctrine): JsonResponse
     {
-        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $jwtKey = $_ENV['JWT_SECRET'];
         $token = $request->query->get('token');
         try {
             $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
@@ -322,7 +322,7 @@ class UserController extends AbstractController
     #[Route('/validate-for-new-password', name: 'app_validate_for_new_password')]
     public function validateForNewPassword(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
     {
-        $jwtKey = 'Un1c4t0l1c4'; //TODO: move this to .env
+        $jwtKey = $_ENV['JWT_SECRET'];
         $token = $request->query->get('token');
         try {
             $decodedToken = JWT::decode(trim($token, '"'), new Key($jwtKey, 'HS256'));
@@ -337,7 +337,7 @@ class UserController extends AbstractController
     #[Route('/change-password', name: 'app_change-password')]
     public function changePassword(ManagerRegistry $doctrine, Request $request, MailerInterface $mailer): JsonResponse
     {
-        $jwtKey = 'Un1c4t0l1c4';
+        $jwtKey = $_ENV['JWT_SECRET'];
         $token = $request->query->get('token');
         $password = $request->query->get('password');
         $passHash = hash('sha256', $password);
