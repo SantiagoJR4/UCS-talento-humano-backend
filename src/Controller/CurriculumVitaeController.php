@@ -949,11 +949,14 @@ class CurriculumVitaeController extends AbstractController
         $qb = function($class, $id) use ($doctrine) {
             return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
         };
-        return new JsonResponse([
+        $cvData = [
             'user' => [
                 'names' => $user->getNames(),
-                'lastNames' => $user->lastNames(),
-                'typeIdentification' => $end
+                'lastNames' => $user->getLastNames(),
+                'typeIdentification' => $user->getTypeIdentification(),
+                'identification' => $user->getIdentification(),
+                'email' => $user->getEmail(),
+                'phone' => $user->getPhone()
             ],
             'personalData' => parseCvData($qb(PersonalData::class, $userId)),
             'academicTraining' => parseCvData($qb(AcademicTraining::class, $userId)),
@@ -961,10 +964,8 @@ class CurriculumVitaeController extends AbstractController
             'language' => parseCvData($qb(Language::class, $userId)),
             'workExperience' => parseCvData($qb(WorkExperience::class, $userId)),
             'teachingExperience' => parseCvData($qb(TeachingExperience::class, $userId)),
-            'intellectualproduction' => parseCvData($qb(IntellectualProduction::class, $userId)),
-            'references' => parseCvData($qb(ReferencesData::class, $userId)),
             'records' => parseCvData($qb(Record::class, $userId))
-        ]);
+        ];
         $entitiesForAnnexes = [
             'PersonalData' => [
                 'entity' => 'App\Entity\PersonalData',
@@ -1023,8 +1024,7 @@ class CurriculumVitaeController extends AbstractController
         }
 
         $htmlContent = $this->renderView('pdf/cv-template.html.twig', [
-            'title' => 'PDF Title',
-            'content' => 'This is the content of the PDF'
+            'cvData' => $cvData
         ]);
 
         $pdfContent = $this->pdfService->generatePdf($htmlContent);
@@ -1040,14 +1040,14 @@ class CurriculumVitaeController extends AbstractController
             return new JsonResponse(['Message' => 'Ghostscript not found']);
         }
         $tmpPath = sys_get_temp_dir();
-        $cvData = tempnam($tmpPath, 'pdf_') . '.pdf';
-        file_put_contents($cvData, $pdfContent);
+        $cvDataPath = tempnam($tmpPath, 'pdf_') . '.pdf';
+        file_put_contents($cvDataPath, $pdfContent);
         try {
             $ghostscript = new Ghostscript($binPath, $tmpPath);
             $ghostscript->merge(
                 'C:\\Users\\DesarrolladorOasic1\\proyectos\\symfony\\pdfs-creados',
                 'hoja de vida de ' . $user->getNames() . ' ' . $user->getLastNames() . '.pdf',
-                array_merge(['cvData' => $cvData], $flattenAndFilterArray)
+                array_merge(['cvDataPath' => $cvDataPath], $flattenAndFilterArray)
             );
         } catch (\Throwable $th) {
             return new JsonResponse(['error' => $th->getMessage()], 500);

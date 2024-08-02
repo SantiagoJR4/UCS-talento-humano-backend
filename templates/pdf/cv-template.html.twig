@@ -8,7 +8,30 @@
     </style>
 </head>
 <body>
-    <h1>{{ title }}</h1>
-    <p>{{ content }}</p>
+    <h1>HOJA DE VIDA</h1>
+    {% if cvData.user %}
+    <h2>Usuario</h2>
+    {% endif %}
+    {% if cvData.personalData %}
+    <h2>Datos Personales</h2>
+    {% endif %}
+    {% if cvData.academicTraining %}
+    <h2>Formación Académica</h2>
+    {% endif %}
+    {% if cvData.furtherTraining %}
+    <h2>Formación Complementaria</h2>
+    {% endif %}
+    {% if cvData.language %}
+    <h2>Lenguaje</h2>
+    {% endif %}
+    {% if cvData.workExperience %}
+    <h2>Experiencia Laboral</h2>
+    {% endif %}
+    {% if cvData.teachingExperience %}
+    <h2>Experiencia Docente</h2>
+    {% endif %}
+    {% if cvData.records %}
+    <h2>Antecendentes</h2>
+    {% endif %}
 </body>
 </html>
