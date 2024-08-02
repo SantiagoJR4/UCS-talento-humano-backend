@@ -13,10 +13,11 @@ use App\Entity\ReferencesData;
 use App\Entity\TeachingExperience;
 use App\Entity\User;
 use App\Entity\WorkExperience;
+use App\Service\PdfService;
 use App\Service\ValidateToken;
-use DateInterval;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
+use Ordinary9843\Ghostscript;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
@@ -31,10 +32,25 @@ use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 
 //TODO: Hacer global
 
-function convertDateTimeToString($data) {
+function flattenArray($array, $prefix = '') {
+    $result = [];
+    foreach ($array as $key => $value) {
+        if (is_array($value)) {
+            $result = array_merge($result, flattenArray($value, $prefix . $key . '-'));
+        } else {
+            $result[$prefix . $key] = $value;
+        }
+    }
+    $filteredArray = array_filter($result, function($value) {
+        return $value !== null;
+    });
+    return $filteredArray;
+}
+
+function parseCvData($data) {
     foreach ($data as $key => $value) {
         if (is_array($value)) {
-            $data[$key] = convertDateTimeToString($value);
+            $data[$key] = parseCvData($value);
         } elseif ($value instanceof \DateTime) {
             $data[$key] = $value->format('Y-m-d H:i:s');
         } else if($key === 'history'){
@@ -96,6 +112,14 @@ function formatTimeWorked($timeWorked): string {
 
 class CurriculumVitaeController extends AbstractController
 {
+
+    private $pdfService;
+
+    public function __construct(PdfService $pdfService)
+    {
+        $this->pdfService = $pdfService;
+    }
+
     #[Route('/curriculum-vitae/read-cv', name: 'app_curriculum_vitae_read')]
     public function read(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken  ): JsonResponse
     {
@@ -107,15 +131,15 @@ class CurriculumVitaeController extends AbstractController
         };
         return new JsonResponse([
             'user' => [$user->getUrlPhoto(), $userId],
-            'personalData' => convertDateTimeToString($qb(PersonalData::class, $userId)),
-            'academicTraining' => convertDateTimeToString($qb(AcademicTraining::class, $userId)),
-            'furtherTraining' => convertDateTimeToString($qb(FurtherTraining::class, $userId)),
-            'language' => convertDateTimeToString($qb(Language::class, $userId)),
-            'workExperience' => convertDateTimeToString($qb(WorkExperience::class, $userId)),
-            'teachingExperience' => convertDateTimeToString($qb(TeachingExperience::class, $userId)),
-            'intellectualproduction' => convertDateTimeToString($qb(IntellectualProduction::class, $userId)),
-            'references' => convertDateTimeToString($qb(ReferencesData::class, $userId)),
-            'records' => convertDateTimeToString($qb(Record::class, $userId))
+            'personalData' => parseCvData($qb(PersonalData::class, $userId)),
+            'academicTraining' => parseCvData($qb(AcademicTraining::class, $userId)),
+            'furtherTraining' => parseCvData($qb(FurtherTraining::class, $userId)),
+            'language' => parseCvData($qb(Language::class, $userId)),
+            'workExperience' => parseCvData($qb(WorkExperience::class, $userId)),
+            'teachingExperience' => parseCvData($qb(TeachingExperience::class, $userId)),
+            'intellectualproduction' => parseCvData($qb(IntellectualProduction::class, $userId)),
+            'references' => parseCvData($qb(ReferencesData::class, $userId)),
+            'records' => parseCvData($qb(Record::class, $userId))
         ]);
     }
 
@@ -129,16 +153,16 @@ class CurriculumVitaeController extends AbstractController
             return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
         };
         return new JsonResponse([
-            'personalData' => convertDateTimeToString($qb(PersonalData::class, $user)),
-            'academicTraining' => convertDateTimeToString($qb(AcademicTraining::class, $user)),
-            'furtherTraining' => convertDateTimeToString($qb(FurtherTraining::class, $user)),
-            'language' => convertDateTimeToString($qb(Language::class, $user)),
-            'workExperience' => convertDateTimeToString($qb(WorkExperience::class, $user)),
-            'teachingExperience' => convertDateTimeToString($qb(TeachingExperience::class, $user)),
-            'intellectualproduction' => convertDateTimeToString($qb(IntellectualProduction::class, $user)),
-            'references' => convertDateTimeToString($qb(ReferencesData::class, $user)),
-            'records' => convertDateTimeToString($qb(Record::class, $user))
-            // 'evaluationCV' => convertDateTimeToString($qb(EvaluationCv::class, $user))
+            'personalData' => parseCvData($qb(PersonalData::class, $user)),
+            'academicTraining' => parseCvData($qb(AcademicTraining::class, $user)),
+            'furtherTraining' => parseCvData($qb(FurtherTraining::class, $user)),
+            'language' => parseCvData($qb(Language::class, $user)),
+            'workExperience' => parseCvData($qb(WorkExperience::class, $user)),
+            'teachingExperience' => parseCvData($qb(TeachingExperience::class, $user)),
+            'intellectualproduction' => parseCvData($qb(IntellectualProduction::class, $user)),
+            'references' => parseCvData($qb(ReferencesData::class, $user)),
+            'records' => parseCvData($qb(Record::class, $user))
+            // 'evaluationCV' => parseCvData($qb(EvaluationCv::class, $user))
         ]);
 
     }
@@ -731,15 +755,15 @@ class CurriculumVitaeController extends AbstractController
         
         foreach ($allEmployees as &$employee) {
             $response = [
-                'personalData' => convertDateTimeToString($queryOneCV('personal_data', $employee['id'])),
-                'academicTraining' => convertDateTimeToString($queryOneCV('academic_training', $employee['id'])),
-                'furtherTraining' => convertDateTimeToString($queryOneCV('further_training', $employee['id'])),
-                'language' => convertDateTimeToString($queryOneCV('language', $employee['id'])),
-                'workExperience' => convertDateTimeToString($queryOneCV('work_experience', $employee['id'])),
-                'teachingExperience' => convertDateTimeToString($queryOneCV('teaching_experience', $employee['id'])),
-                'intellectualProduction' => convertDateTimeToString($queryOneCV('intellectual_production', $employee['id'])),
-                // 'references' => convertDateTimeToString($queryOneCV('references_data', $employee['id'])),
-                'records' => convertDateTimeToString($queryOneCV('record', $employee['id']))
+                'personalData' => parseCvData($queryOneCV('personal_data', $employee['id'])),
+                'academicTraining' => parseCvData($queryOneCV('academic_training', $employee['id'])),
+                'furtherTraining' => parseCvData($queryOneCV('further_training', $employee['id'])),
+                'language' => parseCvData($queryOneCV('language', $employee['id'])),
+                'workExperience' => parseCvData($queryOneCV('work_experience', $employee['id'])),
+                'teachingExperience' => parseCvData($queryOneCV('teaching_experience', $employee['id'])),
+                'intellectualProduction' => parseCvData($queryOneCV('intellectual_production', $employee['id'])),
+                // 'references' => parseCvData($queryOneCV('references_data', $employee['id'])),
+                'records' => parseCvData($queryOneCV('record', $employee['id']))
             ];
 
             $filteredResponse = array_filter($response, function ($value) {
@@ -829,7 +853,7 @@ class CurriculumVitaeController extends AbstractController
             ->where('e.id = :id')
             ->setParameter('id', $entityId);
         $item = $query->getQuery()->getArrayResult();
-        $item = convertDateTimeToString($item);
+        $item = parseCvData($item);
         $item = $item[0];
         // $item['history'] = json_decode($item['history'], true);
         // $item['history'] = end($item['history']);
@@ -915,5 +939,119 @@ class CurriculumVitaeController extends AbstractController
         $entityManager = $doctrine->getManager();
         $entityManager->flush();       
         return new JsonResponse(['message' => 'El cambio de este ítem fue rechazado por Coordinación de talento humano.']);
+    }
+
+    #[Route('/curriculum-vitae/download-cv', name: 'app_files_merge_pdfs')]
+    public function mergePdfs(ManagerRegistry $doctrine , Request $request): JsonResponse
+    {
+        $userId = $request->query->get('userId');
+        $user = $doctrine->getRepository(User::class)->find($userId);
+        $qb = function($class, $id) use ($doctrine) {
+            return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
+        };
+        return new JsonResponse([
+            'user' => [
+                'names' => $user->getNames(),
+                'lastNames' => $user->lastNames(),
+                'typeIdentification' => $end
+            ],
+            'personalData' => parseCvData($qb(PersonalData::class, $userId)),
+            'academicTraining' => parseCvData($qb(AcademicTraining::class, $userId)),
+            'furtherTraining' => parseCvData($qb(FurtherTraining::class, $userId)),
+            'language' => parseCvData($qb(Language::class, $userId)),
+            'workExperience' => parseCvData($qb(WorkExperience::class, $userId)),
+            'teachingExperience' => parseCvData($qb(TeachingExperience::class, $userId)),
+            'intellectualproduction' => parseCvData($qb(IntellectualProduction::class, $userId)),
+            'references' => parseCvData($qb(ReferencesData::class, $userId)),
+            'records' => parseCvData($qb(Record::class, $userId))
+        ]);
+        $entitiesForAnnexes = [
+            'PersonalData' => [
+                'entity' => 'App\Entity\PersonalData',
+                'alias' => 'pd',
+                'fields' => [
+                    'identificationPdf', 'epsPdf', 'pensionPdf',
+                    'bankAccountPdf', 'rutPdf', 'severanceFundPdf'
+                ],
+            ],
+            'AcademicTraining' => [
+                'entity' => 'App\Entity\AcademicTraining',
+                'alias' => 'at',
+                'fields' => [
+                    'degreePdf', 'diplomaPdf', 'certifiedTitlePdf'
+                ],
+            ],
+            'FurtherTraining' => [
+                'entity' => 'App\Entity\FurtherTraining',
+                'alias' => 'ft',
+                'fields' => ['certifiedPdf'],
+            ],
+            'Language' => [
+                'entity' => 'App\Entity\Language',
+                'alias' => 'lg',
+                'fields' => ['certifiedPdf'],
+            ],
+            'WorkExperience' => [
+                'entity' => 'App\Entity\WorkExperience',
+                'alias' => 'we',
+                'fields' => ['certifiedPdf'],
+            ],
+            'TeachingExperience' => [
+                'entity' => 'App\Entity\TeachingExperience',
+                'alias' => 'te',
+                'fields' => ['certifiedPdf'],
+            ],
+            'Record' => [
+                'entity' => 'App\Entity\Record',
+                'alias' => 'r',
+                'fields' => [
+                    'taxRecordPdf', 'judicialRecordPdf', 'disciplinaryRecordPdf', 'correctiveMeasuresPdf'
+                ],
+            ],
+        ];
+
+        $results = [];
+
+        foreach ($entitiesForAnnexes as $key => $entityData) {
+            $query = $doctrine->getManager()->createQueryBuilder();
+            $query->select(implode(', ', array_map(fn($field) => "{$entityData['alias']}.$field", $entityData['fields'])))
+                ->from($entityData['entity'], $entityData['alias'])
+                ->where("{$entityData['alias']}.user = :user")
+                ->setParameter('user', $user);
+            
+            $results[$key] = $query->getQuery()->getArrayResult();
+        }
+
+        $htmlContent = $this->renderView('pdf/cv-template.html.twig', [
+            'title' => 'PDF Title',
+            'content' => 'This is the content of the PDF'
+        ]);
+
+        $pdfContent = $this->pdfService->generatePdf($htmlContent);
+        
+        $flattenAndFilterArray = flattenArray($results);
+        array_walk_recursive($flattenAndFilterArray, function (&$value) {
+            if ($value) {
+                $value = $this->getParameter('hv') . '/' . $value;
+            }
+        });
+        $binPath = $_ENV['GS_BIN_PATH'];
+        if(!file_exists($binPath)){
+            return new JsonResponse(['Message' => 'Ghostscript not found']);
+        }
+        $tmpPath = sys_get_temp_dir();
+        $cvData = tempnam($tmpPath, 'pdf_') . '.pdf';
+        file_put_contents($cvData, $pdfContent);
+        try {
+            $ghostscript = new Ghostscript($binPath, $tmpPath);
+            $ghostscript->merge(
+                'C:\\Users\\DesarrolladorOasic1\\proyectos\\symfony\\pdfs-creados',
+                'hoja de vida de ' . $user->getNames() . ' ' . $user->getLastNames() . '.pdf',
+                array_merge(['cvData' => $cvData], $flattenAndFilterArray)
+            );
+        } catch (\Throwable $th) {
+            return new JsonResponse(['error' => $th->getMessage()], 500);
+        }
+        return new JsonResponse(['message' => 'Archivo descargado']);
     }
 }
