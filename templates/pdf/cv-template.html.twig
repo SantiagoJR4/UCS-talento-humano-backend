@@ -1,37 +1,298 @@
 <!DOCTYPE html>
+{% set bd = cvData.user %}
+{% set pd = cvData.personalData|length > 0 ? cvData.personalData[0] : null %}
+{% set at = cvData.academicTraining|length > 0 ? cvData.academicTraining : null %}
+{% set ft = cvData.furtherTraining|length > 0 ? cvData.furtherTraining : null %}
+{% set l = cvData.language|length > 0 ? cvData.language : null %}
+{% set we = cvData.workExperience|length > 0 ? cvData.workExperience : null %}
+{% set te = cvData.teachingExperience|length > 0 ? cvData.teachingExperience : null %}
 <html>
 <head>
     <meta charset="UTF-8">
     <style>
         body { font-family: Arial, sans-serif; }
         h1 { color: #333; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            border-right: none;
+            border-left: none;
+        }
+        tr:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+        .title-table {
+            background-color: #e5e5e5 !important;
+        }
     </style>
 </head>
 <body>
     <h1>HOJA DE VIDA</h1>
-    {% if cvData.user %}
-    <h2>Usuario</h2>
+    {% if pd %}
+    <h2> {{bd.fullname}} </h2>
+    <h3>Datos Personales</h3>
+    <table>
+        {# <thead>
+            <tr class="title-table">
+                <th>Referencia</th>
+                <th>Valor</th>
+            </tr>
+        </thead> #}
+        <tbody>
+            <tr>
+                <td>Identificación</td>
+                <td> {{bd.fullidentification}} </td>
+            </tr>
+            <tr>
+                <td>Fecha y lugar de expedición del documento</td>
+                <td> {{pd.expeditionDate|date('d/m/Y', false)}}, {{pd.placeOfExpedition.nom_mpio}}, {{pd.placeOfExpedition.dpto}} </td>
+            </tr>
+            <tr>
+                <td>Fecha y lugar de nacimiento</td>
+                <td> {{pd.birthday|date('d/m/Y', false)}}, {{pd.placeOfBirth.nom_mpio}}, {{pd.placeOfBirth.dpto}} </td>
+            </tr>
+            <tr>
+                <td>Teléfono</td>
+                <td> {{bd.phone}} </td>
+            </tr>
+            <tr>
+                <td>Correo electrónico</td>
+                <td> {{bd.email}} </td>
+            </tr>
+            <tr>
+                <td>Genero</td>
+                <td>
+                    {% if pd.gender == 'F'%} Femenino
+                    {% elseif pd.gender == 'M' %} Masculino
+                    {% elseif pd.gender == 'O' %} Otro
+                    {% else %} Desconocido
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>Estado civil</td>
+                <td>
+                    {% if pd.maritalStatus == 'C' %} Casado(a)
+                    {% elseif pd.maritalStatus == 'S' %} Soltero(a)
+                    {% elseif pd.maritalStatus == 'D' %} Divorciado(a)
+                    {% elseif pd.maritalStatus == 'V' %} Viudo(a)
+                    {% elseif pd.maritalStatus == 'U' %} Unión Libre(a)
+                    {% else %} Desconocido
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>Tipo de sangre</td>
+                <td> {{pd.bloodType}} </td>
+            </tr>
+            <tr>
+                <td>EPS</td>
+                <td> {{pd.eps}} </td>
+            </tr>
+            <tr>
+                <td>Pensión</td>
+                <td> {{pd.pension}} </td>
+            </tr>
+            <tr>
+                <td>Lugar de residencia</td>
+                <td> {{pd.residenceAddress}}, {{pd.placeOfResidence.nom_mpio}}, {{pd.placeOfResidence.dpto}} </td>
+            </tr>
+        </tbody>
+    </table>
     {% endif %}
-    {% if cvData.personalData %}
-    <h2>Datos Personales</h2>
+    {% if at %}
+        <h3>Formación Académica</h3>
+        <table>
+            <thead>
+                <tr class="title-table">
+                    <th>Modalidad académica</th>
+                    <th>Título</th>
+                    <th>Nombre de la entidad</th>
+                    <th>Fecha</th>
+                    <th>Metodología del programa</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in at %}
+                    <tr>
+                        <td>
+                            {% if e.academicModality == 'AU' %} Auxiliar
+                            {% elseif e.academicModality == 'TP' %} Técnico Profesional
+                            {% elseif e.academicModality == 'TC' %} Tecnólogo
+                            {% elseif e.academicModality == 'TCE' %} Tecnólogo Especializado
+                            {% elseif e.academicModality == 'UN' %} Universitario
+                            {% elseif e.academicModality == 'ESP' %} Especialización
+                            {% elseif e.academicModality == 'MG' %} Maestría o Magíster
+                            {% elseif e.academicModality == 'DOC' %} Doctorado o PHD
+                            {% elseif e.academicModality == 'PDO' %} Post Doctorado
+                            {% else %} Desconocido
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{ e.titleName }}
+                        </td>
+                        <td>
+                            {{ e.nameUniversity }}
+                        </td>
+                        <td>
+                            {{e.date|date('d/m/Y', false)}}
+                        </td>
+                        <td>
+                            {% if e.programMethodology == 'PRE' %} Presencial
+                            {% elseif e.programMethodology == 'DTR' %} Distancia Tradicional
+                            {% elseif e.programMethodology == 'DVI' %} Distancia Virtual
+                            {% else %} Desconocido
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% endif %}
-    {% if cvData.academicTraining %}
-    <h2>Formación Académica</h2>
+    {% if ft %}
+        <h3>Formación Complementaria</h3>
+        <table>
+            <thead>
+                <tr class="title-table">
+                    <th>Modalidad</th>
+                    <th>Título</th>
+                    <th>Institución</th>
+                    <th>Horas</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in ft %}
+                    <tr>
+                        <td>
+                            {% if e.complementaryModality == 'CL' %} Curso Presencial
+                            {% elseif e.complementaryModality == 'CV' %} Curso Virtual
+                            {% elseif e.complementaryModality == 'DI' %} Diplomado
+                            {% elseif e.complementaryModality == 'SM' %} Seminario
+                            {% elseif e.complementaryModality == 'CG' %} Congreso
+                            {% elseif e.complementaryModality == 'PR' %} Premio
+                            {% elseif e.complementaryModality == 'RE' %} Reconocimiento
+                            {% else %} Desconocido
+                            {% endif %}
+                        </td>
+                        <td>
+                            {{e.titleName}}
+                        </td>
+                        <td>
+                            {{e.institution}}
+                        </td>
+                        <td>
+                            {{e.hours}}
+                        </td>
+                        <td>
+                            {{e.date|date('d/m/Y', false)}}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% endif %}
-    {% if cvData.furtherTraining %}
-    <h2>Formación Complementaria</h2>
+    {% if l %}
+        <h3>Lenguaje</h3>
+        <table>
+            <thead>
+                <tr class="title-table">
+                    <th>Nombre</th>
+                    <th>Habla</th>
+                    <th>Lee</th>
+                    <th>Escribe</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in l %}
+                    <tr>
+                        <td>
+                            {{e.language}}
+                        </td>
+                        <td>
+                            {{ e.toSpeak }}
+                        </td>
+                        <td>
+                            {{ e.toRead }}
+                        </td>
+                        <td>
+                            {{ e.toWrite }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% endif %}
-    {% if cvData.language %}
-    <h2>Lenguaje</h2>
+    {% if we %}
+        <h3>Experiencia Laboral</h3>
+        <table>
+            <thead>
+                <tr class="title-table">
+                    <th>Cargo</th>
+                    <th>Nombre de la entidad</th>
+                    <th>Fecha inicio</th>
+                    <th>Fecha fin</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in we %}
+                    <tr>
+                        <td>
+                            {{e.position}}
+                        </td>
+                        <td>
+                            {{e.companyName}}
+                        </td>
+                        <td>
+                            {{e.admissionDate|date('d/m/Y', false)}}
+                        </td>
+                        <td>
+                            {{e.isWorking ? 'Aún trabaja en la entidad' : e.retirementDate|date('d/m/Y', false)}}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% endif %}
-    {% if cvData.workExperience %}
-    <h2>Experiencia Laboral</h2>
-    {% endif %}
-    {% if cvData.teachingExperience %}
-    <h2>Experiencia Docente</h2>
-    {% endif %}
-    {% if cvData.records %}
-    <h2>Antecendentes</h2>
+    {% if te %}
+        <h3>Experiencia Docente</h3>
+        <table>
+            <thead>
+                <tr class="title-table">
+                    <th>Nombre de la entidad</th>
+                    <th>facultad</th>
+                    <th>Programa</th>
+                    <th>Fecha inicio</th>
+                    <th>Fecha fin</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in te %}
+                    <tr>
+                        <td>
+                            {{e.nameUniversity}}
+                        </td>
+                        <td>
+                            {{e.faculty}}
+                        </td>
+                        <td>
+                            {{e.program}}
+                        </td>
+                        <td>
+                            {{e.admissionDate|date('d/m/Y', false)}}
+                        </td>
+                        <td>
+                            {{e.isWorking ? 'Aún trabaja en la entidad' : e.retirementDate|date('d/m/Y', false)}}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% endif %}
 </body>
 </html>

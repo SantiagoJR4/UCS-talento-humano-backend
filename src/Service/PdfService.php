@@ -17,10 +17,10 @@ class PdfService
         $this->dompdf = new Dompdf($options);
     }
 
-    public function generatePdf(string $htmlContent) : string
+    public function generatePdf(string $htmlContent, string $orientation = 'portrait') : string
     {
         $this->dompdf->loadHtml($htmlContent);
-        $this->dompdf->setPaper('A4', 'portrait');
+        $this->dompdf->setPaper('letter', $orientation);
         $this->dompdf->render();
         return $this->dompdf->output();
     }

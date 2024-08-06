@@ -951,10 +951,8 @@ class CurriculumVitaeController extends AbstractController
         };
         $cvData = [
             'user' => [
-                'names' => $user->getNames(),
-                'lastNames' => $user->getLastNames(),
-                'typeIdentification' => $user->getTypeIdentification(),
-                'identification' => $user->getIdentification(),
+                'fullname' => $user->getNames() . ' ' . $user->getLastNames(),
+                'fullidentification' => $user->getTypeIdentification() . ' ' . $user->getIdentification(),
                 'email' => $user->getEmail(),
                 'phone' => $user->getPhone()
             ],
@@ -966,6 +964,10 @@ class CurriculumVitaeController extends AbstractController
             'teachingExperience' => parseCvData($qb(TeachingExperience::class, $userId)),
             'records' => parseCvData($qb(Record::class, $userId))
         ];
+        usort($cvData['academicTraining'], fn($a, $b) => $b['date'] <=> $a['date']);
+        usort($cvData['furtherTraining'], fn($a, $b) => $b['date'] <=> $a['date']);
+        usort($cvData['workExperience'], fn($a, $b) => $b['admissionDate'] <=> $a['admissionDate']);
+        usort($cvData['teachingExperience'], fn($a, $b) => $b['admissionDate'] <=> $a['admissionDate']);
         $entitiesForAnnexes = [
             'PersonalData' => [
                 'entity' => 'App\Entity\PersonalData',
@@ -1001,13 +1003,6 @@ class CurriculumVitaeController extends AbstractController
                 'entity' => 'App\Entity\TeachingExperience',
                 'alias' => 'te',
                 'fields' => ['certifiedPdf'],
-            ],
-            'Record' => [
-                'entity' => 'App\Entity\Record',
-                'alias' => 'r',
-                'fields' => [
-                    'taxRecordPdf', 'judicialRecordPdf', 'disciplinaryRecordPdf', 'correctiveMeasuresPdf'
-                ],
             ],
         ];
 
@@ -1052,6 +1047,6 @@ class CurriculumVitaeController extends AbstractController
         } catch (\Throwable $th) {
             return new JsonResponse(['error' => $th->getMessage()], 500);
         }
-        return new JsonResponse(['message' => 'Archivo descargado']);
+        return new JsonResponse(['message' => $cvData]);
     }
 }
