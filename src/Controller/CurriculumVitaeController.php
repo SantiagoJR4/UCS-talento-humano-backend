@@ -25,6 +25,7 @@ use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Annotation\Route;
@@ -942,13 +943,38 @@ class CurriculumVitaeController extends AbstractController
     }
 
     #[Route('/curriculum-vitae/download-cv', name: 'app_files_merge_pdfs')]
-    public function mergePdfs(ManagerRegistry $doctrine , Request $request): JsonResponse
+    public function mergePdfs(ManagerRegistry $doctrine , Request $request)
     {
+        $queryCv =  function($class, $id) use ($doctrine){
+            $sql = "SELECT *
+                    FROM $class
+                    WHERE (
+                        user_id = $id
+                        AND
+                        JSON_EXTRACT(
+                            JSON_EXTRACT(
+                                history,
+                                CONCAT('$[', JSON_LENGTH(history) - 1, ']'))
+                        ,'$.state') = 1);";
+            $connectionCV = $doctrine->getManager()->getConnection();
+            $resultSetCV = $connectionCV->executeQuery($sql);
+            $results = $resultSetCV->fetchAllAssociative();
+            $camelCaseResults = [];
+            foreach ($results as $result) {
+                $camelCaseResult = [];
+                foreach ($result as $key => $value) {
+                    $camelCaseKey = lcfirst(str_replace('_', '', ucwords($key, '_')));
+                    $camelCaseResult[$camelCaseKey] = $value;
+                }
+                $camelCaseResults[] = $camelCaseResult;
+            }
+        
+            return $camelCaseResults;
+
+        };
+
         $userId = $request->query->get('userId');
         $user = $doctrine->getRepository(User::class)->find($userId);
-        $qb = function($class, $id) use ($doctrine) {
-            return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
-        };
         $cvData = [
             'user' => [
                 'fullname' => $user->getNames() . ' ' . $user->getLastNames(),
@@ -956,66 +982,83 @@ class CurriculumVitaeController extends AbstractController
                 'email' => $user->getEmail(),
                 'phone' => $user->getPhone()
             ],
-            'personalData' => parseCvData($qb(PersonalData::class, $userId)),
-            'academicTraining' => parseCvData($qb(AcademicTraining::class, $userId)),
-            'furtherTraining' => parseCvData($qb(FurtherTraining::class, $userId)),
-            'language' => parseCvData($qb(Language::class, $userId)),
-            'workExperience' => parseCvData($qb(WorkExperience::class, $userId)),
-            'teachingExperience' => parseCvData($qb(TeachingExperience::class, $userId)),
-            'records' => parseCvData($qb(Record::class, $userId))
+            'personalData' => parseCvData($queryCv('personal_data', $userId)),
+            'academicTraining' => parseCvData($queryCv('academic_training', $userId)),
+            'furtherTraining' => parseCvData($queryCv('further_training', $userId)),
+            'language' => parseCvData($queryCv('language', $userId)),
+            'workExperience' => parseCvData($queryCv('work_experience', $userId)),
+            'teachingExperience' => parseCvData($queryCv('teaching_experience', $userId)),
+            'records' => parseCvData($queryCv('record', $userId))
         ];
         usort($cvData['academicTraining'], fn($a, $b) => $b['date'] <=> $a['date']);
         usort($cvData['furtherTraining'], fn($a, $b) => $b['date'] <=> $a['date']);
         usort($cvData['workExperience'], fn($a, $b) => $b['admissionDate'] <=> $a['admissionDate']);
         usort($cvData['teachingExperience'], fn($a, $b) => $b['admissionDate'] <=> $a['admissionDate']);
-        $entitiesForAnnexes = [
+        $entitiesForAnnexes =
+        [
             'PersonalData' => [
-                'entity' => 'App\Entity\PersonalData',
+                'entity' => 'personal_data',
                 'alias' => 'pd',
                 'fields' => [
-                    'identificationPdf', 'epsPdf', 'pensionPdf',
-                    'bankAccountPdf', 'rutPdf', 'severanceFundPdf'
+                    'identification_pdf', 'eps_pdf', 'pension_pdf',
+                    'bank_account_pdf', 'rut_pdf', 'severance_fund_pdf'
                 ],
             ],
             'AcademicTraining' => [
-                'entity' => 'App\Entity\AcademicTraining',
+                'entity' => 'academic_training',
                 'alias' => 'at',
                 'fields' => [
-                    'degreePdf', 'diplomaPdf', 'certifiedTitlePdf'
+                    'degree_pdf', 'diploma_pdf', 'certified_title_pdf'
                 ],
             ],
             'FurtherTraining' => [
-                'entity' => 'App\Entity\FurtherTraining',
+                'entity' => 'further_training',
                 'alias' => 'ft',
-                'fields' => ['certifiedPdf'],
+                'fields' => ['certified_pdf'],
             ],
             'Language' => [
-                'entity' => 'App\Entity\Language',
+                'entity' => 'language',
                 'alias' => 'lg',
-                'fields' => ['certifiedPdf'],
+                'fields' => ['certified_pdf'],
             ],
             'WorkExperience' => [
-                'entity' => 'App\Entity\WorkExperience',
+                'entity' => 'work_experience',
                 'alias' => 'we',
-                'fields' => ['certifiedPdf'],
+                'fields' => ['certified_pdf'],
             ],
             'TeachingExperience' => [
-                'entity' => 'App\Entity\TeachingExperience',
+                'entity' => 'teaching_experience',
                 'alias' => 'te',
-                'fields' => ['certifiedPdf'],
+                'fields' => ['certified_pdf'],
             ],
+            'Record' => [
+                'entity' => 'record',
+                'alias' => 'r',
+                'fields' => [
+                    'tax_record_pdf', 'judicial_record_pdf',
+                    'disciplinary_record_pdf', 'corrective_measures_pdf'
+                    ]
+                ]
         ];
 
         $results = [];
 
         foreach ($entitiesForAnnexes as $key => $entityData) {
-            $query = $doctrine->getManager()->createQueryBuilder();
-            $query->select(implode(', ', array_map(fn($field) => "{$entityData['alias']}.$field", $entityData['fields'])))
-                ->from($entityData['entity'], $entityData['alias'])
-                ->where("{$entityData['alias']}.user = :user")
-                ->setParameter('user', $user);
-            
-            $results[$key] = $query->getQuery()->getArrayResult();
+            $fields = implode(', ', array_map(fn($field) => "{$entityData['alias']}.$field", $entityData['fields']));
+            $sql = "SELECT $fields
+                    FROM {$entityData['entity']} {$entityData['alias']}
+                    WHERE (
+                        {$entityData['alias']}.user_id = $userId
+                        AND
+                        JSON_EXTRACT(
+                            JSON_EXTRACT(
+                                history,
+                                CONCAT('$[', JSON_LENGTH(history) - 1, ']'))
+                        ,'$.state') = 1)";
+
+            $connectionCV = $doctrine->getManager()->getConnection();
+            $stmt = $connectionCV->executeQuery($sql);
+            $results[$key] = $stmt->fetchAllAssociative();
         }
 
         $htmlContent = $this->renderView('pdf/cv-template.html.twig', [
@@ -1037,16 +1080,22 @@ class CurriculumVitaeController extends AbstractController
         $tmpPath = sys_get_temp_dir();
         $cvDataPath = tempnam($tmpPath, 'pdf_') . '.pdf';
         file_put_contents($cvDataPath, $pdfContent);
+        $pdfName = 'hoja de vida de ' . $user->getNames() . ' ' . $user->getLastNames() . '.pdf';
+        $outputFilePath = $tmpPath . '\\' . $pdfName;
         try {
             $ghostscript = new Ghostscript($binPath, $tmpPath);
             $ghostscript->merge(
-                'C:\\Users\\DesarrolladorOasic1\\proyectos\\symfony\\pdfs-creados',
-                'hoja de vida de ' . $user->getNames() . ' ' . $user->getLastNames() . '.pdf',
+                $tmpPath,
+                $pdfName,
                 array_merge(['cvDataPath' => $cvDataPath], $flattenAndFilterArray)
             );
+            return $this->file($outputFilePath, $pdfName, ResponseHeaderBag::DISPOSITION_ATTACHMENT);
         } catch (\Throwable $th) {
             return new JsonResponse(['error' => $th->getMessage()], 500);
+        } finally {
+            $ghostscript->clearTmpFiles();
         }
+
         return new JsonResponse(['message' => $cvData]);
     }
 }
