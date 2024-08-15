@@ -184,6 +184,7 @@ class UserController extends AbstractController
             'identification' => $data['number'],
             'password' => $passHash
         ]);
+//	var_dump('nombres',$user->getNames());
         $callOpenState = 4;
         $queryBuilder = $doctrine->getManager()->createQueryBuilder();
         $query = $queryBuilder

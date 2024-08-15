@@ -432,17 +432,17 @@ class CallController extends AbstractController
             ->leftJoin('c.profile', 'p')
             ->leftJoin('c.subprofile', 'subp')
             ->leftJoin('c.specialProfile', 'spec');
-        if($specialUser === 'CTH'){
-
-        } else {
-            $queryCommon
-            ->where($queryCommon->expr()->like('c.isPrivate', ':value'))
-            ->orWhere($queryCommon->expr()->like('c.isPrivate', ':userID'))
-            ->setParameters([
-                'value'=> '%' . '{"value":false}' . '%',
-                'userID'=> '%'.'"identification":"'.$userID.'"%'
-            ]);
-        }
+//        if($specialUser === 'CTH'){
+//
+//        } else {
+//            $queryCommon
+//            ->where($queryCommon->expr()->like('c.isPrivate', ':value'))
+//            ->orWhere($queryCommon->expr()->like('c.isPrivate', ':userID'))
+//            ->setParameters([
+//                'value'=> '%' . '{"value":false}' . '%',
+//                'userID'=> '%'.'"identification":"'.$userID.'"%'
+//            ]);
+//        }
         $allActiveCalls = $queryCommon->getQuery()->getArrayResult();
         foreach ($allActiveCalls as $key => $value) {
             $isPrivateObject = json_decode($value['isPrivate'], true);
