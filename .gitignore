@@ -24,4 +24,4 @@
 /public/contracts
 /src/Entity/*
 /public/.htaccess
-.htaccess
+/.htaccess
