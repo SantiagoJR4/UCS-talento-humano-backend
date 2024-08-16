@@ -1081,7 +1081,7 @@ class CurriculumVitaeController extends AbstractController
         $cvDataPath = tempnam($tmpPath, 'pdf_') . '.pdf';
         file_put_contents($cvDataPath, $pdfContent);
         $pdfName = 'hoja de vida de ' . $user->getNames() . ' ' . $user->getLastNames() . '.pdf';
-        $outputFilePath = $tmpPath . '\\' . $pdfName;
+        $outputFilePath = $tmpPath . '/' . $pdfName;
         try {
             $ghostscript = new Ghostscript($binPath, $tmpPath);
             $ghostscript->merge(
