@@ -311,9 +311,10 @@ class ContractController extends AbstractController
 			$currentMonth = date('m');
 
 			if ($currentMonth >= '1' && $currentMonth <= '6') {
-				
+				$currentPeriod = 'A' . $currentYear;
 				$contract->setPeriod('A' . $currentYear);
 			} elseif ($currentMonth >= '7' && $currentMonth <= '12') {
+				$currentPeriod = 'B' . $currentYear;
 				$contract->setPeriod('B' . $currentYear);
 			}
 		
@@ -376,10 +377,11 @@ class ContractController extends AbstractController
 
 			$entityManager->flush();
 
-			$activedReemployment = $doctrine->getRepository(Reemployment::class)->findOneBy(['user' => $user]);
+			$activedReemployment = $doctrine->getRepository(Reemployment::class)->findOneBy([
+				'user' => $user,
+				'period' => $currentPeriod
+			]);
 			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy(['user' => $user]);
-			
-			var_dump($activedReemployment);
 
 			if ($activedReemployment !== null) {
 				$activedReemployment->setState(2);
