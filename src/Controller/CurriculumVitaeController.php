@@ -247,7 +247,7 @@ class CurriculumVitaeController extends AbstractController
         }
         $initialHistory = $entityObj->getHistory();
         $initialHistoryArray = json_decode($initialHistory, true);
-        if(!in_array(end($initialHistoryArray)['state'], [0,3,4])){
+        if(!in_array(end($initialHistoryArray)['state'], [0,3,4]) && !($user->getSpecialUser() === 'CTH' && $user->getUserType() === 8)){
             throw new AccessDeniedException('No tiene autorización realizar este cambio, por favor comuniquese con Coordinación de talento humano');
         }
         $fieldsToUpdate = $request->request->all();
@@ -682,7 +682,7 @@ class CurriculumVitaeController extends AbstractController
             return new JsonResponse(['status'=>'Error','message'=>$message]);
         }
         $entityManager->flush();
-        return new JsonResponse(['status'=> 'done', 'message' => 'Se ha completado con éxito esta tarea']);
+        return new JsonResponse(['message' => 'Se ha enviado un correo a este trabajador']);
     }
 
     // TODO: chat says this is vulnerable to sql injection, so change this when posible
