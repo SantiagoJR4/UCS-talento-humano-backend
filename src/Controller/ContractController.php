@@ -311,9 +311,10 @@ class ContractController extends AbstractController
 			$currentMonth = date('m');
 
 			if ($currentMonth >= '1' && $currentMonth <= '6') {
-				
+				$currentPeriod = 'A' . $currentYear;
 				$contract->setPeriod('A' . $currentYear);
 			} elseif ($currentMonth >= '7' && $currentMonth <= '12') {
+				$currentPeriod = 'B' . $currentYear;
 				$contract->setPeriod('B' . $currentYear);
 			}
 		
@@ -376,9 +377,12 @@ class ContractController extends AbstractController
 
 			$entityManager->flush();
 
-			$activedReemployment = $doctrine->getRepository(Reemployment::class)->findOneBy(['user' => $user]);
+			$activedReemployment = $doctrine->getRepository(Reemployment::class)->findOneBy([
+				'user' => $user,
+				'period' => $currentPeriod
+			]);
 			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy(['user' => $user]);
-			
+
 			if ($activedReemployment !== null) {
 				$activedReemployment->setState(2);
 				$doctrine->getManager()->persist($activedReemployment);
@@ -2570,12 +2574,7 @@ class ContractController extends AbstractController
 			->setParameters([
 				'expirationPeriod' => date('Y-m-d')
 			]);
-		// if( $typeReemployment === 'CTH') {
-		// 	$queryUser->leftjoin('r.user', 'u')
-		// 		->leftjoin(Contract::class, 'co', 'WITH', 'co.user = u.id')
-		// 		->andWhere('co.state = 0')
-		// 		->andWhere('co.expirationContract >= :expirationPeriod ');
-		// }
+
 		$reemploymentsUsers = $queryUser->getQuery()->getResult();
 
 		if (empty($reemploymentsUsers)) {
@@ -2692,6 +2691,85 @@ class ContractController extends AbstractController
 			}
 		}
 		return new JsonResponse(['status'=>true, 'allReemployments' => $reemploymentData]);
+	}
+	//---------------------------------------------------------------------------------------------
+	//------------ LISTAR REVINCULACIONES DE TODOS LOS PERIODOS
+	#[Route('/contract/list-reemployment-period', name:'app_contract_reemployment_list_period')]
+	public function listReemploymentPeriod(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken ) : JsonResponse
+	{
+		$token = $request->query->get('token');
+		$typeReemployment = $request->query->get('typeReemployment');
+		$periodSelected = $request->query->get('periodSelected');
+
+		$userLogueado = $vToken->getUserIdFromToken($token);
+		$specialUser = $userLogueado->getSpecialUser();
+
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+
+			if($periodSelected != null){
+			$queryUser = $doctrine->getManager()->createQueryBuilder();
+			$queryUser
+				->select('r')
+				->from(Reemployment::class, 'r')
+				->where('r.period = :periodSelected')
+			    ->setParameter('periodSelected', $periodSelected);
+			}
+		}
+
+		$reemploymentsUsers = $queryUser->getQuery()->getResult();
+
+		if (empty($reemploymentsUsers)) {
+			return new JsonResponse(['status' => false, 'message' => 'No se encontró una lista de revinculación']);
+		}
+
+		foreach($reemploymentsUsers as $reemployment){
+			$user = $reemployment->getUser();
+			$workDedication = $reemployment->getWorkDedication();
+
+			$response[] = [
+				'id' => $reemployment->getId(),
+				'period' => $reemployment->getPeriod(),
+				'solicitude_date' => $reemployment->getSolicitudeDate()->format('Y-m-d'),
+				'initial_date' => $reemployment->getInitialDate()->format('Y-m-d'),
+				'final_date' => $reemployment->getFinalDate()->format('Y-m-d'),
+				'hours' => $reemployment->getHours(),
+				'salary' => $reemployment->getSalary(),
+				'state' => $reemployment->getState(),
+				'stateUser' => $reemployment->getStateUser(),
+				'stateContract' => $reemployment->getStateContract(),
+				'chargeId' => $reemployment->getCharges()->getId(),
+				'chargeName' => $reemployment->getCharges()->getName(),
+				'chargeWorkDedication' => $workDedication,
+				'chargeSalary' => $reemployment->getCharges()->getSalary(),
+				'typeEmployee' => $reemployment->getCharges()->getTypeEmployee(),
+				'profileId' => $reemployment->getProfile()->getId(),
+				'profileName' => $reemployment->getProfile()->getName(),
+				'user' => $user->getNames().' '.$user->getLastNames(),
+				'userId' => $user->getId(),
+				'specialUser' => $user->getSpecialUser(),
+				'identification' => $user->getIdentification(),
+				'email' => $user->getEmail(),
+				'phone' => $user->getPhone(),
+				'history' => json_decode($reemployment->getHistory(), true)
+			];
+		}
+		$filtered =  array_filter($response, function($var) use($typeReemployment){
+			switch($typeReemployment){
+				case 'VF':
+					return $var['typeEmployee'] === 'AD';
+				case 'DIRENF':
+					return $var['typeEmployee'] === 'PR' && $var['history'][0]['responsible'] === 'DIRENF';
+				case 'DIRASS':
+					return $var['typeEmployee'] === 'PR' && $var['history'][0]['responsible'] === 'DIRASS';
+				case 'VAE':
+					return $var['typeEmployee'] === 'PR' && $var['history'][0]['responsible'] === 'VAE';
+				case 'CTH':
+					return $var['state'] === 1;
+			}
+		});	
+		return new JsonResponse(['status' => true, 'reemployment' => array_values($filtered)]);
 	}
 
 	//LISTAR DATOS DE REVINCULACIÓN DE UN USUARIO CON EL ID DEL USUARIO
@@ -3131,6 +3209,7 @@ class ContractController extends AbstractController
 	{
 		$token = $request->query->get('token');
 		$user = $doctrine->getRepository(User::class)->find($id);
+		$entityManager = $doctrine->getManager();
 
 		if($token === false){
 			return new JsonResponse(['ERROR'=>'Token no válido']);
@@ -3145,6 +3224,12 @@ class ContractController extends AbstractController
 				foreach($directContract as $directContract){
 					$requisition = $directContract->getRequisition();
 					$user = $directContract->getUser();
+
+					$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
+						'requisition' => $requisition
+					]);
+					$stateUsersInRequisition = $existingUserInRequisition->getState();
+					$usersInRequisition = $existingUserInRequisition->getUser();
 
 					$directContract = [
 						'id' => $directContract->getId(),
@@ -3169,6 +3254,10 @@ class ContractController extends AbstractController
 						'type_anotherIF' => $requisition->getTypeAnotherif(),
 						'names_charge' => $requisition->getNamesCharge(),
 						'justification' => $requisition->getJustification(),
+						'usersInRequisition' => $usersInRequisition->getId(),
+						'identificationUserInRequisition' => $usersInRequisition->getIdentification(),
+						'namesUserInRequisition' => $usersInRequisition->getNames().' '.$usersInRequisition->getLastNames(),
+						'stateUsersInRequisition' => $stateUsersInRequisition,
 
 						'user' => $user->getNames().' '.$user->getLastNames(),
 						'typeIdentification' => $user->getTypeIdentification(),
@@ -3187,12 +3276,19 @@ class ContractController extends AbstractController
 	#[Route('/contract/get-direct-contract/{id}', name:'app_contract_get_direct_contract')]
 	public function getDirectContract(ManagerRegistry $doctrine, int $id): JsonResponse
 	{
+		$entityManager = $doctrine->getManager();
 		$directContract = $doctrine->getRepository(DirectContract::class)->find($id);
 		if (!$directContract) {
 				return new JsonResponse(['status' => false, 'message' => 'No se encontró la contratación directa']);
 			}
 		$requisition = $directContract->getRequisition();
 		$user = $directContract->getUser();
+
+		$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
+			'requisition' => $requisition
+		]);
+		$stateUsersInRequisition = $existingUserInRequisition->getState();
+		$usersInRequisition = $existingUserInRequisition->getUser();
 
 		$directContractData = [
 			'id' => $directContract->getId(),
@@ -3217,6 +3313,10 @@ class ContractController extends AbstractController
 			'type_anotherIF' => $requisition->getTypeAnotherif(),
 			'names_charge' => $requisition->getNamesCharge(),
 			'justification' => $requisition->getJustification(),
+			'usersInRequisition' => $usersInRequisition->getId(),
+			'identificationUserInRequisition' => $usersInRequisition->getIdentification(),
+			'namesUserInRequisition' => $usersInRequisition->getNames().' '.$usersInRequisition->getLastNames(),
+			'stateUsersInRequisition' => $stateUsersInRequisition,
 
 			'user' => $user->getNames().' '.$user->getLastNames(),
 			'typeIdentification' => $user->getTypeIdentification(),
@@ -3277,6 +3377,7 @@ class ContractController extends AbstractController
 				'names_charge' => $requisition->getNamesCharge(),
 				'justification' => $requisition->getJustification(),
 				'usersInRequisition' => $usersInRequisition->getId(),
+				'identificationUserInRequisition' => $usersInRequisition->getIdentification(),
 				'namesUserInRequisition' => $usersInRequisition->getNames().' '.$usersInRequisition->getLastNames(),
 				'stateUsersInRequisition' => $stateUsersInRequisition,
 
