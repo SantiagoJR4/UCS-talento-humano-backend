@@ -2877,7 +2877,7 @@ class ContractController extends AbstractController
 			return new JsonResponse(['ERROR' => 'Token no válido']);
 		}else{
 			$newNotification = new Notification();
-			$newNotification->setSeen(0);
+			$newNotification->setSeen(1);
 			$relatedEntity = array(
 				'applicantId'=>$user->getId(),
 				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
@@ -3087,6 +3087,13 @@ class ContractController extends AbstractController
 
 			$requisition->setState(3); //requisición efectuada
 
+			$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
+				'requisition' => $requisition
+			]);
+		
+			$usersInRequisition = $existingUserInRequisition->getUser();
+			$namesUserSelected = $usersInRequisition->getNames().''.$usersInRequisition->getLastNames();
+
 			$directContract = new DirectContract();
 			$currentDate = new DateTime();
 
@@ -3169,7 +3176,7 @@ class ContractController extends AbstractController
 				case 'ASIAC':
 					$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
 					$newNotification->setUser($userForNotification);
-					$newNotification->setMessage('Solicita la aprobación de una solicitud de contratación directa.');
+					$newNotification->setMessage('Solicita la aprobación de una solicitud de contratación directa de '.$namesUserSelected);
 					break;
 				case 'VF':
 					$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType'=>8]);
