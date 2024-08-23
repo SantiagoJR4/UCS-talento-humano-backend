@@ -16,6 +16,7 @@ use App\Entity\WorkExperience;
 use App\Service\PdfService;
 use App\Service\ValidateToken;
 use DateTime;
+use Doctrine\DBAL\Driver\PgSQL\Exception\UnexpectedValue;
 use Doctrine\Persistence\ManagerRegistry;
 use Ordinary9843\Ghostscript;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -109,6 +110,15 @@ function formatTimeWorked($timeWorked): string {
     $formattedTime = implode(" ", $timeParts);
 
     return $formattedTime;
+}
+
+function allKeysHaveEmptyArrays($array) {
+    foreach ($array as $key => $value) {
+        if (!is_array($value) || !empty($value)) {
+            return false;
+        }
+    }
+    return true;
 }
 
 class CurriculumVitaeController extends AbstractController
@@ -652,18 +662,31 @@ class CurriculumVitaeController extends AbstractController
             // 'references' => $qb(ReferencesData::class, array_column($data['references'], 'id')),
             'records' => $qb(Record::class, array_column($data['records'], 'id')),
         ];
+        //TODO Optimize filter
         foreach($dataForEmail as &$array) {
             foreach($array as &$item ){
                 $found = array_filter(
                 $transformed,
                 function($element) use ($item){
                     return $element['id'] === $item['id'];
+                });
+                if(count($found) > 0){
+                    $found = array_pop($found);
+                    $item['reviewText'] = $found['reviewText'];
+                    $item['state'] = $found['state'] === 1 ? 'Aprobado' : ($found['state'] === 2 ? 'Rechazado' : 'Revisar');
+                }
+            }
+        }
+        $filteredDataForEmail = [];
+        foreach ($dataForEmail as $key => $items) {
+            $filteredDataForEmail[$key] = array_filter(
+                $items, function ($item) {
+                    return $item['state'] !== 'Aprobado';
                 }
             );
-            $found = array_pop($found);
-            $item['reviewText'] = $found['reviewText'];
-            $item['state'] = $found['state'] === 1 ? 'Aprobado' : ($found['state'] === 2 ? 'Rechazado' : 'Revisar');
-            }
+        }
+        if( allKeysHaveEmptyArrays($filteredDataForEmail) ){
+            return new JsonResponse(['message' => 'El proceso ha sido completado con éxito.']);
         }
         try{
             $email = (new TemplatedEmail())
@@ -673,13 +696,13 @@ class CurriculumVitaeController extends AbstractController
                 ->htmlTemplate('email/qualifyEmployeeCVEmail.html.twig')
                 ->context([
                     'user' => $user,
-                    'dataForEmail' => $dataForEmail
+                    'dataForEmail' => $filteredDataForEmail
                 ]);         
             $mailer->send($email);
             $message = 'La revisión fue enviada con éxito';
         } catch (\Throwable $th) {
             $message = 'Error al enviar el correo:'.$th->getMessage();
-            return new JsonResponse(['status'=>'Error','message'=>$message]);
+            throw  new UnexpectedValue($message);
         }
         $entityManager->flush();
         return new JsonResponse(['message' => 'Se ha enviado un correo a este trabajador']);
