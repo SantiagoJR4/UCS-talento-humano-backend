@@ -39,27 +39,27 @@
         <span>Las encontrarás aquí abajo:</span>
         {% if dataForEmail.personalData and dataForEmail.personalData[0] %}
             <h3><strong>Datos Personales</strong></h3>
-            <p><i>{{dataForEmail.personalData[0].state}}{{dataForEmail.personalData[0].reviewText ? ' - ' ~ dataForEmail.personalData[0].reviewText : null}}</i></p>
+            <p><i>{{dataForEmail.personalData[0].state}}{{dataForEmail.personalData[0].textReview ? ' - ' ~ dataForEmail.personalData[0].textReview : null}}</i></p>
         {% endif %}
         {% if dataForEmail.academicTraining %}
             <h3><strong>Formación Academica</strong></h3>
             {% for element in dataForEmail.academicTraining %}
                 <p>{{loop.index}}. {{element.titleName}} - {{element.nameUniversity}}</p>
-                <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
+                <p><i>{{element.state}}{{element.textReview ? ' - ' ~ element.textReview : null}}</i></p>
             {% endfor %}
         {% endif %}
         {% if dataForEmail.furtherTraining %}
             <h3><strong>Formación Complementaria</strong></h3>
             {% for element in dataForEmail.furtherTraining %}
                 <p>{{loop.index}}. {{element.titleName}} - {{element.institution}}</p>
-                <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
+                <p><i>{{element.state}}{{element.textReview ? ' - ' ~ element.textReview : null}}</i></p>
             {% endfor %}
         {% endif %}
         {% if dataForEmail.language %}
             <h3><strong>Segunda Lengua</strong></h3>
             {% for element in dataForEmail.language %}
                 <p>{{loop.index}}. {{element.nameLanguage}}</p>
-                <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
+                <p><i>{{element.state}}{{element.textReview ? ' - ' ~ element.textReview : null}}</i></p>
             {% endfor %}
         {% endif %}
         {% if dataForEmail.workExperience %}
@@ -72,7 +72,7 @@
                 {{element.retirementDate|date('d/m/Y')}}
                 {% endif %}
                 </p>
-                <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
+                <p><i>{{element.state}}{{element.textReview ? ' - ' ~ element.textReview : null}}</i></p>
             {% endfor %}
         {% endif %}
         {% if dataForEmail.teachingExperience %}
@@ -85,26 +85,30 @@
                 {{element.retirementDate|date('d/m/Y')}}
                 {% endif %}
                  </p>
-                <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
+                <p><i>{{element.state}}{{element.textReview ? ' - ' ~ element.textReview : null}}</i></p>
             {% endfor %}
         {% endif %}
         {% if dataForEmail.intellectualProduction %}
             <h3><strong>Producción Intelectual</strong></h3>
             {% for element in dataForEmail.intellectualProduction %}
                 <p>{{loop.index}}. {{element.titleProd ? (element.titleProd ~ ' - ' ~ element.urlVerification) : element.cvlac}}</p>
-                <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
+                <p><i>{{element.state}}{{element.textReview ? ' - ' ~ element.textReview : null}}</i></p>
             {% endfor %}
         {% endif %}
         {# {% if dataForEmail.references %}
             <h3><strong>Referencias</strong></h3>
             {% for element in dataForEmail.references %}
                 <p>{{loop.index}}. {{element.names}}</p>
-                <p><i>{{element.state}}{{element.reviewText ? ' - ' ~ element.reviewText : null}}</i></p>
+                <p><i>{{element.state}}{{element.textReview ? ' - ' ~ element.textReview : null}}</i></p>
             {% endfor %}
         {% endif %} #}
         {% if dataForEmail.records and dataForEmail.records[0] %}
             <h3><strong>Antecedentes</strong></h3>
-            <p><i>{{dataForEmail.records[0].state}}{{dataForEmail.records[0].reviewText ? ' - ' ~ dataForEmail.records[0].reviewText : null}}</i></p>
+            <p><i>{{dataForEmail.records[0].state}}{{dataForEmail.records[0].textReview ? ' - ' ~ dataForEmail.records[0].textReview : null}}</i></p>
+        {% endif %}
+        {% if generalTextReview %}
+            <h3><strong>Revisión Adicional:</strong></h3>
+            <p>{{generalTextReview}}</p>
         {% endif %}
         </p>
         <p>Atentamente,</p>

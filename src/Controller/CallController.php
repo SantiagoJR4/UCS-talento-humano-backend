@@ -116,7 +116,7 @@ function requirementsSignUpToCall($userId, $requiredToSignUp, $doctrine){
         'language' => Language::class,
         'workExperience' => WorkExperience::class,
         'teachingExperience' => TeachingExperience::class,
-        'intellectualproduction' => IntellectualProduction::class,
+        'intellectualProduction' => IntellectualProduction::class,
         'references' => ReferencesData::class,
         'records' => Record::class,
     ];
@@ -129,7 +129,7 @@ function requirementsSignUpToCall($userId, $requiredToSignUp, $doctrine){
         $cvlac = $doctrine->getRepository(PersonalData::class)->findOneBy(['user' => $userId])->getUrlCvlac();
         if($cvlac !== NULL)
         {
-            $entityCounts['intellectualproduction'] += 1;
+            $entityCounts['intellectualProduction'] += 1;
         }
     } catch (\Throwable $th)
     {
@@ -882,7 +882,7 @@ class CallController extends AbstractController
                 'language' => $qb(Language::class, array_column($askAgain['language'], 'id')),
                 'workExperience' => $qb(WorkExperience::class, array_column($askAgain['workExperience'], 'id')),
                 'teachingExperience' => $qb(TeachingExperience::class, array_column($askAgain['teachingExperience'], 'id')),
-                'intellectualproduction' => $qb(IntellectualProduction::class, array_column($askAgain['intellectualproduction'], 'id')),
+                'intellectualProduction' => $qb(IntellectualProduction::class, array_column($askAgain['intellectualProduction'], 'id')),
                 // 'references' => $qb(ReferencesData::class, array_column($askAgain['references'], 'id')),
                 'records' => $qb(Record::class, array_column($askAgain['records'], 'id')),
             ];
@@ -1031,11 +1031,11 @@ class CallController extends AbstractController
             $userInCall = $entityManager->getRepository(UsersInCall::class)->findOneBy(['user' => $value['id'], 'call' => $callId]);
             $userInCallStatus = json_decode($userInCall->getStatus(), true);
             $emailInfo =  setEmailInfo('NO');
+            $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
             switch ($step) {
                 case 'CVSTATUS':
                     if($value['approved']) {
                         $userInCallStatus[$step] = 1;
-                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
                         $currentUserStatus = end($arrayUserStatus);
                         $index = array_search($currentUserStatus, $allSteps);
                         array_push($arrayUserStatus, $allSteps[$index + 1]);
@@ -1051,7 +1051,6 @@ class CallController extends AbstractController
                     $call->setKnowledgeTestMinimumScore($knowledgeTestMinimumScore); 
                     if($value['knowledgeRating'] >= $knowledgeTestMinimumScore){
                         $userInCallStatus[$step] = 1;
-                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
                         $currentUserStatus = end($arrayUserStatus);
                         $index = array_search($currentUserStatus, $allSteps);
                         array_push($arrayUserStatus, $allSteps[$index + 1]);
@@ -1086,7 +1085,6 @@ class CallController extends AbstractController
                 case 'PTSTATUS':
                     if($value['psychoRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
                         $userInCallStatus[$step] = 1;
-                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
                         $currentUserStatus = end($arrayUserStatus);
                         $index = array_search($currentUserStatus, $allSteps);
                         array_push($arrayUserStatus, $allSteps[$index + 1]);
@@ -1141,7 +1139,6 @@ class CallController extends AbstractController
                 case 'INSTATUS':
                     if($value['interviewRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
                         $userInCallStatus[$step] = 1;
-                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
                         $currentUserStatus = end($arrayUserStatus);
                         $index = array_search($currentUserStatus, $allSteps);
                         array_push($arrayUserStatus, $allSteps[$index + 1]);
@@ -1176,7 +1173,6 @@ class CallController extends AbstractController
                 case 'CLSTATUS':
                     if($value['classRating'] >= 3){ //TODO may act like knowledgeTestMinimumScore
                         $userInCallStatus[$step] = 1;
-                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
                         $currentUserStatus = end($arrayUserStatus);
                         $index = array_search($currentUserStatus, $allSteps);
                         array_push($arrayUserStatus, $allSteps[$index + 1]);
@@ -1190,7 +1186,6 @@ class CallController extends AbstractController
                     break;
                 case 'FISTATUS':
                     if($value['selected']){
-                        $arrayUserStatus = json_decode($userInCall->getUserStatus(), true);
                         $currentUserStatus = end($arrayUserStatus);
                         $index = array_search($currentUserStatus, $allSteps);
                         array_push($arrayUserStatus, $allSteps[$index + 1]);

@@ -148,7 +148,7 @@ class CurriculumVitaeController extends AbstractController
             'language' => parseCvData($qb(Language::class, $userId)),
             'workExperience' => parseCvData($qb(WorkExperience::class, $userId)),
             'teachingExperience' => parseCvData($qb(TeachingExperience::class, $userId)),
-            'intellectualproduction' => parseCvData($qb(IntellectualProduction::class, $userId)),
+            'intellectualProduction' => parseCvData($qb(IntellectualProduction::class, $userId)),
             'references' => parseCvData($qb(ReferencesData::class, $userId)),
             'records' => parseCvData($qb(Record::class, $userId))
         ]);
@@ -163,6 +163,7 @@ class CurriculumVitaeController extends AbstractController
         $qb = function($class, $id) use ($doctrine) {
             return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
         };
+        $generalTextReview = json_decode($user->getHistory(), true);
         return new JsonResponse([
             'personalData' => parseCvData($qb(PersonalData::class, $user)),
             'academicTraining' => parseCvData($qb(AcademicTraining::class, $user)),
@@ -170,9 +171,10 @@ class CurriculumVitaeController extends AbstractController
             'language' => parseCvData($qb(Language::class, $user)),
             'workExperience' => parseCvData($qb(WorkExperience::class, $user)),
             'teachingExperience' => parseCvData($qb(TeachingExperience::class, $user)),
-            'intellectualproduction' => parseCvData($qb(IntellectualProduction::class, $user)),
+            'intellectualProduction' => parseCvData($qb(IntellectualProduction::class, $user)),
             'references' => parseCvData($qb(ReferencesData::class, $user)),
-            'records' => parseCvData($qb(Record::class, $user))
+            'records' => parseCvData($qb(Record::class, $user)),
+            'generalTextReview' => end($generalTextReview)
             // 'evaluationCV' => parseCvData($qb(EvaluationCv::class, $user))
         ]);
 
@@ -301,10 +303,15 @@ class CurriculumVitaeController extends AbstractController
             }
         }
         date_default_timezone_set('America/Bogota');
-        $initialHistoryArray[] = [
-            'state'=>$request->query->get('entity')!== 'ReferencesData' ? 4 : 1,
-            'date'=>date('Y-m-d H:i:s'),
-            'call'=> NULL];
+        $lastState = end($initialHistoryArray)['state'];
+        $lastTextReview = end($initialHistoryArray)['textReview'];
+        $initialHistoryArray[] =
+        [
+            'state' => $request->query->get('entity')!== 'ReferencesData' ? 4 : 1,
+            'textReview' => $lastState === 3 ? $lastTextReview . ' (Usuario realizó cambios después de pedir revisión)' : $lastTextReview,
+            'date' => date('Y-m-d H:i:s'),
+            'call' => NULL
+        ];
         $newHistory = json_encode($initialHistoryArray);
         $entityObj->setHistory($newHistory);
         $entityManager->persist($entityObj);
@@ -614,6 +621,7 @@ class CurriculumVitaeController extends AbstractController
         if($userCTH->getSpecialUser() !== 'CTH' && $userCTH->getUserType() !== 8){
             throw new AccessDeniedException('No tiene permisos para realizar esta acción');
         }
+        $entityManager = $doctrine->getManager();
         date_default_timezone_set('America/Bogota');
         $data = json_decode($request->request->get('array'), true);
         $userID = $request->request->get('userID');
@@ -635,11 +643,10 @@ class CurriculumVitaeController extends AbstractController
             } else {
                 $entity = 'App\\Entity\\'.ucFirst($value['entity']);
             }
-            $entityManager = $doctrine->getManager();
             $entityObj = $entityManager->getRepository($entity)->find($id);
             $history = $entityObj->getHistory();
             $historyArray = json_decode($history, true);
-            $historyArray[] = ['state'=>$value['state'], 'reviewText'=>$value['reviewText'], 'date'=> date('Y-m-d H:i:s'), 'call'=> NULL];
+            $historyArray[] = ['state'=>$value['state'], 'textReview'=>$value['state'] === 3 ? $value['textReview'] : NULL, 'date'=> date('Y-m-d H:i:s'), 'call'=> NULL];
             $newHistory = json_encode($historyArray);
             $entityObj->setHistory($newHistory);
         }
@@ -672,7 +679,7 @@ class CurriculumVitaeController extends AbstractController
                 });
                 if(count($found) > 0){
                     $found = array_pop($found);
-                    $item['reviewText'] = $found['reviewText'];
+                    $item['textReview'] = $found['textReview'];
                     $item['state'] = $found['state'] === 1 ? 'Aprobado' : ($found['state'] === 2 ? 'Rechazado' : 'Revisar');
                 }
             }
@@ -685,9 +692,28 @@ class CurriculumVitaeController extends AbstractController
                 }
             );
         }
-        if( allKeysHaveEmptyArrays($filteredDataForEmail) ){
+        $generalTextReview = $request->request->get('generalTextReview');
+        $history = json_decode($user->getHistory(), true);
+        if( allKeysHaveEmptyArrays($filteredDataForEmail) && !$generalTextReview ){
+            $history[] = 
+            [
+                'state' => 1,
+                'textReview' => NULL,
+                'date' => date('Y-m-d H:i:s'),
+            ];
+            $encodedHistory = json_encode($history);
+            $user->setHistory($encodedHistory);
+            $entityManager->flush();
             return new JsonResponse(['message' => 'El proceso ha sido completado con éxito.']);
         }
+        $history[] = 
+        [
+            'state' => 3,
+            'textReview' => $generalTextReview ?? NULL,
+            'date' => date('Y-m-d H:i:s'),
+        ];
+        $encodedHistory = json_encode($history);
+        $user->setHistory($encodedHistory);
         try{
             $email = (new TemplatedEmail())
                 ->from('convocatorias@unicatolicadelsur.edu.co')
@@ -696,7 +722,8 @@ class CurriculumVitaeController extends AbstractController
                 ->htmlTemplate('email/qualifyEmployeeCVEmail.html.twig')
                 ->context([
                     'user' => $user,
-                    'dataForEmail' => $filteredDataForEmail
+                    'dataForEmail' => $filteredDataForEmail,
+                    'generalTextReview' => $generalTextReview
                 ]);         
             $mailer->send($email);
             $message = 'La revisión fue enviada con éxito';
@@ -922,7 +949,7 @@ class CurriculumVitaeController extends AbstractController
         $itemHistory = json_decode($itemHistory, true);
         $itemHistory[] = [
             'state' => 3,
-            'reviewText' => 'A la espera de un cambio',
+            'textReview' => 'A la espera de un cambio',
             'date'=>date('Y-m-d H:i:s'),
             'call'=> NULL
         ];
@@ -954,7 +981,7 @@ class CurriculumVitaeController extends AbstractController
         $itemHistory = json_decode($itemHistory, true);
         $itemHistory[] = [
             'state' => end($itemHistory)['state'],
-            'reviewText' => 'Se ha rechazado el cambio de este ítem',
+            'textReview' => 'Se ha rechazado el cambio de este ítem',
             'date'=>date('Y-m-d H:i:s'),
             'call'=> NULL
         ];
