@@ -8,6 +8,17 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+function setTagEmployee($status){
+    $statusMap = array(
+        0 => array('severity' => 'info', 'icon' => 'refresh', 'value' => 'Novedades'),
+        1 => array('severity' => '', 'icon' => 'check', 'value' => 'Terminado'),
+        3 => array('severity' => 'warning', 'icon' => 'hourglass_top', 'value' => 'En espera')
+    );
+    return !!$status && isset($statusMap[$status])
+        ? $statusMap[$status]
+        : array('severity' => 'info', 'icon' => 'refresh', 'value' => 'Novedades');
+}
+
 class EmploymentHistoryController extends AbstractController
 {
     #[Route('/get-employees', name: 'app_get_employees')]
@@ -36,8 +47,9 @@ class EmploymentHistoryController extends AbstractController
                     $value['userType'] = 'Administrativo';
                     break;
             }
-            $decodedHistory = json_decode($value['history']);
+            $decodedHistory = json_decode($value['history'], true);
             $value['history'] = end($decodedHistory);
+            $value['tag'] = setTagEmployee(end($decodedHistory) ? end($decodedHistory)['state'] : false);
         }
         return new JsonResponse($employees, 200, []);
     }
