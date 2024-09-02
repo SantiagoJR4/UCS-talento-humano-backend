@@ -88,9 +88,9 @@
                 <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
             {% endfor %}
         {% endif %}
-        {% if dataForEmail.intellectualproduction %}
+        {% if dataForEmail.intellectualProduction %}
             <h3><strong>Revisar Producción Intelectual</strong></h3>
-            {% for element in dataForEmail.intellectualproduction %}
+            {% for element in dataForEmail.intellectualProduction %}
                 <p>{{loop.index + 1}}. {{element.titleProd}} - {{element.urlVerification}}</p>
                 <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
             {% endfor %}
