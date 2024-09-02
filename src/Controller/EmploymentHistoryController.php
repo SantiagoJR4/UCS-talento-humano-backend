@@ -5,6 +5,7 @@ namespace App\Controller;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -51,6 +52,42 @@ class EmploymentHistoryController extends AbstractController
             $value['history'] = end($decodedHistory);
             $value['tag'] = setTagEmployee(end($decodedHistory) ? end($decodedHistory)['state'] : false);
         }
+        usort($employees, function($a, $b){
+            if (!isset($a['history']['date'])) return 1;
+            if (!isset($b['history']['date'])) return -1;
+            return $b['history']['date'] <=> $a['history']['date'];
+        });
         return new JsonResponse($employees, 200, []);
+    }
+
+    #[Route('/get-single-employee', name: 'app_get_single_employee')]
+    public function getSingleEmployee(ManagerRegistry $doctrine, Request $request): JsonResponse
+    {
+        $userId = $request->query->get('userId');
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select('u.id', 'u.names', 'u.lastNames', 'u.identification', 'u.email', 'u.phone', 'u.userType', 'u.history')
+        ->from('App\Entity\User', 'u')
+        ->where('u.id = :userId')
+        ->setParameter('userId', $userId);
+        $employee = $query->getQuery()->getSingleResult();
+        $employee['fullname'] = $employee['names'] . ' ' . $employee['lastNames'];
+        unset($employee['names']);
+        unset($employee['lastNames']);
+        switch ($employee['userType']) {
+            case 1:
+                $employee['userType'] = 'Administrativo';
+                break;
+            case 2:
+                $employee['userType'] = 'Profesor';
+                break;
+            
+            default:
+                $employee['userType'] = 'Administrativo';
+                break;
+        }
+        $decodedHistory = json_decode($employee['history'], true);
+        $employee['history'] = end($decodedHistory);
+        $employee['tag'] = setTagEmployee(end($decodedHistory) ? end($decodedHistory)['state'] : false);
+        return new JsonResponse($employee, 200, []);
     }
 }

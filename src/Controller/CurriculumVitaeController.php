@@ -313,6 +313,16 @@ class CurriculumVitaeController extends AbstractController
             'call' => NULL
         ];
         $newHistory = json_encode($initialHistoryArray);
+        $userHistory = $user->getHistory();
+        $arrayUserHistory = json_decode($userHistory, true);
+        $lastUserHistory = end($arrayUserHistory);
+        $arrayUserHistory[] =
+        [
+            'state' => 0,
+            'textReview' => $lastUserHistory['textReview'] ?? NULL,
+            'date' => date('Y-m-d H:i:s'),
+        ];
+        $user->setHistory(json_encode($arrayUserHistory));
         $entityObj->setHistory($newHistory);
         $entityManager->persist($entityObj);
         $entityManager->flush();
@@ -369,6 +379,16 @@ class CurriculumVitaeController extends AbstractController
             'call'=> NULL]]);
         $objEntity->setHistory($jsonHistory);
         $objEntity->setUser($user);
+        $userHistory = $user->getHistory();
+        $arrayUserHistory = json_decode($userHistory, true);
+        $lastUserHistory = end($arrayUserHistory);
+        $arrayUserHistory[] =
+        [
+            'state' => 0,
+            'textReview' => $lastUserHistory['textReview'] ?? NULL,
+            'date' => date('Y-m-d H:i:s'),
+        ];
+        $user->setHistory(json_encode($arrayUserHistory));
         $entityManager = $doctrine->getManager();
         $entityManager->persist($objEntity);
         $entityManager->flush();
