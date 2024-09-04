@@ -881,6 +881,20 @@ class ContractController extends AbstractController
 			if($compensation === '[]'){
 				$compensation = 'Sin fechas de compensación';
 			}
+			$datesArray = json_decode($permission->getDatesArray(),true);
+			foreach($datesArray as &$dateItem){
+				$startHour = new DateTime($dateItem['start_hour']);
+				$finalHour = new DateTime($dateItem['final_hour']);
+				$dateItem['start_hour'] = $startHour->format('h:i A');
+				$dateItem['final_hour'] = $finalHour->format('h:i A');
+			}
+			$datesCompensation = json_decode($permission->getDatesCompensation(),true);
+			foreach($datesCompensation as &$dataItemCompensation){
+				$startHourCompensation = new DateTime($dataItemCompensation['startHourCompensation']);
+				$finalHourCompensation = new DateTime($dataItemCompensation['finalHourCompensation']);
+				$dataItemCompensation['startHourCompensation'] = $startHourCompensation->format('h:i A');
+				$dataItemCompensation['finalHourCompensation'] = $finalHourCompensation->format('h:i A');
+			}
 			$permissionData[] = [
 				'permission' => [
 					'id' => $permission->getId(),
@@ -895,8 +909,8 @@ class ContractController extends AbstractController
 					'username' => $user->getNames().' '.$user->getLastNames(),
 					'userIdentification' => $user->getIdentification()
 				],
-				'datesArray' => json_decode($permission->getDatesArray(),true),
-				'datesCompensation' => json_decode($compensation,true)
+				'datesArray' => $datesArray,
+				'datesCompensation' => $datesCompensation
 			];
 		}
 		return new JsonResponse(['status'=>true, 'permission'=>$permissionData]);
@@ -917,6 +931,22 @@ class ContractController extends AbstractController
 		if($compensation === '[]'){
 			$compensation = 'Sin fechas de compensación';
 		}
+
+		$datesArray = json_decode($permission->getDatesArray(),true);
+		foreach($datesArray as &$dateItem){
+			$startHour = new DateTime($dateItem['start_hour']);
+			$finalHour = new DateTime($dateItem['final_hour']);
+			$dateItem['start_hour'] = $startHour->format('h:i A');
+			$dateItem['final_hour'] = $finalHour->format('h:i A');
+		}
+		$datesCompensation = json_decode($permission->getDatesCompensation(),true);
+		foreach($datesCompensation as &$dataItemCompensation){
+			$startHourCompensation = new DateTime($dataItemCompensation['startHourCompensation']);
+			$finalHourCompensation = new DateTime($dataItemCompensation['finalHourCompensation']);
+			$dataItemCompensation['startHourCompensation'] = $startHourCompensation->format('h:i A');
+			$dataItemCompensation['finalHourCompensation'] = $finalHourCompensation->format('h:i A');
+		}
+
 		$permissionData = [
 			'permission' => [
 				'id' => $permission->getId(),
@@ -932,8 +962,8 @@ class ContractController extends AbstractController
 				'idUser' => $user->getId(),
 				'userIdentification' => $user->getIdentification()
 			],
-			'datesArray' => json_decode($permission->getDatesArray(),true),
-			'datesCompensation' => json_decode($compensation,true)
+			'datesArray' => $datesArray,
+			'datesCompensation' => $datesCompensation
 		];
 		return new JsonResponse(['status'=>true, 'permission'=>$permissionData]);
 	}
@@ -1073,6 +1103,20 @@ class ContractController extends AbstractController
 			if($compensation === '[]'){
 				$compensation = 'Sin fechas de compensación';
 			}
+			$datesArray = json_decode($permission->getDatesArray(),true);
+			foreach($datesArray as &$dateItem){
+				$startHour = new DateTime($dateItem['start_hour']);
+				$finalHour = new DateTime($dateItem['final_hour']);
+				$dateItem['start_hour'] = $startHour->format('h:i A');
+				$dateItem['final_hour'] = $finalHour->format('h:i A');
+			}
+			$datesCompensation = json_decode($permission->getDatesCompensation(),true);
+			foreach($datesCompensation as &$dataItemCompensation){
+				$startHourCompensation = new DateTime($dataItemCompensation['startHourCompensation']);
+				$finalHourCompensation = new DateTime($dataItemCompensation['finalHourCompensation']);
+				$dataItemCompensation['startHourCompensation'] = $startHourCompensation->format('h:i A');
+				$dataItemCompensation['finalHourCompensation'] = $finalHourCompensation->format('h:i A');
+			}
 			$permissionData[] = [
 				'permission' => [
 					'id' => $permission->getId(),
@@ -1087,8 +1131,8 @@ class ContractController extends AbstractController
 					'username' => $user->getNames().' '.$user->getLastNames(),
 					'userIdentification' => $user->getIdentification()
 				],
-				'datesArray' => json_decode($permission->getDatesArray(),true),
-				'datesCompensation' => json_decode($compensation,true)
+				'datesArray' => $datesArray,
+				'datesCompensation' => $datesCompensation
 			];
 		}
 		return new JsonResponse(['status' => true, 'permissions' => $permissionData]);
