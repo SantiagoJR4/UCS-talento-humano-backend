@@ -348,7 +348,7 @@ class CurriculumVitaeController extends AbstractController
                     $objEntity->{'set' . $fieldName}($dateTime);
                 }
                 elseif ($fieldValue instanceof UploadedFile) {
-                    $directory = $this->getParameter('hv')
+                    $directory = $this->getParameter('hv')  
                         . '/'
                         . $user->getTypeIdentification()
                         . $user->getIdentification();
