@@ -160,6 +160,7 @@ class UserController extends AbstractController
             $userData->setEmail($dataRegister['email']);
             $userData->setPhone($dataRegister['phone']);
             $userData->setPassword(hash('sha256',$dataRegister['password']));
+            $userData->setHistory('[]');
     
             $entityManager=$doctrine->getManager();
             $entityManager->persist($userData);
