@@ -263,6 +263,8 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
 		$data = $request->request->all();
 
+		$idContract = $data['idContract'];
+
 		$workStart = $data['work_start']; 
 		$expirationContract = $data['expiration_contract'];
 
@@ -381,7 +383,7 @@ class ContractController extends AbstractController
 				'user' => $user,
 				'period' => $currentPeriod
 			]);
-			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy(['user' => $user]);
+			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy(['id' => $idContract]);
 			
 			$entityManager = $doctrine->getManager();
 			
@@ -453,8 +455,10 @@ class ContractController extends AbstractController
 				'user' => $user,
 				'period' => $period
 			]);
-			
+
 			$reemployment->setStateContract(1); //Archivo Cargado
+
+			
 
 			$entityManager->persist($reemployment);
 			$entityManager->flush();
@@ -1917,7 +1921,7 @@ class ContractController extends AbstractController
 				// Obtenemos la requisición y el usuario
 				$requisitionId = $requisition->getId();
 				$requisitionEntity = $entityManager->getRepository(Requisition::class)->find($requisitionId);
-				$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user_requisition']);
+				$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user']);
 			
 				// Creamos el objeto UsersInRequisition y lo configuramos
 				$userInRequisition = new UsersInRequisition();
@@ -2692,7 +2696,7 @@ class ContractController extends AbstractController
 					'chargeWorkDedication' => $workDedication,
 					'chargeSalary' => $reemployment->getCharges()->getSalary(),
 					'typeEmployee' => $reemployment->getCharges()->getTypeEmployee(),
-					'profileId' => $reemployment->getProfile()->getId(),
+					'profileId' => $reemployment->getProfile()->getId(),	
 					'profileName' => $reemployment->getProfile()->getName(),
 					'user' => $user->getNames().' '.$user->getLastNames(),
 					'userId' => $user->getId(),
@@ -3154,6 +3158,16 @@ class ContractController extends AbstractController
 				$message = 'La contratación directa fue solicitada por ' . $userLogueado->getNames() . ' ' . $userLogueado->getLastNames();
 			}
 
+			$currentYear = date('Y');
+			$currentMonth = date('m');
+
+			if ($currentMonth >= '1' && $currentMonth <= '6') {
+				
+				$directContract->setPeriod('A' . $currentYear);
+			} elseif ($currentMonth >= '7' && $currentMonth <= '12') {
+				$directContract->setPeriod('B' . $currentYear);
+			}
+
       		date_default_timezone_set('America/Bogota');
 			$addToHistory = json_encode(array(array(
 				'user' => $userLogueado->getId(),
@@ -3398,17 +3412,20 @@ class ContractController extends AbstractController
 				'type_anotherIF' => $requisition->getTypeAnotherif(),
 				'names_charge' => $requisition->getNamesCharge(),
 				'justification' => $requisition->getJustification(),
-				'usersInRequisition' => $usersInRequisition->getId(),
-				'identificationUserInRequisition' => $usersInRequisition->getIdentification(),
-				'namesUserInRequisition' => $usersInRequisition->getNames().' '.$usersInRequisition->getLastNames(),
+				'userId' => $usersInRequisition->getId(),
+				'identification' => $usersInRequisition->getIdentification(),
+				'user' => $usersInRequisition->getNames().' '.$usersInRequisition->getLastNames(),
+				'email' => $usersInRequisition->getEmail(),
+				'phone' => $usersInRequisition->getPhone(),
 				'stateUsersInRequisition' => $stateUsersInRequisition,
+				'period'=>$allDirectContract->getPeriod(),
 
-				'user' => $user->getNames().' '.$user->getLastNames(),
-				'typeIdentification' => $user->getTypeIdentification(),
-				'identification' => $user->getIdentification(),
-				'userId' => $user->getId(),
-				'email' => $user->getEmail(),
-				'phone' => $user->getPhone()
+				'userResponsible' => $user->getNames().' '.$user->getLastNames(),
+				'typeIdentificationResponsible' => $user->getTypeIdentification(),
+				'identificationResponsible' => $user->getIdentification(),
+				'userIdResponsible' => $user->getId(),
+				'emailResponsible' => $user->getEmail(),
+				'phoneResponsible' => $user->getPhone()
 			];
 		}
 	}
