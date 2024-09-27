@@ -382,16 +382,22 @@ class ContractController extends AbstractController
 				'period' => $currentPeriod
 			]);
 			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy(['user' => $user]);
-
+			
+			$entityManager = $doctrine->getManager();
+			
 			if ($activedReemployment !== null) {
 				$activedReemployment->setState(2);
-				$doctrine->getManager()->persist($activedReemployment);
-				$doctrine->getManager()->flush();
-			} elseif ($activedDirectContract !== null) {
-				$activedDirectContract->setState(3);
-				$doctrine->getManager()->persist($activedDirectContract);
-				$doctrine->getManager()->flush();
+				$entityManager->persist($activedReemployment);
 			}
+			
+			if ($activedDirectContract !== null) {
+				$activedDirectContract->setState(2); //Contrato generado
+				$entityManager->persist($activedDirectContract);
+			}
+			
+			// Persistir y guardar cambios solo una vez
+			$entityManager->flush();
+			
 
 			return new JsonResponse(['status' => 'Success', 'Code' => '200', 'message' => 'Contrato y asignación generados con éxito']);
 		}
@@ -443,7 +449,10 @@ class ContractController extends AbstractController
 			$entityManager->persist($contract);
 			$entityManager->flush();
 
-			$reemployment = $entityManager->getRepository(Reemployment::class)->findOneBy(['user' => $user]);
+			$reemployment = $entityManager->getRepository(Reemployment::class)->findOneBy([
+				'user' => $user,
+				'period' => $period
+			]);
 			
 			$reemployment->setStateContract(1); //Archivo Cargado
 
@@ -881,6 +890,20 @@ class ContractController extends AbstractController
 			if($compensation === '[]'){
 				$compensation = 'Sin fechas de compensación';
 			}
+			$datesArray = json_decode($permission->getDatesArray(),true);
+			foreach($datesArray as &$dateItem){
+				$startHour = new DateTime($dateItem['start_hour']);
+				$finalHour = new DateTime($dateItem['final_hour']);
+				$dateItem['start_hour'] = $startHour->format('h:i A');
+				$dateItem['final_hour'] = $finalHour->format('h:i A');
+			}
+			$datesCompensation = json_decode($permission->getDatesCompensation(),true);
+			foreach($datesCompensation as &$dataItemCompensation){
+				$startHourCompensation = new DateTime($dataItemCompensation['startHourCompensation']);
+				$finalHourCompensation = new DateTime($dataItemCompensation['finalHourCompensation']);
+				$dataItemCompensation['startHourCompensation'] = $startHourCompensation->format('h:i A');
+				$dataItemCompensation['finalHourCompensation'] = $finalHourCompensation->format('h:i A');
+			}
 			$permissionData[] = [
 				'permission' => [
 					'id' => $permission->getId(),
@@ -895,8 +918,8 @@ class ContractController extends AbstractController
 					'username' => $user->getNames().' '.$user->getLastNames(),
 					'userIdentification' => $user->getIdentification()
 				],
-				'datesArray' => json_decode($permission->getDatesArray(),true),
-				'datesCompensation' => json_decode($compensation,true)
+				'datesArray' => $datesArray,
+				'datesCompensation' => $datesCompensation
 			];
 		}
 		return new JsonResponse(['status'=>true, 'permission'=>$permissionData]);
@@ -917,6 +940,22 @@ class ContractController extends AbstractController
 		if($compensation === '[]'){
 			$compensation = 'Sin fechas de compensación';
 		}
+
+		$datesArray = json_decode($permission->getDatesArray(),true);
+		foreach($datesArray as &$dateItem){
+			$startHour = new DateTime($dateItem['start_hour']);
+			$finalHour = new DateTime($dateItem['final_hour']);
+			$dateItem['start_hour'] = $startHour->format('h:i A');
+			$dateItem['final_hour'] = $finalHour->format('h:i A');
+		}
+		$datesCompensation = json_decode($permission->getDatesCompensation(),true);
+		foreach($datesCompensation as &$dataItemCompensation){
+			$startHourCompensation = new DateTime($dataItemCompensation['startHourCompensation']);
+			$finalHourCompensation = new DateTime($dataItemCompensation['finalHourCompensation']);
+			$dataItemCompensation['startHourCompensation'] = $startHourCompensation->format('h:i A');
+			$dataItemCompensation['finalHourCompensation'] = $finalHourCompensation->format('h:i A');
+		}
+
 		$permissionData = [
 			'permission' => [
 				'id' => $permission->getId(),
@@ -932,8 +971,8 @@ class ContractController extends AbstractController
 				'idUser' => $user->getId(),
 				'userIdentification' => $user->getIdentification()
 			],
-			'datesArray' => json_decode($permission->getDatesArray(),true),
-			'datesCompensation' => json_decode($compensation,true)
+			'datesArray' => $datesArray,
+			'datesCompensation' => $datesCompensation
 		];
 		return new JsonResponse(['status'=>true, 'permission'=>$permissionData]);
 	}
@@ -1073,6 +1112,20 @@ class ContractController extends AbstractController
 			if($compensation === '[]'){
 				$compensation = 'Sin fechas de compensación';
 			}
+			$datesArray = json_decode($permission->getDatesArray(),true);
+			foreach($datesArray as &$dateItem){
+				$startHour = new DateTime($dateItem['start_hour']);
+				$finalHour = new DateTime($dateItem['final_hour']);
+				$dateItem['start_hour'] = $startHour->format('h:i A');
+				$dateItem['final_hour'] = $finalHour->format('h:i A');
+			}
+			$datesCompensation = json_decode($permission->getDatesCompensation(),true);
+			foreach($datesCompensation as &$dataItemCompensation){
+				$startHourCompensation = new DateTime($dataItemCompensation['startHourCompensation']);
+				$finalHourCompensation = new DateTime($dataItemCompensation['finalHourCompensation']);
+				$dataItemCompensation['startHourCompensation'] = $startHourCompensation->format('h:i A');
+				$dataItemCompensation['finalHourCompensation'] = $finalHourCompensation->format('h:i A');
+			}
 			$permissionData[] = [
 				'permission' => [
 					'id' => $permission->getId(),
@@ -1087,8 +1140,8 @@ class ContractController extends AbstractController
 					'username' => $user->getNames().' '.$user->getLastNames(),
 					'userIdentification' => $user->getIdentification()
 				],
-				'datesArray' => json_decode($permission->getDatesArray(),true),
-				'datesCompensation' => json_decode($compensation,true)
+				'datesArray' => $datesArray,
+				'datesCompensation' => $datesCompensation
 			];
 		}
 		return new JsonResponse(['status' => true, 'permissions' => $permissionData]);
@@ -1129,8 +1182,8 @@ class ContractController extends AbstractController
 
 			$license -> setTypeCompensation($data['type_compensation']);
 			$license -> setTypeLicense($data['type_license']);
-			$license -> setLicense($data['license']);
-			$license -> setOthertypeLicense($data['otherTypeLicense'] ?? NULL);
+			$license -> setLicense($data['license'] ?? NULL);
+			$license -> setOthertypeLicense($data['othertype_license'] ?? NULL);
 			$license -> setReason($data['reason']);
 			$license -> setState(0);
 			$license -> setUser($user);
@@ -1212,7 +1265,7 @@ class ContractController extends AbstractController
 					'type_license' => $license->getTypelicense(),
 					'type_compensation' => $license->getTypeCompensation(),
 					'license' => $license->getLicense(),
-					'otherLicense' => $license->getOthertypeLicense(),
+					'othertype_license' => $license->getOthertypeLicense(),
 					'reason' => $license->getReason(),
 					'initial_date' => $license->getInitialDate()->format('Y-m-d'),
 					'final_date' => $license->getFinalDate()->format('Y-m-d'),
@@ -1245,7 +1298,7 @@ class ContractController extends AbstractController
 				'type_license' => $license->getTypelicense(),
 				'type_compensation' => $license->getTypeCompensation(),
 				'license' => $license->getLicense(),
-				'otherLicense' => $license->getOthertypeLicense(),
+				'othertype_license' => $license->getOthertypeLicense(),
 				'reason' => $license->getReason(),
 				'initial_date' => $license->getInitialDate()->format('Y-m-d'),
 				'final_date' => $license->getFinalDate()->format('Y-m-d'),
@@ -1349,14 +1402,14 @@ class ContractController extends AbstractController
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
 		switch($specialUser){
 			case 'CTH':
-				// $userWhoMadeLicense = $license->getUser();
-				// $newNotification->setUser($userWhoMadeLicense);
 				$newNotification->setMessage('Licencia rechazada por Talento humano');
+				$userWhoMadeLicense = $license->getUser();
+				$newNotification->setUser($userWhoMadeLicense);
 				break;
 			default:
-				//$userWhoMadeLicense = $license->getUser();
-				// $newNotification->setUser($userWhoMadeLicense);
-                $newNotification->setMessage('Licencia rechazada por Jefe inmediato');
+				$newNotification->setMessage('Licencia rechazada por Jefe inmediato');
+				$userWhoMadeLicense = $license->getUser();
+				$newNotification->setUser($userWhoMadeLicense);
 				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
@@ -1419,13 +1472,14 @@ class ContractController extends AbstractController
 		$isValidToken = $this->validateTokenSuper($request)->getContent();
 		$entityManager = $doctrine->getManager();
 		$data = $request->request->all();
-
+		
 		$incapacityDate = $data['incapacity_date'];
 
 		if($isValidToken === false){
 			return new JsonResponse(['ERROR' => 'Token no válido']);
 		}else{
 			$user = $entityManager->getRepository(User::class)->find($data['user']);
+			$specialUser = $user->getSpecialUser();
 			if(!$user){
 				throw $this->createNotFoundException('No user found for id'. $data['id']);
 			}
@@ -1442,8 +1496,7 @@ class ContractController extends AbstractController
 			$incapacity -> setState(0);
 			$incapacity -> setUser($user);
 
-			$file1 = $request->files->get('medical_support_pdf');
-			$file2 = $request->files->get('eps_support_pdf');
+			$file1 = $request->files->get('support_pdf_incapacity');
 			$identificationUser = $data['identificationUser'];
 
 			if(isset($file1)){
@@ -1453,28 +1506,13 @@ class ContractController extends AbstractController
 					$fileNameMedical = $identificationUser.'_'.time().'_'.$nameFileMedical;
 					try{
 						$file1->move($folderDestination,$fileNameMedical);
-						$incapacity->setMedicalSupportPdf($fileNameMedical);
+						$incapacity->setSupportPdfIncapacity($fileNameMedical);
 					}catch(\Exception $e){
 						return new JsonResponse(['error' => 'Error al solicitar una incapacidad']);
 					}
 				}
 			}else{
-				$incapacity->setMedicalSupportPdf('Sin soporte');
-			}
-			if(isset($file2)){
-				$nameFileEps = $data['fileName2'];	
-				if($file2 instanceof UploadedFile){
-					$folderDestination = $this->getParameter('contract').'/'.$identificationUser;
-					$fileNameEps = $identificationUser.'_'.time().'_'.$nameFileEps;
-					try{
-						$file2->move($folderDestination,$fileNameEps);
-						$incapacity->setEpsSupportPdf($fileNameEps);
-					}catch(\Exception $e){
-						return new JsonResponse(['error' => 'Error al solicitar una incapacidad']);
-					}
-				}
-			}else{
-				$incapacity->setEpsSupportPdf('Sin soporte');
+				$incapacity->setSupportPdfIncapacity('Sin soporte');
 			}
 
 			date_default_timezone_set('America/Bogota');
@@ -1490,27 +1528,45 @@ class ContractController extends AbstractController
 			$entityManager->persist($incapacity);
 			$entityManager->flush();
 
-			$immediateBossArray = json_decode($data['arrayImmediateBoss'],true);
-			// $immediateBossIds = [];
+			$newNotification = new Notification();
+			$newNotification->setSeen(0);
+			$relatedEntity = array(
+				'id' => $incapacity->getId(),
+				'applicantId'=>$user->getId(),
+				'applicantName' => $user->getNames() . " " . $user->getLastNames(),
+				'entity' => 'incapacity'    
+			);
 
-			foreach ($immediateBossArray as $boss) {
-				$bossID = $boss['id'];
-				$immediateBossUsers = $doctrine->getRepository(User::class)->find($bossID);
-				$newNotification = new Notification();
-				$newNotification->setSeen(0);
-				$newNotification->setUser($immediateBossUsers);
-				$newNotification->setMessage('Solicita la aprobación de una incapacidad');
-				
-				$relatedEntity = array(
-					'id' => $incapacity->getId(),
-					'applicantId'=>$user->getId(),
-					'applicantName' => $user->getNames() . " " . $user->getLastNames(),
-					'entity' => 'incapacity'    
-				);
+			if ($specialUser !== 'CTH') {
 				$newNotification->setRelatedEntity(json_encode($relatedEntity));
-				
-				$entityManager->persist($newNotification);
+				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser' => 'CTH', 'userType' => 8]);
+				$newNotification->setUser($userForNotification);
+				$newNotification->setMessage('Solicita la aprobación de una incapacidad');
 			}
+							
+			$entityManager->persist($newNotification);
+
+			// $immediateBossArray = json_decode($data['arrayImmediateBoss'],true);
+			// // $immediateBossIds = [];
+
+			// foreach ($immediateBossArray as $boss) {
+			// 	$bossID = $boss['id'];
+			// 	$immediateBossUsers = $doctrine->getRepository(User::class)->find($bossID);
+			// 	$newNotification = new Notification();
+			// 	$newNotification->setSeen(0);
+			// 	$newNotification->setUser($immediateBossUsers);
+			// 	$newNotification->setMessage('Solicita la aprobación de una incapacidad');
+				
+			// 	$relatedEntity = array(
+			// 		'id' => $incapacity->getId(),
+			// 		'applicantId'=>$user->getId(),
+			// 		'applicantName' => $user->getNames() . " " . $user->getLastNames(),
+			// 		'entity' => 'incapacity'    
+			// 	);
+			// 	$newNotification->setRelatedEntity(json_encode($relatedEntity));
+				
+			// 	$entityManager->persist($newNotification);
+			// }
 			$entityManager->flush();
 
 		}
@@ -1560,8 +1616,7 @@ class ContractController extends AbstractController
 					'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
 					'number_days_incapacity' => $incapacity->getNumberDaysIncapacity(),
 					'origin_incapacity' => $incapacity->getOriginIncapacity(),
-					'medical_support_pdf' => $incapacity->getMedicalSupportPdf(),
-					'eps_support_pdf' => $incapacity->getEpsSupportPdf(),
+					'support_pdf_incapacity' => $incapacity->getSupportPdfIncapacity(),
 					'state' => $incapacity->getState(),
 					'history' => $incapacity->getHistory(),
 					'username' => $user->getNames().' '.$user->getLastNames(),
@@ -1610,8 +1665,7 @@ class ContractController extends AbstractController
 				'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
 				'number_days_incapacity' => $incapacity->getNumberDaysIncapacity(),
 				'origin_incapacity' => $incapacity->getOriginIncapacity(),
-				'medical_support_pdf' => $incapacity->getMedicalSupportPdf(),
-				'eps_support_pdf' => $incapacity->getEpsSupportPdf(),
+				'support_pdf_incapacity' => $incapacity->getSupportPdfIncapacity(),
 				'state' => $incapacity->getState(),
 				'history' => $incapacity->getHistory(),
 				'username' => $user->getNames().' '.$user->getLastNames(),
@@ -1733,7 +1787,7 @@ class ContractController extends AbstractController
 			'user' => $user->getId(),
 			'responsible' => $user->getSpecialUser(),
 			'state' => 3,
-			'message' => 'La incapacidad fue rechazada por'.$user->getNames()." ".$user->getLastNames(),
+			'message' => 'La incapacidad fue rechazada por '.$user->getNames()." ".$user->getLastNames(),
 			'userInput' => $rejectText,
             'date' => date('Y-m-d H:i:s'),
 		));
@@ -1784,8 +1838,7 @@ class ContractController extends AbstractController
 					'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
 					'number_days_incapacity' => $incapacity->getNumberDaysIncapacity(),
 					'origin_incapacity' => $incapacity->getOriginIncapacity(),
-					'medical_support_pdf' => $incapacity->getMedicalSupportPdf(),
-					'eps_support_pdf' => $incapacity->getEpsSupportPdf(),
+					'support_pdf_incapacity' => $incapacity->getSupportPdfIncapacity(),
 					'state' => $incapacity->getState(),
 					'history' => $incapacity->getHistory(),
 					'username' => $user->getNames().' '.$user->getLastNames(),
@@ -1859,44 +1912,6 @@ class ContractController extends AbstractController
 
 			$entityManager->persist($requisition);
 			$entityManager->flush();
-
-			// $newNotification = new Notification();
-			// $newNotification->setSeen(0);
-			// $relatedEntity = array(	
-			// 	'id' => $requisition->getId(),
-			// 	'applicantId'=>$user->getId(),
-			// 	'applicantName'=>$user->getNames()." ".$user->getLastNames(),
-			// 	'entity'=>'requisition'
-			// );
-			// $newNotification->setRelatedEntity(json_encode($relatedEntity));
-
-			// switch($specialUser){
-			// 	case 'CPSI':
-			// 	case 'REC':
-			// 	case 'CPB':
-			// 	case 'DIRENF':
-			// 	case 'DIRASS':
-			// 	case 'CRCAD':
-			// 	case 'AOASIC':
-			// 	case 'CTH':
-			// 	case 'VPSB':
-			// 	case 'VAE':
-			// 	case 'VII':
-			// 	case 'ASIAC':
-			// 		$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
-			// 		$newNotification->setUser($userForNotification);
-			// 		$newNotification->setMessage('Solicita la aprobación de una requisición.');
-			// 		break;
-			// 	case 'VF':
-			// 		$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType'=>8]);
-			// 		$newNotification->setUser($userForNotification);
-			// 		$requisition->setState(1);
-			// 		$newNotification->setMessage('Envia la solicitud de revinculación APROBADA por parte de Vicerrectoría Financiera.');
-			// 		break;
-			// }
-
-			// $entityManager->persist($newNotification);
-			// $entityManager->flush();
 
 			if (isset($data['user_requisition']) && $data['user_requisition'] !== null) {
 				// Obtenemos la requisición y el usuario
@@ -2877,7 +2892,7 @@ class ContractController extends AbstractController
 			return new JsonResponse(['ERROR' => 'Token no válido']);
 		}else{
 			$newNotification = new Notification();
-			$newNotification->setSeen(0);
+			$newNotification->setSeen(1);
 			$relatedEntity = array(
 				'applicantId'=>$user->getId(),
 				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
@@ -3087,6 +3102,13 @@ class ContractController extends AbstractController
 
 			$requisition->setState(3); //requisición efectuada
 
+			$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
+				'requisition' => $requisition
+			]);
+		
+			$usersInRequisition = $existingUserInRequisition->getUser();
+			$namesUserSelected = $usersInRequisition->getNames().''.$usersInRequisition->getLastNames();
+
 			$directContract = new DirectContract();
 			$currentDate = new DateTime();
 
@@ -3169,7 +3191,7 @@ class ContractController extends AbstractController
 				case 'ASIAC':
 					$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
 					$newNotification->setUser($userForNotification);
-					$newNotification->setMessage('Solicita la aprobación de una solicitud de contratación directa.');
+					$newNotification->setMessage('Solicita la aprobación de una solicitud de contratación directa de '.$namesUserSelected);
 					break;
 				case 'VF':
 					$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType'=>8]);

@@ -31,7 +31,7 @@ class NotificationController extends AbstractController
             ->andWhere('n.user = :user')
             ->andWhere('n.seen = false')
             ->orderBy('n.id', 'DESC')
-            ->setMaxResults(5)
+            // ->setMaxResults(5) TODO: uncomment when all notifications is ready
             ->setParameter('user', $user);
         $allNotification = $query->getQuery()->getArrayResult();
         foreach($allNotification as &$value)
