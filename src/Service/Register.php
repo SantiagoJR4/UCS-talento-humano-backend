@@ -26,6 +26,7 @@ class UserService
         $user->setPassword($data['password']);
         $user->setPhone($data['telefono']);
         $user->setUserType(6);
+        $user->setHistory('[]');
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();
