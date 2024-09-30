@@ -35,8 +35,13 @@ use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\DBAL\Connection;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as WriterXlsx;
 use PhpParser\Node\Expr\Cast\Array_;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class ContractController extends AbstractController
 {
@@ -3587,5 +3592,136 @@ class ContractController extends AbstractController
 	$entityManager->persist($newNotification);
 	$entityManager->flush();
 	return new JsonResponse(['message'=>'Se ha rechazado la solicitud de contratación directa de '.$namesUserSelected]);
+  }
+
+  #[Route('contract/generate-dataBase-excel', name: 'app_contract_generate_dataBase_excel')]
+  public function generateDataBaseExcel(Request $request, ManagerRegistry $doctrine): BinaryFileResponse
+  {
+	  $token = $request->query->get('token');
+  
+	  // Validación del token
+	  if ($token === false) {
+		  throw new \Exception('Token no válido'); // Puedes manejar los errores de otra manera si prefieres
+	  }
+  
+	  // Obtener el EntityManager
+	  $conn = $doctrine->getConnection();
+  
+	  // Consulta SQL para obtener los datos
+	  $sql = "
+		  SELECT 
+			  u.names AS Nombre, 
+			  u.last_names AS Apellido,
+			  u.identification AS NUM_DOCUMENTO,
+			  JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_expedition, '$.nom_mpio')) AS LUGAR_EXPEDICION,
+			  pd.birthday AS FECHA_NACIMIENTO,
+			  JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.nom_mpio')) AS LUGAR_NACIMIENTO,
+			  JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.cod_mpio')) AS ID_MUNICIPIO_NACIMIENTO,
+			  act.academic_modality AS ID_NIVEL_MAXESTUDIO,
+			  act.title_name AS TITULO_RECIBIDO,
+			  act.date AS FECHA_GRADO,
+			  act.is_foreign_university AS TITULO_CONVALIDADO,
+			  act.name_university AS NOMBRE_INSTITUCION_ESTUDIO,
+			  act.program_methodology AS ID_METODOLOGIA_PROGRAMA,
+			  con.type_contract AS ID_TIPO_CONTRATO,
+			  con.work_dedication AS ID_DEDICACION,
+			  con.weekly_hours AS HORAS_DEDICACION_SEMESTRE,
+			  con.salary AS ASIGNACION_BASICA_MENSUAL,
+			  0 AS PORCENTAJE_DOCENCIA,
+			  0 AS PORCENTAJE_INVESTIGACION,
+			  0 AS PORCENTAJE_ADMINISTRATIVA,
+			  0 AS PORCENTAJE_EXTENSION,
+			  0 AS PORCENTAJE_OTRAS_ACTIVIDADES,
+			  pd.residence_address AS Direccion,
+			  u.phone AS Celular,
+			  u.email AS Correo_Personal,
+			  pd.marital_status AS Estado_Civil,
+			  pd.blood_type AS RH,
+			  pregrado.title_name_pregrado AS Titulo_de_Pregrado,
+			  0 AS Pais_en_el_que_estudio,
+			  pregrado.name_university_pregrado AS Universidad_donde_estudio,
+			  pregrado.date_pregrado AS Fecha_de_grado,
+			  lg.levelLanguage AS Nivel_de_ingles_que_tiene_actualmente
+		  FROM 
+			  user u
+		  JOIN 
+			  personal_data pd ON u.id = pd.user_id
+		  JOIN 
+			  (SELECT user_id, MAX(CASE 
+				  WHEN academic_modality = 'PDO' THEN 9
+				  WHEN academic_modality = 'DOC' THEN 8
+				  WHEN academic_modality = 'MG' THEN 7
+				  WHEN academic_modality = 'ESP' THEN 6
+				  WHEN academic_modality = 'UN' THEN 5
+				  WHEN academic_modality = 'TCE' THEN 4
+				  WHEN academic_modality = 'TC' THEN 3
+				  WHEN academic_modality = 'TP' THEN 2
+				  WHEN academic_modality = 'AU' THEN 1
+				  END) AS nivel_estudio
+			  FROM academic_training
+			  GROUP BY user_id) AS max_academic_modality ON u.id = max_academic_modality.user_id
+		  JOIN academic_training act ON u.id = act.user_id AND 
+			  CASE 
+				  WHEN act.academic_modality = 'PDO' THEN 9
+				  WHEN act.academic_modality = 'DOC' THEN 8
+				  WHEN act.academic_modality = 'MG' THEN 7
+				  WHEN act.academic_modality = 'ESP' THEN 6
+				  WHEN act.academic_modality = 'UN' THEN 5
+				  WHEN act.academic_modality = 'TCE' THEN 4
+				  WHEN act.academic_modality = 'TC' THEN 3
+				  WHEN act.academic_modality = 'TP' THEN 2
+				  WHEN act.academic_modality = 'AU' THEN 1
+			  END = max_academic_modality.nivel_estudio
+		  JOIN (SELECT user_id, title_name AS title_name_pregrado, name_university AS name_university_pregrado, date AS date_pregrado
+			  FROM academic_training
+			  WHERE academic_modality = 'UN') AS pregrado ON u.id = pregrado.user_id
+		  JOIN contract con ON u.id = con.user_id
+		  JOIN language lg ON u.id = lg.user_id
+		  WHERE u.user_type = 2;
+	  ";
+  
+	  // Ejecutar la consulta
+	  $stmt = $conn->executeQuery($sql);
+	  $results = $stmt->fetchAllAssociative();
+  
+	  // Crear la hoja de cálculo
+	  $spreadsheet = new Spreadsheet();
+	  $sheet = $spreadsheet->getActiveSheet();
+  
+	  // Agregar encabezados
+	  $headers = [
+		  'Nombre', 'Apellido', 'NUM_DOCUMENTO', 'LUGAR_EXPEDICION', 'FECHA_NACIMIENTO',
+		  'LUGAR_NACIMIENTO', 'ID_MUNICIPIO_NACIMIENTO', 'ID_NIVEL_MAXESTUDIO',
+		  'TITULO_RECIBIDO', 'FECHA_GRADO', 'TITULO_CONVALIDADO', 'NOMBRE_INSTITUCION_ESTUDIO',
+		  'ID_METODOLOGIA_PROGRAMA', 'ID_TIPO_CONTRATO', 'ID_DEDICACION',
+		  'HORAS_DEDICACION_SEMESTRE', 'ASIGNACION_BASICA_MENSUAL', 'PORCENTAJE_DOCENCIA',
+		  'PORCENTAJE_INVESTIGACION', 'PORCENTAJE_ADMINISTRATIVA', 'PORCENTAJE_EXTENSION',
+		  'PORCENTAJE_OTRAS_ACTIVIDADES', 'Direccion', 'Celular', 'Correo_Personal',
+		  'Estado_Civil', 'RH', 'Titulo_de_Pregrado', 'Pais_en_el_que_estudio',
+		  'Universidad_donde_estudio', 'Fecha_de_grado', 'Nivel_de_ingles_que_tiene_actualmente'
+	  ];
+	  $sheet->fromArray($headers, null, 'A1');
+  
+	  // Agregar los datos
+	  $row = 2;
+	  foreach ($results as $data) {
+		  $sheet->fromArray($data, null, 'A' . $row);
+		  $row++;
+	  }
+  
+	  // Guardar el archivo temporalmente
+	  $writer = new WriterXlsx($spreadsheet);
+	  $fileName = 'baseDatosSnies.xlsx';
+	  $temp_file = tempnam(sys_get_temp_dir(), $fileName);
+	  $writer->save($temp_file);
+  
+	  // Retornar el archivo como respuesta para descarga
+	  $response = new BinaryFileResponse($temp_file);
+	  $response->setContentDisposition(
+		  ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+		  $fileName
+	  );
+  
+	  return $response;
   }
 }
