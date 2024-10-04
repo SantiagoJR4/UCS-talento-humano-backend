@@ -739,7 +739,6 @@ class CallController extends AbstractController
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         $newCallPercentage->setCall($call);
         $entityManager->persist($newCallPercentage);
-        $entityManager->flush();
         if( $factorsValues !== NULL )
         {
             try {
@@ -752,7 +751,6 @@ class CallController extends AbstractController
                 $newFactorProfile->setCall($call);
                 $entityManager->persist($newFactorProfile);
             }
-            $entityManager->flush();
             } catch (\Throwable $th) {
                 throw new \Exception('There is an error in factorsValues', 400);
             }
