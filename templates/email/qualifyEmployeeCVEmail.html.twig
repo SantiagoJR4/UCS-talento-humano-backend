@@ -65,12 +65,7 @@
         {% if dataForEmail.workExperience %}
             <h3><strong>Experiencia Laboral</strong></h3>
             {% for element in dataForEmail.workExperience %}
-                <p>{{loop.index}}. {{element.companyName}} - {{element.admissionDate|date('d/m/Y')}} a 
-                {% if element.isWorking %}
-                    actualmente
-                {% else %}
-                {{element.retirementDate|date('d/m/Y')}}
-                {% endif %}
+                <p>{{loop.index}}. {{element.companyName}} - {{element.position}}
                 </p>
                 <p><i>{{element.state}}{{element.textReview ? ' - ' ~ element.textReview : null}}</i></p>
             {% endfor %}

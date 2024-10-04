@@ -65,13 +65,7 @@
         {% if dataForEmail.workExperience %}
             <h3><strong>Revisar Experiencia Laboral</strong></h3>
             {% for element in dataForEmail.workExperience %}
-                <p>{{loop.index}}. {{element.companyName}} - {{element.admissionDate|date('d/m/Y')}} a 
-                {% if element.isWorking %}
-                    actualmente
-                {% else %}
-                {{element.retirementDate|date('d/m/Y')}}
-                {% endif %}
-                </p>
+                <p>{{loop.index}}. {{element.companyName}} - {{element.position}}</p>
                 <p>Notas del Revisor: <i>{{element.textReview}}</i></p>
             {% endfor %}
         {% endif %}

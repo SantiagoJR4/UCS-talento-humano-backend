@@ -688,7 +688,7 @@ class CallController extends AbstractController
         $isTokenValid = (new DateTime())->getTimestamp() < $expirationTime;
         if( $userType !== 8 || !$isTokenValid)
         {
-            return new JsonResponse(['isValid' => $isTokenValid], 200, []);
+            return new JsonResponse(['isValid' => $isTokenValid], 400, []);
         }
         $data = $request->request->all();
         $callPercentage = json_decode($data['callPercentage'], true);
@@ -724,22 +724,21 @@ class CallController extends AbstractController
             $newCallPercentage->{'set'.$fieldValue['name']}($fieldValue['value'] !== 0 ? $fieldValue['value'] : NULL);
         }
         } catch (\Throwable $th) {
-            return new JsonResponse('callPercentage');
+            throw new \Exception('There is an error in callPercentage', 400);
         }
         try {
             // TODO:  see what happens when hvPercentage === NULL
             foreach($hvPercentage as $fieldName => $fieldValue)
-        {
-            $newCallPercentage->{'set'.$fieldValue['name']}($fieldValue['value'] !== 0 ? $fieldValue['value'] : NULL);
-        }
+            {
+                $newCallPercentage->{'set'.ucfirst($fieldValue['name'])}($fieldValue['value'] !== 0 ? $fieldValue['value'] : NULL);
+            }
         } catch (\Throwable $th) {
-            return new JsonResponse('hvPercentage');
+            throw new \Exception('There is an error in hvPercentage', 400);
         }
         $newCallPercentage->setHvScore($scoreHV);
         $call = $doctrine->getRepository(TblCall::class)->find($callId);
         $newCallPercentage->setCall($call);
         $entityManager->persist($newCallPercentage);
-        $entityManager->flush();
         if( $factorsValues !== NULL )
         {
             try {
@@ -752,9 +751,8 @@ class CallController extends AbstractController
                 $newFactorProfile->setCall($call);
                 $entityManager->persist($newFactorProfile);
             }
-            $entityManager->flush();
             } catch (\Throwable $th) {
-                return new JsonResponse('factorsValues');
+                throw new \Exception('There is an error in factorsValues', 400);
             }
         }
         try {
@@ -768,25 +766,11 @@ class CallController extends AbstractController
                 $newCompetencePercentage->setExtraCompetence($fieldValue['extraCompetence']);
             }
             $newCompetencePercentage->setCall($call);
-            $newCompetencePercentage->setPsychoPercentage($fieldValue['valuePsycho'] !== 0 ? $fieldValue['valuePsycho'] : NULL);
             $newCompetencePercentage->setInterviewPercentage($fieldValue['valueInterview'] !== 0 ? $fieldValue['valueInterview'] : NULL);
             $entityManager->persist($newCompetencePercentage);
-            $entityManager->flush();
-            if( $factorsValues !== NULL ){
-                foreach($fieldValue['factorsInCompetence'] as $index => $factorId)
-                {
-                    $factorCall = $entityManager
-                        ->getRepository(FactorProfile::class)
-                        ->findOneBy(['factor' => $factorId, 'call' => $call]);
-                    $newScore = new Score();
-                    $newScore->setCompetencePercentage($newCompetencePercentage);
-                    $newScore->setFactorProfile($factorCall);
-                    $entityManager->persist($newScore);
-                }
-            }
         }
         } catch (\Throwable $th) {
-            return new JsonResponse('competenciesPercentage');
+            throw new \Exception('There is an error in competenciesPercentage => '.$th, 400);
         }
         $entityManager->flush();
         return new JsonResponse(['done'=>'hecho'], 200, []);

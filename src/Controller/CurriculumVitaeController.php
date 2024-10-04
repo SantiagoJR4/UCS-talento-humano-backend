@@ -62,7 +62,7 @@ function parseCvData($data) {
         } elseif($key === 'timeWorked'){
             $decodedValue = json_decode($value, true);
             $data[$key] = formatTimeWorked($decodedValue);
-        } elseif(in_array($key, ['placeOfResidence', 'placeOfBirth', 'placeOfExpedition'])){
+        } elseif(in_array($key, ['placeOfResidence', 'placeOfBirth', 'placeOfExpedition', 'workDates'])){
             $data[$key] = json_decode($value, true);
         }
     }
@@ -304,7 +304,7 @@ class CurriculumVitaeController extends AbstractController
         }
         date_default_timezone_set('America/Bogota');
         $lastState = end($initialHistoryArray)['state'];
-        $lastTextReview = end($initialHistoryArray)['textReview'];
+        $lastTextReview = isset(end($initialHistoryArray)['textReview']) ? end($initialHistoryArray)['textReview'] : NULL;
         $initialHistoryArray[] =
         [
             'state' => $request->query->get('entity')!== 'ReferencesData' ? 4 : 1,
@@ -398,13 +398,17 @@ class CurriculumVitaeController extends AbstractController
     #[Route('/test-controller', name: 'app_test_controller')]
     public function test(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
     {
-        date_default_timezone_set('America/Bogota');
-        $initial = "[{\"state\":0,\"date\":\"17-07-2014 17:13:58\",\"call\":null},{\"state\":1,\"date\":\"30-05-2023 17:13:58\",\"call\":3}]";
-        $add = json_encode(['state'=>4,'date'=>date('d-m-Y H:i:s'), 'call'=> 7]);
-        $result = rtrim($initial, ']').','.$add.']';
-        $result = json_decode($result);
-        // $result[] = $add;
-        var_dump($result);
+        $sqlWE="
+            SELECT
+                id,
+                work_dates
+            FROM work_experience
+            WHERE user_id = 12;
+        ";
+        $connectionEmp = $doctrine->getManager()->getConnection();
+        $resultSetEmp = $connectionEmp->executeQuery($sqlWE);
+        $result = $resultSetEmp->fetchAllAssociative();
+        $result[0]['work_dates'] = json_decode($result[0]['work_dates'], true);
         return new JsonResponse($result);
     }
     //---------------------------------------------------------------------------------------

@@ -53,12 +53,7 @@
             {% case 'WorkExperience' %}
                 <h3><strong>Experiencia Laboral</strong></h3>
                 <p>
-                    {{item.companyName}} - {{item.admissionDate|date('d/m/Y')}} a 
-                    {% if item.isWorking %}
-                        actualmente
-                    {% else %}
-                        {{item.retirementDate|date('d/m/Y')}}
-                    {% endif %}
+                    {{item.companyName}} - {{item.position}}
                 </p>
             {% case 'TeachingExperience' %}
                 <h3><strong>Experiencia Docente</strong></h3>
