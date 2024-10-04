@@ -268,7 +268,7 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
 		$data = $request->request->all();
 
-		$idContract = $data['idContract'];
+		$idContract = $data['idUserContractDirect'];
 
 		$workStart = $data['work_start']; 
 		$expirationContract = $data['expiration_contract'];
@@ -388,7 +388,8 @@ class ContractController extends AbstractController
 				'user' => $user,
 				'period' => $currentPeriod
 			]);
-			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy(['id' => $idContract]);
+			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy([
+				'id' => $idContract]);
 			
 			$entityManager = $doctrine->getManager();
 			
@@ -1926,7 +1927,7 @@ class ContractController extends AbstractController
 				// Obtenemos la requisición y el usuario
 				$requisitionId = $requisition->getId();
 				$requisitionEntity = $entityManager->getRepository(Requisition::class)->find($requisitionId);
-				$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user']);
+				$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user_requisition']);
 			
 				// Creamos el objeto UsersInRequisition y lo configuramos
 				$userInRequisition = new UsersInRequisition();
@@ -3111,12 +3112,8 @@ class ContractController extends AbstractController
 
 			$requisition->setState(3); //requisición efectuada
 
-			$existingUserInRequisition = $entityManager->getRepository(UsersInRequisition::class)->findOneBy([
-				'requisition' => $requisition
-			]);
-		
-			$usersInRequisition = $existingUserInRequisition->getUser();
-			$namesUserSelected = $usersInRequisition->getNames().''.$usersInRequisition->getLastNames();
+			$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user']);
+			$namesUserSelected = $dataUserRequisition->getNames().''.$dataUserRequisition->getLastNames();
 
 			$directContract = new DirectContract();
 			$currentDate = new DateTime();
