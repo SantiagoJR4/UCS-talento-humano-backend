@@ -772,6 +772,7 @@ class CallController extends AbstractController
         } catch (\Throwable $th) {
             throw new \Exception('There is an error in competenciesPercentage => '.$th, 400);
         }
+        $call->setState(4);
         $entityManager->flush();
         return new JsonResponse(['done'=>'hecho'], 200, []);
     }
@@ -994,6 +995,7 @@ class CallController extends AbstractController
         $data = json_decode( $request->request->get('data'), true);
         $callId = $request->request->get('callId');
         $callName = $request->request->get('callName');
+        $sendEmail = $request->request->get('sendEmail');
         $date = $request->request->get('date');
         $hour = $request->request->get('hour');
         $step = $request->request->get('step');
@@ -1188,7 +1190,7 @@ class CallController extends AbstractController
             $entityManager->flush();
             $userEmail = $user->getEmail();
             $fullname = $user->getNames().' '.$user->getlastNames();
-            if ($emailInfo){
+            if ($emailInfo && $sendEmail !== 'false'){
                 try {
                     $email = (new TemplatedEmail())
                         ->from('convocatorias@unicatolicadelsur.edu.co')
