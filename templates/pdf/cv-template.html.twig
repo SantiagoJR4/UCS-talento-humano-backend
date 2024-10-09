@@ -30,6 +30,9 @@
         .title-table {
             background-color: #e5e5e5 !important;
         }
+        .custom-pre {
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -236,8 +239,8 @@
                 <tr class="title-table">
                     <th>Cargo</th>
                     <th>Nombre de la entidad</th>
-                    <th>Fecha inicio</th>
-                    <th>Fecha fin</th>
+                    <th>Fechas de trabajo</th>
+                    <th>Tiempo trabajado</th>
                 </tr>
             </thead>
             <tbody>
@@ -250,10 +253,10 @@
                             {{e.companyName}}
                         </td>
                         <td>
-                            {{e.admissionDate|date('d/m/Y', false)}}
+                            <pre class="custom-pre">{{e.dateIntervals}}</pre>
                         </td>
                         <td>
-                            {{e.isWorking ? 'Aún trabaja en la entidad' : e.retirementDate|date('d/m/Y', false)}}
+                            {{e.timeWorked}}
                         </td>
                     </tr>
                 {% endfor %}

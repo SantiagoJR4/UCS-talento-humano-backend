@@ -13,6 +13,7 @@ use App\Entity\ReferencesData;
 use App\Entity\TeachingExperience;
 use App\Entity\User;
 use App\Entity\WorkExperience;
+use App\Service\DateUtilities;
 use App\Service\PdfService;
 use App\Service\ValidateToken;
 use DateTime;
@@ -125,10 +126,12 @@ class CurriculumVitaeController extends AbstractController
 {
 
     private $pdfService;
+    private $dateUtilities;
 
-    public function __construct(PdfService $pdfService)
+    public function __construct(PdfService $pdfService, DateUtilities $dateUtilities)
     {
         $this->pdfService = $pdfService;
+        $this->dateUtilities = $dateUtilities;
     }
 
     #[Route('/curriculum-vitae/read-cv', name: 'app_curriculum_vitae_read')]
@@ -1064,9 +1067,16 @@ class CurriculumVitaeController extends AbstractController
             'teachingExperience' => parseCvData($queryCv('teaching_experience', $userId)),
             'records' => parseCvData($queryCv('record', $userId))
         ];
+        
         usort($cvData['academicTraining'], fn($a, $b) => $b['date'] <=> $a['date']);
         usort($cvData['furtherTraining'], fn($a, $b) => $b['date'] <=> $a['date']);
-        usort($cvData['workExperience'], fn($a, $b) => $b['admissionDate'] <=> $a['admissionDate']);
+        if(isset($cvData['workExperience']) && count($cvData['workExperience']) > 0){
+            foreach($cvData['workExperience'] as &$we){
+                $we['dateIntervals'] = $this->dateUtilities->dateIntervals($we['workDates'], ['startDate', 'endDate']);
+                $we['timeWorked'] = $this->dateUtilities->timeWorked($we['workDates'], ['startDate', 'endDate']);
+            }
+        }
+        usort($cvData['workExperience'], fn($a, $b) => $b['workDates'][0]['startDate'] <=> $a['workDates'][0]['startDate']);
         usort($cvData['teachingExperience'], fn($a, $b) => $b['admissionDate'] <=> $a['admissionDate']);
         $entitiesForAnnexes =
         [
