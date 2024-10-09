@@ -291,7 +291,7 @@
                             {{e.admissionDate|date('d/m/Y', false)}}
                         </td>
                         <td>
-                            {{e.isWorking ? 'Aún trabaja en la entidad' : e.retirementDate|date('d/m/Y', false)}}
+                            {{e.isActive ? 'Aún trabaja en la entidad' : e.retirementDate|date('d/m/Y', false)}}
                         </td>
                     </tr>
                 {% endfor %}
