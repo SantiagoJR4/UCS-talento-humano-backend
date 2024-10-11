@@ -162,12 +162,13 @@ class CurriculumVitaeController extends AbstractController
     {
         $token = $request->query->get('token');
         $user =  $vToken->getUserIdFromToken($token); // TODO: use this for validate (maybe)
-        $user = $doctrine->getRepository(User::class)->find($id);
+        $user = $doctrine->getRepository(User::class)->createQueryBuilder('e')->andWhere('e.id = :id')->setParameter('id', $id)->getQuery()->getArrayResult();
         $qb = function($class, $id) use ($doctrine) {
             return $doctrine->getRepository($class)->createQueryBuilder('e')->andWhere('e.user = :user')->setParameter('user', $id)->getQuery()->getArrayResult();
         };
-        $generalTextReview = json_decode($user->getHistory(), true);
+        $generalTextReview = json_decode($user[0]["history"], true);
         return new JsonResponse([
+            'user' => parseCvData($user),
             'personalData' => parseCvData($qb(PersonalData::class, $user)),
             'academicTraining' => parseCvData($qb(AcademicTraining::class, $user)),
             'furtherTraining' => parseCvData($qb(FurtherTraining::class, $user)),
@@ -1020,8 +1021,16 @@ class CurriculumVitaeController extends AbstractController
     }
 
     #[Route('/curriculum-vitae/download-cv', name: 'app_files_merge_pdfs')]
-    public function mergePdfs(ManagerRegistry $doctrine , Request $request)
+    public function mergePdfs(ManagerRegistry $doctrine , Request $request, ValidateToken $vToken)
     {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(!$user) {
+            throw new UserNotFoundException('Usuario no encontrado');
+        }
+        if(!($user->getSpecialUser() === 'CTH' || $user->getUserType() === 8)){
+            throw new AccessDeniedException('El usuario no tiene autorización para realizar este cambio');
+        }
         $queryCv =  function($class, $id) use ($doctrine){
             $sql = "SELECT *
                     FROM $class
@@ -1049,7 +1058,6 @@ class CurriculumVitaeController extends AbstractController
             return $camelCaseResults;
 
         };
-
         $userId = $request->query->get('userId');
         $user = $doctrine->getRepository(User::class)->find($userId);
         $cvData = [
@@ -1164,7 +1172,7 @@ class CurriculumVitaeController extends AbstractController
         $tmpPath = sys_get_temp_dir();
         $cvDataPath = tempnam($tmpPath, 'pdf_') . '.pdf';
         file_put_contents($cvDataPath, $pdfContent);
-        $pdfName = 'hoja de vida de ' . $user->getNames() . ' ' . $user->getLastNames() . '.pdf';
+        $pdfName = 'hoja de vida.pdf';
         $outputFilePath = $tmpPath . '/' . $pdfName;
         try {
             $ghostscript = new Ghostscript($binPath, $tmpPath);
