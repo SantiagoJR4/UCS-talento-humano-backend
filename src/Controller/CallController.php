@@ -809,9 +809,9 @@ class CallController extends AbstractController
             case 'CTH':
                 return new JsonResponse($usersInCall, 200, []);
             case 'PSI':
-                $usersInCall = array_filter($usersInCall, function($item){
+                $usersInCall = array_values(array_filter($usersInCall, function($item) {
                     return array_search('PT', $item['userStatus']);
-                });
+                }));
                 return new JsonResponse($usersInCall, 200, []);
             default:
                 return new JsonResponse(['message'=>'No tienes autorización'], 200, []);
