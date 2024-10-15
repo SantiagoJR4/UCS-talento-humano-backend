@@ -73,7 +73,9 @@ function parseCvData($data) {
 function filesToChangeOrDelete($table) {
     switch ($table) {
         case 'AcademicTraining':
-            return ['degreePdf', 'diplomaPdf', 'certifiedTitlePdf'];
+            return ['identificationPdf', 'epsPdf', 'pensionPdf', 'bankAccountPdf', 'rutPdf', 'severanceFundPdf'];
+        case 'AcademicTraining':
+            return ['degreePdf', 'diplomaPdf', 'certifiedTitlePdf', 'professionalCardPdf'];
         case 'FurtherTraining':
         case 'WorkExperience':
         case 'TeachingExperience':
