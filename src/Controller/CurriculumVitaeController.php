@@ -58,8 +58,8 @@ function parseCvData($data) {
             $data[$key] = $value->format('Y-m-d H:i:s');
         } else if($key === 'history'){
             $decodedValue = json_decode($value, true);
-            $data[$key] = end($decodedValue);
-            $data['tag'] = setTag(end($decodedValue)['state']);
+            $data[$key] = !!end($decodedValue) ? end($decodedValue) : ['state' => 3, 'date' => date('Y-m-d H:i:s'), 'textReview' => null];
+            $data['tag'] = setTag(isset(end($decodedValue)['state']) ? end($decodedValue)['state'] : 3);
         } elseif($key === 'timeWorked'){
             $decodedValue = json_decode($value, true);
             $data[$key] = formatTimeWorked($decodedValue);
