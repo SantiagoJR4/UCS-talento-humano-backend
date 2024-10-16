@@ -2351,7 +2351,6 @@ class ContractController extends AbstractController
 					$user = $userInRequisition->getUser();
 					$requisition = $userInRequisition->getRequisition();
 					$state = $userInRequisition->getState();
-	
 					
 					$existingDirectContract = $entityManager->getRepository(DirectContract::class)->findOneBy([
 						'requisition' => $requisition
