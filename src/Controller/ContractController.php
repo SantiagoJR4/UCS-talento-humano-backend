@@ -20,6 +20,7 @@ use App\Entity\User;
 use App\Entity\UsersInDirectContract;
 use App\Entity\UsersInRequisition;
 use App\Entity\WorkHistory;
+use App\Service\DateUtilities;
 use App\Service\ValidateToken;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
@@ -47,6 +48,13 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class ContractController extends AbstractController
 {
+	private $dateUtilities;
+
+	public function __construct(DateUtilities $dateUtilities)
+	{
+		$this->dateUtilities = $dateUtilities;	
+	}
+
     //TODO: HACER TOKEN PARA SUPERUSUARIOS
     public function validateTokenSuper(Request $request): JsonResponse
     {
@@ -141,6 +149,9 @@ class ContractController extends AbstractController
 					);
 			}
 
+			// Clonar el estado original antes de aplicar los cambios
+			$originalMedicalTest = clone $medicalTest;
+
 			$medicalTest -> setCity($data['city']);
 			$medicalTest -> setDate(new DateTime($data['date']));
 			$medicalTest -> setAddress($data['address']);
@@ -159,6 +170,44 @@ class ContractController extends AbstractController
 
 			$medicalTest -> setUser($user);
 
+			// Comparar y preparar datos para la plantilla
+			$fields = [
+				'Ciudad' => [
+					'old' => $originalMedicalTest->getCity(),
+					'new' => $medicalTest->getCity(),
+					'updated' => $originalMedicalTest->getCity() !== $medicalTest->getCity()
+				],
+				'Fecha' => [
+					'old' => $originalMedicalTest->getDate()->format('d/m/Y H:i'),
+					'new' => $medicalTest->getDate()->format('d/m/Y H:i'),
+					'updated' => $originalMedicalTest->getDate() != $medicalTest->getDate()
+				],
+				'Dirección' => [
+					'old' => $originalMedicalTest->getAddress(),
+					'new' => $medicalTest->getAddress(),
+					'updated' => $originalMedicalTest->getAddress() !== $medicalTest->getAddress()
+				],
+				'Centro médico' => [
+					'old' => $originalMedicalTest->getMedicalcenter(),
+					'new' => $medicalTest->getMedicalcenter(),
+					'updated' => $originalMedicalTest->getMedicalcenter() !== $medicalTest->getMedicalcenter()
+				],
+				'Contacto' => [
+					'old' => $originalMedicalTest->getPhone(),
+					'new' => $medicalTest->getPhone(),
+					'updated' => $originalMedicalTest->getPhone() !== $medicalTest->getPhone()
+				],
+				'Tipo de examen' => [
+					'old' => $originalMedicalTest->getTypetest(),
+					'new' => $medicalTest->getTypetest(),
+					'updated' => $originalMedicalTest->getTypetest() !== $medicalTest->getTypetest()
+				],
+				'Examen médico ocupacional' => [
+					'old' => $originalMedicalTest->getOcupationalmedicaltest(),
+					'new' => $medicalTest->getOcupationalmedicaltest(),
+					'updated' => $originalMedicalTest->getOcupationalmedicaltest() !== $medicalTest->getOcupationalmedicaltest()
+				]
+			];
 			$entiyManager = $doctrine->getManager();
 			$entiyManager->persist($medicalTest);
 			$entiyManager->flush();
@@ -168,10 +217,10 @@ class ContractController extends AbstractController
 							->from('santipo12@gmail.com')
 							->to($user->getEmail(),'pasante.santiago@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
 							->subject('Actualización Cita Médica')
-							->htmlTemplate('email/medicalTestEmail.html.twig')
+							->htmlTemplate('email/medicalTestUpdateEmail.html.twig')
 							->context([
 									'user' => $user,
-									'medicalTest' => $medicalTest
+									'fields' => $fields,
 							]);         
 					$mailer->send($email);
 					$message = 'El examén médico fue actualizado con éxito, se envío un correo con la información a ' . $user->getEmail();
@@ -2351,7 +2400,6 @@ class ContractController extends AbstractController
 					$user = $userInRequisition->getUser();
 					$requisition = $userInRequisition->getRequisition();
 					$state = $userInRequisition->getState();
-	
 					
 					$existingDirectContract = $entityManager->getRepository(DirectContract::class)->findOneBy([
 						'requisition' => $requisition
@@ -3614,179 +3662,191 @@ class ContractController extends AbstractController
   
 	  // Consulta SQL para obtener los datos
 	  $sql = "
-		SELECT 
-			u.names, 
-			u.last_names, 
-			u.identification, 
-			COALESCE(r.period, dr.period) AS period, 
-			CASE 
-				WHEN r.user_id IS NOT NULL AND dr.requisition_id IS NULL THEN 'Revinculacion' 
-				WHEN dr.requisition_id IS NOT NULL AND r.user_id IS NULL THEN 'ContratacionDirecta'
-				WHEN r.user_id IS NOT NULL AND dr.requisition_id IS NOT NULL THEN 'Ambos'
-				ELSE 'Desconocido'
-			END AS tipo_contrato,
-			
-			-- Datos personales
-			JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_expedition, '$.nom_mpio')) AS LUGAR_EXPEDICION,
-			pd.birthday AS FECHA_NACIMIENTO,
-			JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.nom_mpio')) AS LUGAR_NACIMIENTO,
-			JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.cod_mpio')) AS ID_MUNICIPIO_NACIMIENTO,
-			
-			-- Información académica
-			act.academic_modality AS id_nivel_maxestudio,
-			act.title_name AS titulo_recibido,
-			act.date AS fecha_grado,
-			act.is_foreign_university AS titulo_convalidado,
-			act.name_university AS nombre_institucion_estudio,
-			act.program_methodology AS id_metodologia_programa,
-			
-			-- Contrato y dedicación
-			con.type_contract AS id_tipo_contrato,
-			con.work_dedication AS id_dedicacion,
-			con.weekly_hours AS horas_dedicacion_semestre,
-			con.salary AS asignacion_basica_mensual,
-
-			-- Porcentajes (pueden ser calculados después si hay valores)
-			0 AS porcentaje_docencia,
-			0 AS porcentaje_investigacion,
-			0 AS porcentaje_administrativa,
-			0 AS porcentaje_extension,
-			0 AS porcentaje_otras_actividades,
-
-			-- Información de contacto
-			pd.residence_address AS direccion,
-			u.phone AS celular,
-			u.email AS correo_personal,
-			
-			-- Información adicional
-			pd.marital_status AS estado_civil,
-			pd.blood_type AS rh,
-			
-			-- Pregrado (si existe)
-			pregrado.title_name_pregrado AS titulo_de_pregrado,
-			pregrado.name_university_pregrado AS universidad_donde_estudio,
-			0 AS Pais_donde_estudio,
-			pregrado.date_pregrado AS fecha_de_grado_pregrado,
-			
-			-- Experiencia (se puede sumar después si no es relevante ahora)
-			0 AS años_de_experiencia_docente,
-			GROUP_CONCAT(DISTINCT act.name_university SEPARATOR ', ') AS instituciones,
-			0 AS años_de_experiencia_profesional,
-			GROUP_CONCAT(DISTINCT w.company_name SEPARATOR ', ') AS empresas,
-			0 AS Escalafon_de_Colciencias,
-			
-			-- Primera contratación de la historia del usuario
-			first_contract.first_work_start AS primera_contratacion_unicatolica_del_sur_en_yeshua,
-			
-			-- Programa al que pertenece
-			0 AS Programa_al_que_pertenece,
-
-			-- Nivel de inglés
-			lg.levelLanguage AS nivel_de_ingles_actual,
-
-			-- Fecha de contratos del periodo seleccionado
-			con.work_start AS Fecha_de_contrato_inicio,
-			con.expiration_contract AS Fecha_de_contrato_final,
-
-			-- Caja de compensación
-			'CONFAMILIAR' AS CAJA_DE_COMPENSACION,
-
-			-- Datos personales
-			pd.eps AS Eps,
-			pd.pension AS Fondo_de_Pensiones,
-			'Colmena' AS Arl,
-			'Activo' AS Estado_del_profesor,
-			0 AS También_tiene_contrato_administrativo,
-			pd.bank_name AS Banco,
-			pd.bank_account_number AS No_Cuenta,
-			pd.gender AS Sexo
-
-			FROM user u
-			LEFT JOIN reemployment r ON u.id = r.user_id AND r.period LIKE '%$period%'
-			LEFT JOIN users_in_requisition ur ON u.id = ur.user_id
-			LEFT JOIN direct_contract dr ON dr.requisition_id = ur.requisition_id AND dr.period LIKE '%$period%'
-			LEFT JOIN personal_data pd ON u.id = pd.user_id
-
-			-- Obtener el máximo nivel académico del usuario
-			LEFT JOIN (
-				SELECT 
-					user_id,
-					MAX(
-						CASE 
-							WHEN academic_modality = 'PDO' THEN 9
-							WHEN academic_modality = 'DOC' THEN 8
-							WHEN academic_modality = 'MG' THEN 7
-							WHEN academic_modality = 'ESP' THEN 6
-							WHEN academic_modality = 'UN' THEN 5
-							WHEN academic_modality = 'TCE' THEN 4
-							WHEN academic_modality = 'TC' THEN 3
-							WHEN academic_modality = 'TP' THEN 2
-							WHEN academic_modality = 'AU' THEN 1
-						END
-					) AS nivel_estudio
-				FROM academic_training
-				GROUP BY user_id
-			) AS max_academic_modality ON u.id = max_academic_modality.user_id
-			LEFT JOIN academic_training act ON u.id = act.user_id AND (
+			SELECT 
+			  CASE 
+					WHEN u.user_type = 1 THEN 'Administrativo'
+					WHEN u.user_type = 2 THEN 'Docente'
+					ELSE 'Otro' -- Puedes agregar un valor por defecto si lo necesitas
+    		END AS user_role,
+				u.names, 
+				u.last_names, 
+				u.identification, 
+				COALESCE(r.period, dr.period) AS period, 
 				CASE 
-					WHEN act.academic_modality = 'PDO' THEN 9
-					WHEN act.academic_modality = 'DOC' THEN 8
-					WHEN act.academic_modality = 'MG' THEN 7
-					WHEN act.academic_modality = 'ESP' THEN 6
-					WHEN act.academic_modality = 'UN' THEN 5
-					WHEN act.academic_modality = 'TCE' THEN 4
-					WHEN act.academic_modality = 'TC' THEN 3
-					WHEN act.academic_modality = 'TP' THEN 2
-					WHEN act.academic_modality = 'AU' THEN 1
-				END = max_academic_modality.nivel_estudio
-			)
-			-- Pregrado (solo si es modalidad universitaria)
-			LEFT JOIN (
-				SELECT 
-					user_id,
-					title_name AS title_name_pregrado,
-					name_university AS name_university_pregrado,
-					date AS date_pregrado
-				FROM academic_training
-				WHERE academic_modality = 'UN'
-			) AS pregrado ON u.id = pregrado.user_id
+					WHEN r.user_id IS NOT NULL AND dr.requisition_id IS NULL THEN 'Revinculacion' 
+					WHEN dr.requisition_id IS NOT NULL AND r.user_id IS NULL THEN 'ContratacionDirecta'
+					WHEN r.user_id IS NOT NULL AND dr.requisition_id IS NOT NULL THEN 'Ambos'
+					ELSE 'Desconocido'
+				END AS tipo_contrato,
+				
+				-- Datos personales
+				JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_expedition, '$.nom_mpio')) AS LUGAR_EXPEDICION,
+				pd.birthday AS FECHA_NACIMIENTO,
+				JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.nom_mpio')) AS LUGAR_NACIMIENTO,
+				JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.cod_mpio')) AS ID_MUNICIPIO_NACIMIENTO,
+				
+				-- Información académica
+				act.academic_modality AS id_nivel_maxestudio,
+				act.title_name AS titulo_recibido,
+				act.date AS fecha_grado,
+				act.is_foreign_university AS titulo_convalidado,
+				act.name_university AS nombre_institucion_estudio,
+				act.program_methodology AS id_metodologia_programa,
+				
+				-- Contrato y dedicación
+				con.type_contract AS id_tipo_contrato,
+				con.work_dedication AS id_dedicacion,
+				con.weekly_hours AS horas_dedicacion_semestre,
+				con.salary AS asignacion_basica_mensual,
 
-			-- Información de contrato
-			LEFT JOIN contract con ON u.id = con.user_id AND con.period LIKE '%$period%'
+				-- Porcentajes (pueden ser calculados después si hay valores)
+				0 AS porcentaje_docencia,
+				0 AS porcentaje_investigacion,
+				0 AS porcentaje_administrativa,
+				0 AS porcentaje_extension,
+				0 AS porcentaje_otras_actividades,
 
-			-- Subconsulta para obtener la primera fecha de contrato
-			LEFT JOIN (
-				SELECT 
-					user_id,
-					MIN(work_start) AS first_work_start
-				FROM contract
-				GROUP BY user_id
-			) AS first_contract ON u.id = first_contract.user_id
+				-- Información de contacto
+				pd.residence_address AS direccion,
+				u.phone AS celular,
+				u.email AS correo_personal,
+				
+				-- Información adicional
+				pd.marital_status AS estado_civil,
+				pd.blood_type AS rh,
+				
+				-- Pregrado (si existe)
+				pregrado.title_name_pregrado AS titulo_de_pregrado,
+				pregrado.name_university_pregrado AS universidad_donde_estudio,
+				0 AS Pais_donde_estudio,
+				pregrado.date_pregrado AS fecha_de_grado_pregrado,
+				
+				-- Experiencia (se puede sumar después si no es relevante ahora)
+				CONCAT('[', GROUP_CONCAT(SUBSTRING(te.work_dates, 2, LENGTH(te.work_dates) - 2) SEPARATOR ', '), ']') AS teaching_dates,
+				0 AS años_de_experiencia_docente,
+				GROUP_CONCAT(DISTINCT act.name_university SEPARATOR ', ') AS instituciones,
+				CONCAT('[', GROUP_CONCAT(SUBSTRING(w.work_dates, 2, LENGTH(w.work_dates) - 2) SEPARATOR ', '), ']') AS work_dates,
+				0 AS años_de_experiencia_profesional,
+				GROUP_CONCAT(DISTINCT w.company_name SEPARATOR ', ') AS empresas,
+				0 AS Escalafon_de_Colciencias,
+				
+				-- Primera contratación de la historia del usuario
+				first_contract.first_work_start AS primera_contratacion_unicatolica_del_sur_en_yeshua,
+				
+				-- Programa al que pertenece
+				0 AS Programa_al_que_pertenece,
 
+				-- Nivel de inglés
+				lg.levelLanguage AS nivel_de_ingles_actual,
 
-			-- Información de idioma
-			LEFT JOIN language lg ON u.id = lg.user_id
+				-- Fecha de contratos del periodo seleccionado
+				con.work_start AS Fecha_de_contrato_inicio,
+				con.expiration_contract AS Fecha_de_contrato_final,
 
-			-- Experiencia profesional
-			LEFT JOIN work_experience w ON u.id = w.user_id
+				-- Caja de compensación
+				'CONFAMILIAR' AS CAJA_DE_COMPENSACION,
 
-			WHERE (r.period IS NOT NULL OR dr.period IS NOT NULL) 
-			GROUP BY u.id
-			ORDER BY u.names ASC;
+				-- Datos personales
+				pd.eps AS Eps,
+				pd.pension AS Fondo_de_Pensiones,
+				'Colmena' AS Arl,
+				'Activo' AS Estado_del_profesor,
+				0 AS También_tiene_contrato_administrativo,
+				pd.bank_name AS Banco,
+				pd.bank_account_number AS No_Cuenta,
+				pd.gender AS Sexo
+
+				FROM user u
+				LEFT JOIN reemployment r ON u.id = r.user_id AND r.period LIKE '%$period%'
+				LEFT JOIN users_in_requisition ur ON u.id = ur.user_id
+				LEFT JOIN direct_contract dr ON dr.requisition_id = ur.requisition_id AND dr.period LIKE '%$period%'
+				LEFT JOIN personal_data pd ON u.id = pd.user_id
+
+				-- Obtener el máximo nivel académico del usuario
+				LEFT JOIN (
+					SELECT 
+						user_id,
+						MAX(
+							CASE 
+								WHEN academic_modality = 'PDO' THEN 9
+								WHEN academic_modality = 'DOC' THEN 8
+								WHEN academic_modality = 'MG' THEN 7
+								WHEN academic_modality = 'ESP' THEN 6
+								WHEN academic_modality = 'UN' THEN 5
+								WHEN academic_modality = 'TCE' THEN 4
+								WHEN academic_modality = 'TC' THEN 3
+								WHEN academic_modality = 'TP' THEN 2
+								WHEN academic_modality = 'AU' THEN 1
+							END
+						) AS nivel_estudio
+					FROM academic_training
+					GROUP BY user_id
+				) AS max_academic_modality ON u.id = max_academic_modality.user_id
+				LEFT JOIN academic_training act ON u.id = act.user_id AND (
+					CASE 
+						WHEN act.academic_modality = 'PDO' THEN 9
+						WHEN act.academic_modality = 'DOC' THEN 8
+						WHEN act.academic_modality = 'MG' THEN 7
+						WHEN act.academic_modality = 'ESP' THEN 6
+						WHEN act.academic_modality = 'UN' THEN 5
+						WHEN act.academic_modality = 'TCE' THEN 4
+						WHEN act.academic_modality = 'TC' THEN 3
+						WHEN act.academic_modality = 'TP' THEN 2
+						WHEN act.academic_modality = 'AU' THEN 1
+					END = max_academic_modality.nivel_estudio
+				)
+				-- Pregrado (solo si es modalidad universitaria)
+				LEFT JOIN (
+					SELECT 
+						user_id,
+						title_name AS title_name_pregrado,
+						name_university AS name_university_pregrado,
+						date AS date_pregrado
+					FROM academic_training
+					WHERE academic_modality = 'UN'
+				) AS pregrado ON u.id = pregrado.user_id
+
+				-- Información de contrato
+				LEFT JOIN contract con ON u.id = con.user_id AND con.period LIKE '%$period%'
+
+				-- Subconsulta para obtener la primera fecha de contrato
+				LEFT JOIN (
+					SELECT 
+						user_id,
+						MIN(work_start) AS first_work_start
+					FROM contract
+					GROUP BY user_id
+				) AS first_contract ON u.id = first_contract.user_id
+
+				-- Información de idioma
+				LEFT JOIN language lg ON u.id = lg.user_id
+
+				-- Experiencia profesional
+				LEFT JOIN work_experience w ON u.id = w.user_id
+
+				-- Experiencia docente
+				LEFT JOIN teaching_experience te ON u.id = te.user_id
+
+				WHERE (r.period IS NOT NULL OR dr.period IS NOT NULL) 
+				GROUP BY u.id
+				ORDER BY u.names ASC;
 	  ";
   
    	  // Ejecutar la consulta con el periodo como parámetro
 	  $stmt = $conn->executeQuery($sql);
 	  //$stmt->execute(['period' => "%$period%"]);
 	  $results = $stmt->fetchAllAssociative();
-  
+
+		// Procesar los resultados para calcular la experiencia profesional y docente
+		$this->processResults($results);
+	
 	  // Crear la hoja de cálculo
 	  $spreadsheet = new Spreadsheet();
 	  $sheet = $spreadsheet->getActiveSheet();
   
 	  // Agregar encabezados
 	  $headers = [
-		  'Nombre', 'Apellido', 'NUM_DOCUMENTO', 'Periodo', 'Tipo de Contrato' ,'LUGAR_EXPEDICION', 'FECHA_NACIMIENTO',
+		  'Tipo de vinculación','Nombre', 'Apellido', 'NUM_DOCUMENTO', 'Periodo', 'Tipo de Contrato' ,'LUGAR_EXPEDICION', 'FECHA_NACIMIENTO',
 		  'LUGAR_NACIMIENTO', 'ID_MUNICIPIO_NACIMIENTO', 'ID_NIVEL_MAXESTUDIO',
 		  'TITULO_RECIBIDO', 'FECHA_GRADO', 'TITULO_CONVALIDADO', 'NOMBRE_INSTITUCION_ESTUDIO',
 		  'ID_METODOLOGIA_PROGRAMA', 'ID_TIPO_CONTRATO', 'ID_DEDICACION',
@@ -3840,6 +3900,8 @@ class ContractController extends AbstractController
 	  // Agregar los datos
 	  $row = 2;
 	  foreach ($results as $data) {
+			unset($data['teaching_dates']);
+		  unset($data['work_dates']);
 		  $sheet->fromArray($data, null, 'A' . $row);
 		  $row++;
 	  }
@@ -3859,4 +3921,30 @@ class ContractController extends AbstractController
   
 	  return $response;
   }
+
+	private function calculateExperience($dates)
+	{
+    if (is_string($dates)) {
+        $datesArray = json_decode($dates, true); // Decodifica si es un JSON string
+    } else {
+        $datesArray = $dates; // Ya es un array
+    }
+
+    if (!empty($datesArray) && is_array($datesArray)) {
+        return $this->dateUtilities->timeWorked($datesArray, ['startDate', 'endDate']);
+    }
+
+    // Retorna el valor por defecto si no hay fechas válidas
+    return '0 años, 0 meses y 0 días';
+	}
+
+	public function processResults(array &$results)
+	{
+			foreach ($results as &$data) {
+					$data['años_de_experiencia_profesional'] = $this->calculateExperience($data['work_dates'], 'work');
+					$data['años_de_experiencia_docente'] = $this->calculateExperience($data['teaching_dates'], 'teaching');
+			}
+	}
 }
+
+
