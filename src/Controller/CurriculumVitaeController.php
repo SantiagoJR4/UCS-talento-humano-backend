@@ -73,7 +73,7 @@ function parseCvData($data) {
 function filesToChangeOrDelete($table) {
     switch ($table) {
         case 'AcademicTraining':
-            return ['identificationPdf', 'epsPdf', 'pensionPdf', 'bankAccountPdf', 'rutPdf', 'severanceFundPdf'];
+            return ['identificationPdf', 'epsPdf', 'pensionPdf', 'bankAccountPdf', 'rutPdf', 'severanceFundPdf', 'titrationsPdf'];
         case 'AcademicTraining':
             return ['degreePdf', 'diplomaPdf', 'certifiedTitlePdf', 'professionalCardPdf'];
         case 'FurtherTraining':
@@ -1095,14 +1095,15 @@ class CurriculumVitaeController extends AbstractController
                 'alias' => 'pd',
                 'fields' => [
                     'identification_pdf', 'eps_pdf', 'pension_pdf',
-                    'bank_account_pdf', 'rut_pdf', 'severance_fund_pdf'
+                    'bank_account_pdf', 'rut_pdf', 'severance_fund_pdf',
+                    'titrationsPdf'
                 ],
             ],
             'AcademicTraining' => [
                 'entity' => 'academic_training',
                 'alias' => 'at',
                 'fields' => [
-                    'degree_pdf', 'diploma_pdf', 'certified_title_pdf'
+                    'degree_pdf', 'diploma_pdf', 'certified_title_pdf', 'professionalCardPdf'
                 ],
             ],
             'FurtherTraining' => [
