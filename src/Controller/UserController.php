@@ -120,10 +120,10 @@ class UserController extends AbstractController
         }
 
         // Actualizar los datos del usuario según los parámetros recibido   s
-        // $user->setNames($request->request->get('names'));
-        // $user->setLastNames($request->request->get('lastNames'));
-        // $user->setTypeIdentification($request->request->get('type_identification'));
-        // $user->setIdentification($request->request->get('identification'));
+        $user->setNames($data['names']);
+        $user->setLastNames($data['lastNames']);
+        $user->setTypeIdentification($data['type_identification']);
+        $user->setIdentification($data['identification']);
         $user->setEmail($data['email']);
         $user->setPhone($data['phone']);
 
