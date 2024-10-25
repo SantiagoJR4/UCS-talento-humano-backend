@@ -11,13 +11,11 @@ use App\Entity\License;
 use App\Entity\Medicaltest;
 use App\Entity\Notification;
 use App\Entity\Permission;
-use App\Entity\Permissions;
-use App\Entity\PermissionsAndLicences;
+use App\Entity\PersonalData;
 use App\Entity\Profile;
 use App\Entity\Reemployment;
 use App\Entity\Requisition;
 use App\Entity\User;
-use App\Entity\UsersInDirectContract;
 use App\Entity\UsersInRequisition;
 use App\Entity\WorkHistory;
 use App\Service\DateUtilities;
@@ -32,16 +30,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\DBAL\Connection;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as WriterXlsx;
-use PhpParser\Node\Expr\Cast\Array_;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -49,6 +46,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 class ContractController extends AbstractController
 {
 	private $dateUtilities;
+
 
 	public function __construct(DateUtilities $dateUtilities)
 	{
@@ -512,12 +510,20 @@ class ContractController extends AbstractController
 				'user' => $user,
 				'period' => $period
 			]);
-
-			$reemployment->setStateContract(1); //Archivo Cargado
-
 			
+			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy([
+				'id' => $data['idDirectContract']]);
+			
+			if($reemployment !== null){
+				$reemployment->setStateContract(1); //Archivo Cargado
+				$entityManager->persist($reemployment);
+			}
 
-			$entityManager->persist($reemployment);
+			if($activedDirectContract !== null){
+				$activedDirectContract->setStateContract(1); //Archivo Cargado
+				$entityManager->persist($activedDirectContract);
+			}
+
 			$entityManager->flush();
 			
 			return new JsonResponse(['status' => 'Success', 'Code' => '200', 'message' => 'Contrato cargado correctamente']);
@@ -3200,6 +3206,7 @@ class ContractController extends AbstractController
 			$directContract->setRequisition($requisition);
 			$directContract->setCharge($chargeId);
 			$directContract->setProfile($profileId);
+			$directContract->setStateContract(0);
 
 			// Verificamos si el usuario especial es 'VF'
 			if ($specialUser === 'VF') {
@@ -3336,6 +3343,7 @@ class ContractController extends AbstractController
 						'typeEmployee' => $directContract->getCharge()->getTypeEmployee(),
 						'profileId' => $directContract->getProfile()->getId(),
 						'profileName' => $directContract->getProfile()->getName(),
+						'stateContract' => $directContract->getStateContract(),
 
 						'type_requisition' => $requisition->getTypeRequisition(),
 						'type_contract' => $requisition->getTypeContract(),
@@ -3395,6 +3403,7 @@ class ContractController extends AbstractController
 			'typeEmployee' => $directContract->getCharge()->getTypeEmployee(),
 			'profileId' => $directContract->getProfile()->getId(),
 			'profileName' => $directContract->getProfile()->getName(),
+			'stateContract' => $directContract->getStateContract(),
 
 			'type_requisition' => $requisition->getTypeRequisition(),
 			'type_contract' => $requisition->getTypeContract(),
@@ -3459,6 +3468,7 @@ class ContractController extends AbstractController
 				'typeEmployee' => $allDirectContract->getCharge()->getTypeEmployee(),
 				'profileId' => $allDirectContract->getProfile()->getId(),
 				'profileName' => $allDirectContract->getProfile()->getName(),
+				'stateContract' => $allDirectContract->getStateContract(),
 				'type_requisition' => $requisition->getTypeRequisition(),
 				'type_contract' => $requisition->getTypeContract(),
 				'type_anotherIF' => $requisition->getTypeAnotherif(),
@@ -3945,6 +3955,316 @@ class ContractController extends AbstractController
 					$data['años_de_experiencia_docente'] = $this->calculateExperience($data['teaching_dates'], 'teaching');
 			}
 	}
+
+	//-------------------------------------------------------------------------------------------------------------------------------------
+	///--------------------------------------------- WORK CERTIFICATE ---------------------------------------------------------------------
+	#[Route('contract/work-certificate', name:'app_contract_work_certificate')]
+	public function workCertificate(Request $request, ManagerRegistry $doctrine, ValidateToken $vToken)
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+		$user = $vToken->getUserIdFromToken($token);
+	
+		// Cambiar para recibir datos JSON correctamente
+		$data = json_decode($request->getContent(), true);
+		// if (!isset($data['periods']) || !is_array($data['periods'])) {
+		// 	return new JsonResponse([
+		// 		'status' => false,
+		// 		'message' => 'Los periodos no se han proporcionado correctamente.'
+		// 	], 400);
+		// }
+
+		//$periods = $data['periods'];
+		$includeHistory = isset($data['history']) ? (bool)$data['history'] : false;
+		$includeSalary = isset($data['salary']) ? (bool)$data['salary'] : false;
+		$includeFunctions = isset($data['functions']) ? (bool)$data['functions'] : false;
+
+		// Validación del token
+		if (!$token) {
+			throw new \Exception('Token no válido');
+		}
+	
+    	// Obtener el último contrato del usuario
+		$lastContract = $doctrine->getRepository(Contract::class)->findOneBy(
+			['user' => $user],
+			['workStart' => 'DESC']
+		);
+
+		if (!$lastContract) {
+			return new JsonResponse([
+				'status' => false,
+				'message' => 'No se encontraron contratos para el usuario.'
+			], 404);
+		}
+
+		// Obtener todos los contratos menos el último si se selecciona la opción de histórico
+		$allContracts = [];
+		if ($includeHistory) {
+			$allContracts = $doctrine->getRepository(Contract::class)->createQueryBuilder('c')
+				->where('c.user = :user')
+				->andWhere('c.id != :lastContractId') // Excluir el último contrato
+				->orderBy('c.workStart', 'ASC')
+				->setParameter('user', $user->getId())
+				->setParameter('lastContractId', $lastContract->getId()) // ID del último contrato
+				->getQuery()
+				->getResult();
+		}
+
+		$user = $doctrine->getRepository(User::class)->find($user);
+		$userData = [
+			'user' =>[
+				'fullname' => $user->getNames() . ' ' . $user->getLastNames(),
+				'fullidentification' => $user->getTypeIdentification() . ' ' . $user->getIdentification()
+			]
+		];
+
+		$personalData = $doctrine->getRepository(PersonalData::class)->findOneBy(['user' => $user->getId()]);
+		$placeOfExpedition = $personalData->getPlaceOfExpedition();
+		$jsonData = json_decode($placeOfExpedition, true);
+
+		$userPersonalData = [
+			'nom_mpio' => $jsonData['nom_mpio'] ?? null
+		];
+
+		$currentDate = new DateTime();
+		$formattedCurrentDate = formatDate($currentDate->format('Y-m-d'));
+
+		// Preparar datos del último contrato
+		$lastContractData = prepareContractData($lastContract, $doctrine);
+
+		// Preparar datos para contratos históricos (si corresponde)
+		$contractsHistoryData = [];
+		if ($includeHistory) {
+			foreach ($allContracts as $contract) {
+				$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
+
+				$assignmentsProfiles = [];
+				$assignmentsCharges = [];
+				foreach ($assignmentContract as $assignment) {
+					$profile = $assignment->getProfile();
+					$charge = $assignment->getCharge();
+
+					if ($profile) {
+						$assignmentsProfiles[] = [
+							'id' => $profile->getId(),
+							'name' => $profile->getName(),
+						];
+					}
+
+					if ($charge) {
+						$assignmentsCharges[] = [
+							'id' => $charge->getId(),
+							'name' => $charge->getName(),
+						];
+					}
+				}
+
+				$starDate =$contract->getWorkStart()->format('Y-m-d');
+				$endDate = $contract->getExpirationContract()->format('Y-m-d');
+
+				$contractsHistoryData[] = [
+					'start_date' => formatDateShort($starDate),
+					'end_date' => formatDateShort($endDate),
+					'assignmentsProfiles' => $assignmentsProfiles,
+					'assignmentsCharges' => $assignmentsCharges,
+				];
+
+			}
+		}
+		
+		$html = $this->renderView('pdf/certificate.html.twig', [
+			'ud' => [
+				'fullname' => strtoupper($userData['user']['fullname']),
+				'fullidentification' => $userData['user']['fullidentification']
+			],
+			'dp' => [
+				'nom_mpio' => $userPersonalData['nom_mpio']
+			],
+			'contracts' => $lastContractData, // Enviar todos los contratos obtenidos
+			'contractsHistory' => $contractsHistoryData,
+			'includeSalary' => $includeSalary,
+			'includeHistory' => $includeHistory,
+			'includeFunctions' => $includeFunctions,
+			'formattedCurrentDate' => $formattedCurrentDate
+		]);
+
+		// Configurar Dompdf
+		$options = new Options();
+		$options->set('defaultFont', 'Arial');
+		$options->set('isRemoteEnabled', true);
+		$dompdf = new Dompdf($options);
+		$dompdf->loadHtml($html);
+		$dompdf->setPaper('A4', 'portrait');
+		$dompdf->render();
+
+		// Generar la respuesta como PDF
+		$pdfOutput = $dompdf->output();
+		$response = new Response($pdfOutput);
+		$response->headers->set('Content-Type', 'application/pdf');
+		$response->headers->set('Content-Disposition', 'attachment;filename="work_certificate.pdf"');
+
+		return $response;
+	}
+
+}
+
+function prepareContractData($contract, $doctrine)
+{
+    $assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
+
+    $assignmentsProfiles = [];
+    $assignmentsCharges = [];
+    foreach ($assignmentContract as $assignment) {
+        $profile = $assignment->getProfile();
+        $charge = $assignment->getCharge();
+
+        if ($profile) {
+            $assignmentsProfiles[] = [
+                'id' => $profile->getId(),
+                'name' => $profile->getName(),
+            ];
+        }
+
+        if ($charge) {
+            $assignmentsCharges[] = [
+                'id' => $charge->getId(),
+                'name' => $charge->getName(),
+            ];
+        }
+    }
+
+    $salary = $contract->getSalary();
+    $startDate = $contract->getWorkStart()->format('Y-m-d');
+    $endDate = $contract->getExpirationContract()->format('Y-m-d');
+
+    return [
+        'contract' => [
+            'id' => $contract->getId(),
+            'type_contract' => $contract->getTypeContract(),
+            'work_start' => formatDate($startDate),
+            'initial_contract' => $contract->getInitialContract(),
+            'expiration_contract' => formatDate($endDate),
+            'work_dedication' => formatDate($endDate),
+            'salary' => $salary,
+            'salary_in_words' => numberToWords($salary),
+            'weekly_hours' => $contract->getWeeklyHours(),
+            'functions' => $contract->getFunctions(),
+            'specific_functions' => $contract->getSpecificFunctions(),
+            'contract_file' => $contract->getContractFile(),
+            'contract_file_pdf' => $contract->getContractFilePdf(),
+        ],
+        'assignmentsProfiles' => $assignmentsProfiles,
+        'assignmentsCharges' => $assignmentsCharges,
+    ];
+}
+
+function numberToWords($num) {
+    $ones = [
+        0 => 'cero', 1 => 'un', 2 => 'dos', 3 => 'tres', 4 => 'cuatro', 
+        5 => 'cinco', 6 => 'seis', 7 => 'siete', 8 => 'ocho', 9 => 'nueve', 
+        10 => 'diez', 11 => 'once', 12 => 'doce', 13 => 'trece', 
+        14 => 'catorce', 15 => 'quince', 16 => 'dieciséis', 17 => 'diecisiete', 
+        18 => 'dieciocho', 19 => 'diecinueve'
+    ];
+
+    $tens = [
+        20 => 'veinte', 30 => 'treinta', 40 => 'cuarenta', 50 => 'cincuenta', 
+        60 => 'sesenta', 70 => 'setenta', 80 => 'ochenta', 90 => 'noventa'
+    ];
+
+    $hundreds = [
+        100 => 'cien', 200 => 'doscientos', 300 => 'trescientos', 
+        400 => 'cuatrocientos', 500 => 'quinientos', 600 => 'seiscientos', 
+        700 => 'setecientos', 800 => 'ochocientos', 900 => 'novecientos'
+    ];
+
+    // Para millones
+    if ($num < 20) return $ones[$num];
+    if ($num < 100) return $tens[10 * floor($num / 10)] . (($num % 10 !== 0) ? ' y ' . $ones[$num % 10] : '');
+    if ($num < 1000) return $hundreds[100 * floor($num / 100)] . (($num % 100 !== 0) ? ' ' . numberToWords($num % 100) : '');
+    
+    if ($num < 1000000) {
+        return numberToWords(floor($num / 1000)) . ' mil' . (($num % 1000 !== 0) ? ' ' . numberToWords($num % 1000) : '');
+    }
+
+    if ($num < 2000000) { // Para 1.000.000 hasta 1.999.999
+		return numberToWords(floor($num / 1000000)) . ' millon' . (($num % 1000000 !== 0) ? ' ' . numberToWords($num % 1000000) : '');
+    } elseif ($num < 1000000000) {
+        return numberToWords(floor($num / 1000000)) . ' millones' . (($num % 1000000 !== 0) ? ' ' . numberToWords($num % 1000000) : '');
+    }
+	return 'número demasiado grande';
+}
+
+function numberToText($num) {
+    $ones = [
+        1 => 'uno', 2 => 'dos', 3 => 'tres', 4 => 'cuatro', 5 => 'cinco', 
+        6 => 'seis', 7 => 'siete', 8 => 'ocho', 9 => 'nueve', 10 => 'diez',
+        11 => 'once', 12 => 'doce', 13 => 'trece', 14 => 'catorce', 15 => 'quince', 
+        16 => 'dieciséis', 17 => 'diecisiete', 18 => 'dieciocho', 19 => 'diecinueve',
+        20 => 'veinte', 21 => 'veintiuno', 22 => 'veintidós', 23 => 'veintitrés', 
+        24 => 'veinticuatro', 25 => 'veinticinco', 26 => 'veintiséis', 
+        27 => 'veintisiete', 28 => 'veintiocho', 29 => 'veintinueve', 30 => 'treinta',
+        31 => 'treinta y uno'
+    ];
+    
+    return $ones[$num];
+}
+
+function monthToText($month) {
+    $months = [
+        1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
+        7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+    ];
+    
+    return $months[$month];
+}
+
+function yearToText($year) {
+    // Desglosa el año para obtener cada parte en palabras
+    $thousands = floor($year / 1000) * 1000;
+    $hundreds = $year % 1000;
+    
+    $yearWords = "dos mil";
+    
+    if ($hundreds > 0) {
+        $yearWords .= " " . numberToWords($hundreds);
+    }
+    
+    return $yearWords;
+}
+
+function formatDate($dateString) {
+    try {
+        $date = new DateTime($dateString);
+        $day = (int)$date->format('d');
+        $month = (int)$date->format('m');
+        $year = (int)$date->format('Y');
+
+        $dayInText = numberToText($day);
+        $monthInText = monthToText($month);
+        $yearInText = yearToText($year);
+
+        return "{$dayInText} ({$day}) de {$monthInText} de {$year}";
+    } catch (\Exception $e) {
+        // Manejar la excepción si hay un problema con el formato de la fecha
+        return "Fecha inválida";
+    }
+}
+
+function formatDateShort($dateString) {
+    try {
+        $date = new DateTime($dateString);
+        $day = (int)$date->format('d');
+        $month = (int)$date->format('m');
+        $year = (int)$date->format('Y');
+
+        $monthInText = monthToText($month);
+
+        return "{$day} de {$monthInText} de {$year}";
+    } catch (\Exception $e) {
+        // Manejar la excepción si hay un problema con el formato de la fecha
+        return "Fecha inválida";
+    }
 }
 
 

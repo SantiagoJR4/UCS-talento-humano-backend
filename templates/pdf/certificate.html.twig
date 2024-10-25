@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @page {
+            size: A4; /* O establece dimensiones personalizadas si tu generador lo permite */
+            width: 21.59cm;
+            height: 27.94cm;
+            margin: 0; /* Eliminar márgenes predeterminados del navegador */
+        }
+        body {
+            font-family: Tahoma, Tahoma;
+            margin: 0; /* Eliminar márgenes del body */
+            padding: 0; /* Eliminar padding del body */
+        }
+        .header img {
+            width: 100%; /* La imagen ocupará todo el ancho del contenedor */
+            height: auto; /* Mantiene las proporciones originales */
+            object-fit: cover; /* Ajusta la imagen para llenar el contenedor */
+            margin: 0; /* Sin márgenes */
+        }
+        .footer img {
+            width: 100%; /* La imagen ocupará todo el ancho del contenedor */
+            height: auto; /* Mantiene las proporciones originales */
+            object-fit: cover; /* Ajusta la imagen para llenar el contenedor */
+            margin: 0; /* Sin márgenes */
+            position: absolute; /* Posiciona la imagen */
+            bottom: 0; /* Ubica la imagen al final de la página */
+            left: 0; /* Alinea la imagen a la izquierda */
+            right: 0; /* Alinea la imagen a la derecha */
+        }
+        .left-image {
+            position: absolute;
+            left: 0;
+            top: 50%; /* Posiciona la parte superior de la imagen al 50% de la altura de la página */
+            transform: translateY(-50%); /* Mueve la imagen hacia arriba la mitad de su propia altura para centrarla */
+            height: 10%; /* Ajusta la altura según sea necesario */
+            transform-origin: left center; /* Define el punto de origen para transformaciones */
+        }
+        .title { text-align: center; font-size: 14px; font-weight: bold; margin-top: 50px; }
+        .content {
+            margin-left: 50px; /* Ajusta el margen izquierdo para que el contenido no se superponga con la imagen */
+            margin-right: 40px;
+            padding-top: 20px; /* Ajuste de margen superior si es necesario */
+        }
+        .signature {
+            margin-top: 100px;
+            line-height: 1.2; /* Ajusta el valor según el espaciado deseado */
+        }
+
+        .signature p {
+            margin: 5px 0; /* Reduce los márgenes para que no haya tanto espacio entre los párrafos */
+        }
+        .bold {  text-align: center; font-weight: bold; }
+        .list-item { margin-left: 30px; }
+        .list-item span { font-size: 14px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse; /* Colapsa los bordes de la tabla */
+            margin-top: 20px; /* Espacio entre el texto anterior y la tabla */
+        }
+
+        th, td {
+            border: 1px solid black; /* Borde de 1px de color negro */
+            text-align: center; /* Centra el texto */
+            padding: 8px; /* Espacio interior en las celdas */
+        }
+
+        th {
+            background-color: #f2f2f2; /* Color de fondo para el encabezado */
+            font-weight: bold; /* Negrita para el encabezado */
+        }
+    </style>
+</head>
+<body>
+    <img src="http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/assets/ladoIzquierdo.png" class="left-image" alt="Imagen Vertical">
+
+    <div class="header">
+        <img src="http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/assets/cabecera.png" alt="Logo Universidad">
+    </div>
+    
+    <div class="title">LA SUSCRITA COORDINADORA DE TALENTO HUMANO</div>
+    <p class="title">CERTIFICA:</p>
+    
+    <div class="content">
+        <p>Que, <span class="bold">{{ ud.fullname|upper }}</span> identificado(a) con la cédula de ciudadanía No. 
+        {{ ud.fullidentification }} de {{ dp.nom_mpio | capitalize }}, se encuentra actualmente vinculada a la 
+        <span class="bold">FUNDACIÓN UNIVERSITARIA CATÓLICA DEL SUR</span>, a través de contrato de trabajo a término fijo,
+        Desde {{ contracts.contract.work_start }} al {{ contracts.contract.expiration_contract }} desempeñando el cargo de
+        {% for contractProfile in contracts.assignmentsProfiles %}
+            {{contractProfile.name}}
+        {% endfor %}
+        {% if includeSalary %}
+            , con una asignación salarial mensual de 
+            {{contracts.contract.salary_in_words |upper}} M/CTE ({{ contracts.contract.salary|number_format(0, ',', '.') }}) mensuales.</p>
+        {% endif %}
+
+        {% if contractsHistory|length > 0 %}
+        <p>Igualmente se relaciona la siguiente historia laboral:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Cargo</th>
+                    <th>Desde</th>
+                    <th>Hasta</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contract in contractsHistory %}
+                    {% for profile in contract.assignmentsProfiles %}
+                        <tr>
+                            <td>{{ profile.name }}</td>
+                            <td>{{ contract.start_date }}</td>
+                            <td>{{ contract.end_date }}</td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+        
+        <p>Dada en San Juan de Pasto, el {{ formattedCurrentDate }}.</p>
+
+        <p>Atentamente,</p>
+
+        <div class="signature">
+            <span class="bold">MARIA ALEJANDRA IBARRA YEPES</span>
+            <p>Coordinadora de Talento Humano</p>
+            <p>Fundación Universitaria Católica del Sur</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <img src="http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/assets/piedepagina.png" alt="Logo Universidad">
+    </div>
+    
+</body>
+</html>
