@@ -1096,14 +1096,14 @@ class CurriculumVitaeController extends AbstractController
                 'fields' => [
                     'identification_pdf', 'eps_pdf', 'pension_pdf',
                     'bank_account_pdf', 'rut_pdf', 'severance_fund_pdf',
-                    'titrationsPdf'
+                    'titrations_pdf'
                 ],
             ],
             'AcademicTraining' => [
                 'entity' => 'academic_training',
                 'alias' => 'at',
                 'fields' => [
-                    'degree_pdf', 'diploma_pdf', 'certified_title_pdf', 'professionalCardPdf'
+                    'degree_pdf', 'diploma_pdf', 'certified_title_pdf', 'professional_card_pdf'
                 ],
             ],
             'FurtherTraining' => [
