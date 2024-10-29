@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Actualización de cita médica</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+        h1 { color: #166838; }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f8f8;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+        }
+        p { margin-bottom: 10px; }
+        .updated { font-weight: bold; color: #166838; }
+        .unchanged { color: #555555; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="{{asset('http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/uploads/imagenes/logo_institucional_UniCat%c3%b3lica-02.png')}}"
+            alt="logo Institucional" style="display: block; margin: 0 auto; max-width: 100%;">
+        <h1>Actualización de cita médica</h1>
+        <p>Estimado/a {{ user.names }},</p>
+        <p>Te informamos que tu cita médica programada ha sido actualizada:</p>
+
+        {% for field, details in fields %}
+            <p class="{% if details.updated %}updated{% else %}unchanged{% endif %}">
+                <strong>{{ field|capitalize }}:</strong>
+                {% if details.updated %}
+                    Actualizada de "{{ details.old }}" a "{{ details.new }}"
+                {% else %}
+                    "{{ details.new }}"
+                {% endif %}
+            </p>
+        {% endfor %}
+
+        <p>Por favor, asegúrate de llegar a tiempo y llevar contigo cualquier documento o requisito necesario para la cita.</p>
+        <p>Si tienes alguna pregunta o necesitas más información, no dudes en contactarnos.</p>
+        <p>¡Esperamos verte pronto!</p>
+        <p>Atentamente,</p>
+        <p>Gestión de seguridad y salud en el trabajo - Coordinación de talento humano.</p>
+        <p>Fundación Universitaria Católica del Sur.</p>
+    </div>
+</body>
+</html>

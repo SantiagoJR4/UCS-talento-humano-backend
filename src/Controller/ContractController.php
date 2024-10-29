@@ -11,15 +11,14 @@ use App\Entity\License;
 use App\Entity\Medicaltest;
 use App\Entity\Notification;
 use App\Entity\Permission;
-use App\Entity\Permissions;
-use App\Entity\PermissionsAndLicences;
+use App\Entity\PersonalData;
 use App\Entity\Profile;
 use App\Entity\Reemployment;
 use App\Entity\Requisition;
 use App\Entity\User;
-use App\Entity\UsersInDirectContract;
 use App\Entity\UsersInRequisition;
 use App\Entity\WorkHistory;
+use App\Service\DateUtilities;
 use App\Service\ValidateToken;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
@@ -31,20 +30,29 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\DBAL\Connection;
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as WriterXlsx;
-use PhpParser\Node\Expr\Cast\Array_;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 
 class ContractController extends AbstractController
 {
+	private $dateUtilities;
+
+
+	public function __construct(DateUtilities $dateUtilities)
+	{
+		$this->dateUtilities = $dateUtilities;	
+	}
+
     //TODO: HACER TOKEN PARA SUPERUSUARIOS
     public function validateTokenSuper(Request $request): JsonResponse
     {
@@ -139,6 +147,9 @@ class ContractController extends AbstractController
 					);
 			}
 
+			// Clonar el estado original antes de aplicar los cambios
+			$originalMedicalTest = clone $medicalTest;
+
 			$medicalTest -> setCity($data['city']);
 			$medicalTest -> setDate(new DateTime($data['date']));
 			$medicalTest -> setAddress($data['address']);
@@ -157,6 +168,44 @@ class ContractController extends AbstractController
 
 			$medicalTest -> setUser($user);
 
+			// Comparar y preparar datos para la plantilla
+			$fields = [
+				'Ciudad' => [
+					'old' => $originalMedicalTest->getCity(),
+					'new' => $medicalTest->getCity(),
+					'updated' => $originalMedicalTest->getCity() !== $medicalTest->getCity()
+				],
+				'Fecha' => [
+					'old' => $originalMedicalTest->getDate()->format('d/m/Y H:i'),
+					'new' => $medicalTest->getDate()->format('d/m/Y H:i'),
+					'updated' => $originalMedicalTest->getDate() != $medicalTest->getDate()
+				],
+				'Dirección' => [
+					'old' => $originalMedicalTest->getAddress(),
+					'new' => $medicalTest->getAddress(),
+					'updated' => $originalMedicalTest->getAddress() !== $medicalTest->getAddress()
+				],
+				'Centro médico' => [
+					'old' => $originalMedicalTest->getMedicalcenter(),
+					'new' => $medicalTest->getMedicalcenter(),
+					'updated' => $originalMedicalTest->getMedicalcenter() !== $medicalTest->getMedicalcenter()
+				],
+				'Contacto' => [
+					'old' => $originalMedicalTest->getPhone(),
+					'new' => $medicalTest->getPhone(),
+					'updated' => $originalMedicalTest->getPhone() !== $medicalTest->getPhone()
+				],
+				'Tipo de examen' => [
+					'old' => $originalMedicalTest->getTypetest(),
+					'new' => $medicalTest->getTypetest(),
+					'updated' => $originalMedicalTest->getTypetest() !== $medicalTest->getTypetest()
+				],
+				'Examen médico ocupacional' => [
+					'old' => $originalMedicalTest->getOcupationalmedicaltest(),
+					'new' => $medicalTest->getOcupationalmedicaltest(),
+					'updated' => $originalMedicalTest->getOcupationalmedicaltest() !== $medicalTest->getOcupationalmedicaltest()
+				]
+			];
 			$entiyManager = $doctrine->getManager();
 			$entiyManager->persist($medicalTest);
 			$entiyManager->flush();
@@ -166,10 +215,10 @@ class ContractController extends AbstractController
 							->from('santipo12@gmail.com')
 							->to($user->getEmail(),'pasante.santiago@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
 							->subject('Actualización Cita Médica')
-							->htmlTemplate('email/medicalTestEmail.html.twig')
+							->htmlTemplate('email/medicalTestUpdateEmail.html.twig')
 							->context([
 									'user' => $user,
-									'medicalTest' => $medicalTest
+									'fields' => $fields,
 							]);         
 					$mailer->send($email);
 					$message = 'El examén médico fue actualizado con éxito, se envío un correo con la información a ' . $user->getEmail();
@@ -461,12 +510,20 @@ class ContractController extends AbstractController
 				'user' => $user,
 				'period' => $period
 			]);
-
-			$reemployment->setStateContract(1); //Archivo Cargado
-
 			
+			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy([
+				'id' => $data['idDirectContract']]);
+			
+			if($reemployment !== null){
+				$reemployment->setStateContract(1); //Archivo Cargado
+				$entityManager->persist($reemployment);
+			}
 
-			$entityManager->persist($reemployment);
+			if($activedDirectContract !== null){
+				$activedDirectContract->setStateContract(1); //Archivo Cargado
+				$entityManager->persist($activedDirectContract);
+			}
+
 			$entityManager->flush();
 			
 			return new JsonResponse(['status' => 'Success', 'Code' => '200', 'message' => 'Contrato cargado correctamente']);
@@ -2349,7 +2406,6 @@ class ContractController extends AbstractController
 					$user = $userInRequisition->getUser();
 					$requisition = $userInRequisition->getRequisition();
 					$state = $userInRequisition->getState();
-	
 					
 					$existingDirectContract = $entityManager->getRepository(DirectContract::class)->findOneBy([
 						'requisition' => $requisition
@@ -3150,6 +3206,7 @@ class ContractController extends AbstractController
 			$directContract->setRequisition($requisition);
 			$directContract->setCharge($chargeId);
 			$directContract->setProfile($profileId);
+			$directContract->setStateContract(0);
 
 			// Verificamos si el usuario especial es 'VF'
 			if ($specialUser === 'VF') {
@@ -3286,6 +3343,7 @@ class ContractController extends AbstractController
 						'typeEmployee' => $directContract->getCharge()->getTypeEmployee(),
 						'profileId' => $directContract->getProfile()->getId(),
 						'profileName' => $directContract->getProfile()->getName(),
+						'stateContract' => $directContract->getStateContract(),
 
 						'type_requisition' => $requisition->getTypeRequisition(),
 						'type_contract' => $requisition->getTypeContract(),
@@ -3345,6 +3403,7 @@ class ContractController extends AbstractController
 			'typeEmployee' => $directContract->getCharge()->getTypeEmployee(),
 			'profileId' => $directContract->getProfile()->getId(),
 			'profileName' => $directContract->getProfile()->getName(),
+			'stateContract' => $directContract->getStateContract(),
 
 			'type_requisition' => $requisition->getTypeRequisition(),
 			'type_contract' => $requisition->getTypeContract(),
@@ -3409,6 +3468,7 @@ class ContractController extends AbstractController
 				'typeEmployee' => $allDirectContract->getCharge()->getTypeEmployee(),
 				'profileId' => $allDirectContract->getProfile()->getId(),
 				'profileName' => $allDirectContract->getProfile()->getName(),
+				'stateContract' => $allDirectContract->getStateContract(),
 				'type_requisition' => $requisition->getTypeRequisition(),
 				'type_contract' => $requisition->getTypeContract(),
 				'type_anotherIF' => $requisition->getTypeAnotherif(),
@@ -3595,113 +3655,263 @@ class ContractController extends AbstractController
   public function generateDataBaseExcel(Request $request, ManagerRegistry $doctrine): BinaryFileResponse
   {
 	  $token = $request->query->get('token');
-  
+	  $data = $request->request->all();
+
+	  $period = $data['period'];
 	  // Validación del token
 	  if ($token === false) {
 		  throw new \Exception('Token no válido'); // Puedes manejar los errores de otra manera si prefieres
 	  }
+
+	  if(!$period){
+		throw new \Exception('Periodo no válido'); 
+	  }
   
 	  // Obtener el EntityManager
-	  $conn = $doctrine->getConnection();
+	  $conn = $doctrine->getManager()->getConnection();
   
 	  // Consulta SQL para obtener los datos
 	  $sql = "
-		  SELECT 
-			  u.names AS Nombre, 
-			  u.last_names AS Apellido,
-			  u.identification AS NUM_DOCUMENTO,
-			  JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_expedition, '$.nom_mpio')) AS LUGAR_EXPEDICION,
-			  pd.birthday AS FECHA_NACIMIENTO,
-			  JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.nom_mpio')) AS LUGAR_NACIMIENTO,
-			  JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.cod_mpio')) AS ID_MUNICIPIO_NACIMIENTO,
-			  act.academic_modality AS ID_NIVEL_MAXESTUDIO,
-			  act.title_name AS TITULO_RECIBIDO,
-			  act.date AS FECHA_GRADO,
-			  act.is_foreign_university AS TITULO_CONVALIDADO,
-			  act.name_university AS NOMBRE_INSTITUCION_ESTUDIO,
-			  act.program_methodology AS ID_METODOLOGIA_PROGRAMA,
-			  con.type_contract AS ID_TIPO_CONTRATO,
-			  con.work_dedication AS ID_DEDICACION,
-			  con.weekly_hours AS HORAS_DEDICACION_SEMESTRE,
-			  con.salary AS ASIGNACION_BASICA_MENSUAL,
-			  0 AS PORCENTAJE_DOCENCIA,
-			  0 AS PORCENTAJE_INVESTIGACION,
-			  0 AS PORCENTAJE_ADMINISTRATIVA,
-			  0 AS PORCENTAJE_EXTENSION,
-			  0 AS PORCENTAJE_OTRAS_ACTIVIDADES,
-			  pd.residence_address AS Direccion,
-			  u.phone AS Celular,
-			  u.email AS Correo_Personal,
-			  pd.marital_status AS Estado_Civil,
-			  pd.blood_type AS RH,
-			  pregrado.title_name_pregrado AS Titulo_de_Pregrado,
-			  0 AS Pais_en_el_que_estudio,
-			  pregrado.name_university_pregrado AS Universidad_donde_estudio,
-			  pregrado.date_pregrado AS Fecha_de_grado,
-			  lg.levelLanguage AS Nivel_de_ingles_que_tiene_actualmente
-		  FROM 
-			  user u
-		  JOIN 
-			  personal_data pd ON u.id = pd.user_id
-		  JOIN 
-			  (SELECT user_id, MAX(CASE 
-				  WHEN academic_modality = 'PDO' THEN 9
-				  WHEN academic_modality = 'DOC' THEN 8
-				  WHEN academic_modality = 'MG' THEN 7
-				  WHEN academic_modality = 'ESP' THEN 6
-				  WHEN academic_modality = 'UN' THEN 5
-				  WHEN academic_modality = 'TCE' THEN 4
-				  WHEN academic_modality = 'TC' THEN 3
-				  WHEN academic_modality = 'TP' THEN 2
-				  WHEN academic_modality = 'AU' THEN 1
-				  END) AS nivel_estudio
-			  FROM academic_training
-			  GROUP BY user_id) AS max_academic_modality ON u.id = max_academic_modality.user_id
-		  JOIN academic_training act ON u.id = act.user_id AND 
+			SELECT 
 			  CASE 
-				  WHEN act.academic_modality = 'PDO' THEN 9
-				  WHEN act.academic_modality = 'DOC' THEN 8
-				  WHEN act.academic_modality = 'MG' THEN 7
-				  WHEN act.academic_modality = 'ESP' THEN 6
-				  WHEN act.academic_modality = 'UN' THEN 5
-				  WHEN act.academic_modality = 'TCE' THEN 4
-				  WHEN act.academic_modality = 'TC' THEN 3
-				  WHEN act.academic_modality = 'TP' THEN 2
-				  WHEN act.academic_modality = 'AU' THEN 1
-			  END = max_academic_modality.nivel_estudio
-		  JOIN (SELECT user_id, title_name AS title_name_pregrado, name_university AS name_university_pregrado, date AS date_pregrado
-			  FROM academic_training
-			  WHERE academic_modality = 'UN') AS pregrado ON u.id = pregrado.user_id
-		  JOIN contract con ON u.id = con.user_id
-		  JOIN language lg ON u.id = lg.user_id
-		  WHERE u.user_type = 2;
+					WHEN u.user_type = 1 THEN 'Administrativo'
+					WHEN u.user_type = 2 THEN 'Docente'
+					ELSE 'Otro' -- Puedes agregar un valor por defecto si lo necesitas
+    		END AS user_role,
+				u.names, 
+				u.last_names, 
+				u.identification, 
+				COALESCE(r.period, dr.period) AS period, 
+				CASE 
+					WHEN r.user_id IS NOT NULL AND dr.requisition_id IS NULL THEN 'Revinculacion' 
+					WHEN dr.requisition_id IS NOT NULL AND r.user_id IS NULL THEN 'ContratacionDirecta'
+					WHEN r.user_id IS NOT NULL AND dr.requisition_id IS NOT NULL THEN 'Ambos'
+					ELSE 'Desconocido'
+				END AS tipo_contrato,
+				
+				-- Datos personales
+				JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_expedition, '$.nom_mpio')) AS LUGAR_EXPEDICION,
+				pd.birthday AS FECHA_NACIMIENTO,
+				JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.nom_mpio')) AS LUGAR_NACIMIENTO,
+				JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.cod_mpio')) AS ID_MUNICIPIO_NACIMIENTO,
+				
+				-- Información académica
+				act.academic_modality AS id_nivel_maxestudio,
+				act.title_name AS titulo_recibido,
+				act.date AS fecha_grado,
+				act.is_foreign_university AS titulo_convalidado,
+				act.name_university AS nombre_institucion_estudio,
+				act.program_methodology AS id_metodologia_programa,
+				
+				-- Contrato y dedicación
+				con.type_contract AS id_tipo_contrato,
+				con.work_dedication AS id_dedicacion,
+				con.weekly_hours AS horas_dedicacion_semestre,
+				con.salary AS asignacion_basica_mensual,
+
+				-- Porcentajes (pueden ser calculados después si hay valores)
+				0 AS porcentaje_docencia,
+				0 AS porcentaje_investigacion,
+				0 AS porcentaje_administrativa,
+				0 AS porcentaje_extension,
+				0 AS porcentaje_otras_actividades,
+
+				-- Información de contacto
+				pd.residence_address AS direccion,
+				u.phone AS celular,
+				u.email AS correo_personal,
+				
+				-- Información adicional
+				pd.marital_status AS estado_civil,
+				pd.blood_type AS rh,
+				
+				-- Pregrado (si existe)
+				pregrado.title_name_pregrado AS titulo_de_pregrado,
+				pregrado.name_university_pregrado AS universidad_donde_estudio,
+				0 AS Pais_donde_estudio,
+				pregrado.date_pregrado AS fecha_de_grado_pregrado,
+				
+				-- Experiencia (se puede sumar después si no es relevante ahora)
+				CONCAT('[', GROUP_CONCAT(SUBSTRING(te.work_dates, 2, LENGTH(te.work_dates) - 2) SEPARATOR ', '), ']') AS teaching_dates,
+				0 AS años_de_experiencia_docente,
+				GROUP_CONCAT(DISTINCT act.name_university SEPARATOR ', ') AS instituciones,
+				CONCAT('[', GROUP_CONCAT(SUBSTRING(w.work_dates, 2, LENGTH(w.work_dates) - 2) SEPARATOR ', '), ']') AS work_dates,
+				0 AS años_de_experiencia_profesional,
+				GROUP_CONCAT(DISTINCT w.company_name SEPARATOR ', ') AS empresas,
+				0 AS Escalafon_de_Colciencias,
+				
+				-- Primera contratación de la historia del usuario
+				first_contract.first_work_start AS primera_contratacion_unicatolica_del_sur_en_yeshua,
+				
+				-- Programa al que pertenece
+				0 AS Programa_al_que_pertenece,
+
+				-- Nivel de inglés
+				lg.levelLanguage AS nivel_de_ingles_actual,
+
+				-- Fecha de contratos del periodo seleccionado
+				con.work_start AS Fecha_de_contrato_inicio,
+				con.expiration_contract AS Fecha_de_contrato_final,
+
+				-- Caja de compensación
+				'CONFAMILIAR' AS CAJA_DE_COMPENSACION,
+
+				-- Datos personales
+				pd.eps AS Eps,
+				pd.pension AS Fondo_de_Pensiones,
+				'Colmena' AS Arl,
+				'Activo' AS Estado_del_profesor,
+				0 AS También_tiene_contrato_administrativo,
+				pd.bank_name AS Banco,
+				pd.bank_account_number AS No_Cuenta,
+				pd.gender AS Sexo
+
+				FROM user u
+				LEFT JOIN reemployment r ON u.id = r.user_id AND r.period LIKE '%$period%'
+				LEFT JOIN users_in_requisition ur ON u.id = ur.user_id
+				LEFT JOIN direct_contract dr ON dr.requisition_id = ur.requisition_id AND dr.period LIKE '%$period%'
+				LEFT JOIN personal_data pd ON u.id = pd.user_id
+
+				-- Obtener el máximo nivel académico del usuario
+				LEFT JOIN (
+					SELECT 
+						user_id,
+						MAX(
+							CASE 
+								WHEN academic_modality = 'PDO' THEN 9
+								WHEN academic_modality = 'DOC' THEN 8
+								WHEN academic_modality = 'MG' THEN 7
+								WHEN academic_modality = 'ESP' THEN 6
+								WHEN academic_modality = 'UN' THEN 5
+								WHEN academic_modality = 'TCE' THEN 4
+								WHEN academic_modality = 'TC' THEN 3
+								WHEN academic_modality = 'TP' THEN 2
+								WHEN academic_modality = 'AU' THEN 1
+							END
+						) AS nivel_estudio
+					FROM academic_training
+					GROUP BY user_id
+				) AS max_academic_modality ON u.id = max_academic_modality.user_id
+				LEFT JOIN academic_training act ON u.id = act.user_id AND (
+					CASE 
+						WHEN act.academic_modality = 'PDO' THEN 9
+						WHEN act.academic_modality = 'DOC' THEN 8
+						WHEN act.academic_modality = 'MG' THEN 7
+						WHEN act.academic_modality = 'ESP' THEN 6
+						WHEN act.academic_modality = 'UN' THEN 5
+						WHEN act.academic_modality = 'TCE' THEN 4
+						WHEN act.academic_modality = 'TC' THEN 3
+						WHEN act.academic_modality = 'TP' THEN 2
+						WHEN act.academic_modality = 'AU' THEN 1
+					END = max_academic_modality.nivel_estudio
+				)
+				-- Pregrado (solo si es modalidad universitaria)
+				LEFT JOIN (
+					SELECT 
+						user_id,
+						title_name AS title_name_pregrado,
+						name_university AS name_university_pregrado,
+						date AS date_pregrado
+					FROM academic_training
+					WHERE academic_modality = 'UN'
+				) AS pregrado ON u.id = pregrado.user_id
+
+				-- Información de contrato
+				LEFT JOIN contract con ON u.id = con.user_id AND con.period LIKE '%$period%'
+
+				-- Subconsulta para obtener la primera fecha de contrato
+				LEFT JOIN (
+					SELECT 
+						user_id,
+						MIN(work_start) AS first_work_start
+					FROM contract
+					GROUP BY user_id
+				) AS first_contract ON u.id = first_contract.user_id
+
+				-- Información de idioma
+				LEFT JOIN language lg ON u.id = lg.user_id
+
+				-- Experiencia profesional
+				LEFT JOIN work_experience w ON u.id = w.user_id
+
+				-- Experiencia docente
+				LEFT JOIN teaching_experience te ON u.id = te.user_id
+
+				WHERE (r.period IS NOT NULL OR dr.period IS NOT NULL) 
+				GROUP BY u.id
+				ORDER BY u.names ASC;
 	  ";
   
-	  // Ejecutar la consulta
+   	  // Ejecutar la consulta con el periodo como parámetro
 	  $stmt = $conn->executeQuery($sql);
+	  //$stmt->execute(['period' => "%$period%"]);
 	  $results = $stmt->fetchAllAssociative();
-  
+
+		// Procesar los resultados para calcular la experiencia profesional y docente
+		$this->processResults($results);
+	
 	  // Crear la hoja de cálculo
 	  $spreadsheet = new Spreadsheet();
 	  $sheet = $spreadsheet->getActiveSheet();
   
 	  // Agregar encabezados
 	  $headers = [
-		  'Nombre', 'Apellido', 'NUM_DOCUMENTO', 'LUGAR_EXPEDICION', 'FECHA_NACIMIENTO',
+		  'Tipo de vinculación','Nombre', 'Apellido', 'NUM_DOCUMENTO', 'Periodo', 'Tipo de Contrato' ,'LUGAR_EXPEDICION', 'FECHA_NACIMIENTO',
 		  'LUGAR_NACIMIENTO', 'ID_MUNICIPIO_NACIMIENTO', 'ID_NIVEL_MAXESTUDIO',
 		  'TITULO_RECIBIDO', 'FECHA_GRADO', 'TITULO_CONVALIDADO', 'NOMBRE_INSTITUCION_ESTUDIO',
 		  'ID_METODOLOGIA_PROGRAMA', 'ID_TIPO_CONTRATO', 'ID_DEDICACION',
 		  'HORAS_DEDICACION_SEMESTRE', 'ASIGNACION_BASICA_MENSUAL', 'PORCENTAJE_DOCENCIA',
 		  'PORCENTAJE_INVESTIGACION', 'PORCENTAJE_ADMINISTRATIVA', 'PORCENTAJE_EXTENSION',
 		  'PORCENTAJE_OTRAS_ACTIVIDADES', 'Direccion', 'Celular', 'Correo_Personal',
-		  'Estado_Civil', 'RH', 'Titulo_de_Pregrado', 'Pais_en_el_que_estudio',
-		  'Universidad_donde_estudio', 'Fecha_de_grado', 'Nivel_de_ingles_que_tiene_actualmente'
+		  'Estado_Civil', 'RH', 'Titulo_de_Pregrado', 'Universidad donde estudio' ,'Pais en el que estudio',
+		  'Fecha_de_grado', 'Años de Experiencia docente','Institución(es)','Años Experiencia profesional','Empresa(s)',
+		  'Escalafón de Colciencias','Primera contratación Unicatólica del sur en Yeshua','Programa al que pertenece',
+		  'Nivel_de_ingles_actual', 'Fecha inicial contrato', 'Fecha final contrato', 'Caja de compensación',
+		  'Eps','Fondo de pensiones','ARL','Estado del profesor','Contrato administrativo?','Banco','No.Cuenta','Sexo'
 	  ];
 	  $sheet->fromArray($headers, null, 'A1');
+
+		// Aplica estilos a los encabezados
+		$headerStyle = [
+			'font' => [
+				'bold' => true, // Negrita
+				'size' => 12, // Tamaño de fuente
+				'color' => ['rgb' => 'FFFFFF'], // Color de texto blanco
+			],
+			'fill' => [
+				'fillType' => Fill::FILL_SOLID,
+				'startColor' => [
+					'rgb' => '4F81BD' // Color de fondo azul
+				]
+			],
+			'alignment' => [
+				'horizontal' => Alignment::HORIZONTAL_CENTER, // Centrado horizontal
+				'vertical' => Alignment::VERTICAL_CENTER, // Centrado vertical
+			],
+		];
+
+		// Ajusta el ancho de las columnas automáticamente
+		foreach (range('A', 'Z') as $columnID) {
+			$sheet->getColumnDimension($columnID)->setAutoSize(true);
+		}
+
+		// Ajusta el ancho de las columnas automáticamente para AA-AZ
+		foreach (range('A', 'Z') as $first) {
+			$columnID = 'A' . $first;
+			$sheet->getColumnDimension($columnID)->setAutoSize(true);
+		}
+
+		// Aplica estilos a todas las celdas de los encabezados
+		$sheet->getStyle('A1:AZ1')->applyFromArray($headerStyle);
+
+		// Ajusta la altura de la fila de los encabezados
+		$sheet->getRowDimension(1)->setRowHeight(35);
   
 	  // Agregar los datos
 	  $row = 2;
 	  foreach ($results as $data) {
+			unset($data['teaching_dates']);
+		  unset($data['work_dates']);
 		  $sheet->fromArray($data, null, 'A' . $row);
 		  $row++;
 	  }
@@ -3711,7 +3921,7 @@ class ContractController extends AbstractController
 	  $fileName = 'baseDatosSnies.xlsx';
 	  $temp_file = tempnam(sys_get_temp_dir(), $fileName);
 	  $writer->save($temp_file);
-  
+	  
 	  // Retornar el archivo como respuesta para descarga
 	  $response = new BinaryFileResponse($temp_file);
 	  $response->setContentDisposition(
@@ -3721,4 +3931,340 @@ class ContractController extends AbstractController
   
 	  return $response;
   }
+
+	private function calculateExperience($dates)
+	{
+    if (is_string($dates)) {
+        $datesArray = json_decode($dates, true); // Decodifica si es un JSON string
+    } else {
+        $datesArray = $dates; // Ya es un array
+    }
+
+    if (!empty($datesArray) && is_array($datesArray)) {
+        return $this->dateUtilities->timeWorked($datesArray, ['startDate', 'endDate']);
+    }
+
+    // Retorna el valor por defecto si no hay fechas válidas
+    return '0 años, 0 meses y 0 días';
+	}
+
+	public function processResults(array &$results)
+	{
+			foreach ($results as &$data) {
+					$data['años_de_experiencia_profesional'] = $this->calculateExperience($data['work_dates'], 'work');
+					$data['años_de_experiencia_docente'] = $this->calculateExperience($data['teaching_dates'], 'teaching');
+			}
+	}
+
+	//-------------------------------------------------------------------------------------------------------------------------------------
+	///--------------------------------------------- WORK CERTIFICATE ---------------------------------------------------------------------
+	#[Route('contract/work-certificate', name:'app_contract_work_certificate')]
+	public function workCertificate(Request $request, ManagerRegistry $doctrine, ValidateToken $vToken)
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+		$user = $vToken->getUserIdFromToken($token);
+	
+		// Cambiar para recibir datos JSON correctamente
+		$data = json_decode($request->getContent(), true);
+		// if (!isset($data['periods']) || !is_array($data['periods'])) {
+		// 	return new JsonResponse([
+		// 		'status' => false,
+		// 		'message' => 'Los periodos no se han proporcionado correctamente.'
+		// 	], 400);
+		// }
+
+		//$periods = $data['periods'];
+		$includeHistory = isset($data['history']) ? (bool)$data['history'] : false;
+		$includeSalary = isset($data['salary']) ? (bool)$data['salary'] : false;
+		$includeFunctions = isset($data['functions']) ? (bool)$data['functions'] : false;
+
+		// Validación del token
+		if (!$token) {
+			throw new \Exception('Token no válido');
+		}
+	
+    	// Obtener el último contrato del usuario
+		$lastContract = $doctrine->getRepository(Contract::class)->findOneBy(
+			['user' => $user],
+			['workStart' => 'DESC']
+		);
+
+		if (!$lastContract) {
+			return new JsonResponse([
+				'status' => false,
+				'message' => 'No se encontraron contratos para el usuario.'
+			], 404);
+		}
+
+		// Obtener todos los contratos menos el último si se selecciona la opción de histórico
+		$allContracts = [];
+		if ($includeHistory) {
+			$allContracts = $doctrine->getRepository(Contract::class)->createQueryBuilder('c')
+				->where('c.user = :user')
+				->andWhere('c.id != :lastContractId') // Excluir el último contrato
+				->orderBy('c.workStart', 'ASC')
+				->setParameter('user', $user->getId())
+				->setParameter('lastContractId', $lastContract->getId()) // ID del último contrato
+				->getQuery()
+				->getResult();
+		}
+
+		$user = $doctrine->getRepository(User::class)->find($user);
+		$userData = [
+			'user' =>[
+				'fullname' => $user->getNames() . ' ' . $user->getLastNames(),
+				'fullidentification' => $user->getTypeIdentification() . ' ' . $user->getIdentification()
+			]
+		];
+
+		$personalData = $doctrine->getRepository(PersonalData::class)->findOneBy(['user' => $user->getId()]);
+		$placeOfExpedition = $personalData->getPlaceOfExpedition();
+		$jsonData = json_decode($placeOfExpedition, true);
+
+		$userPersonalData = [
+			'nom_mpio' => $jsonData['nom_mpio'] ?? null
+		];
+
+		$currentDate = new DateTime();
+		$formattedCurrentDate = formatDate($currentDate->format('Y-m-d'));
+
+		// Preparar datos del último contrato
+		$lastContractData = prepareContractData($lastContract, $doctrine);
+
+		// Preparar datos para contratos históricos (si corresponde)
+		$contractsHistoryData = [];
+		if ($includeHistory) {
+			foreach ($allContracts as $contract) {
+				$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
+
+				$assignmentsProfiles = [];
+				$assignmentsCharges = [];
+				foreach ($assignmentContract as $assignment) {
+					$profile = $assignment->getProfile();
+					$charge = $assignment->getCharge();
+
+					if ($profile) {
+						$assignmentsProfiles[] = [
+							'id' => $profile->getId(),
+							'name' => $profile->getName(),
+						];
+					}
+
+					if ($charge) {
+						$assignmentsCharges[] = [
+							'id' => $charge->getId(),
+							'name' => $charge->getName(),
+						];
+					}
+				}
+
+				$starDate =$contract->getWorkStart()->format('Y-m-d');
+				$endDate = $contract->getExpirationContract()->format('Y-m-d');
+
+				$contractsHistoryData[] = [
+					'start_date' => formatDateShort($starDate),
+					'end_date' => formatDateShort($endDate),
+					'assignmentsProfiles' => $assignmentsProfiles,
+					'assignmentsCharges' => $assignmentsCharges,
+				];
+
+			}
+		}
+		
+		$html = $this->renderView('pdf/certificate.html.twig', [
+			'ud' => [
+				'fullname' => strtoupper($userData['user']['fullname']),
+				'fullidentification' => $userData['user']['fullidentification']
+			],
+			'dp' => [
+				'nom_mpio' => $userPersonalData['nom_mpio']
+			],
+			'contracts' => $lastContractData, // Enviar todos los contratos obtenidos
+			'contractsHistory' => $contractsHistoryData,
+			'includeSalary' => $includeSalary,
+			'includeHistory' => $includeHistory,
+			'includeFunctions' => $includeFunctions,
+			'formattedCurrentDate' => $formattedCurrentDate
+		]);
+
+		// Configurar Dompdf
+		$options = new Options();
+		$options->set('defaultFont', 'Arial');
+		$options->set('isRemoteEnabled', true);
+		$dompdf = new Dompdf($options);
+		$dompdf->loadHtml($html);
+		$dompdf->setPaper('A4', 'portrait');
+		$dompdf->render();
+
+		// Generar la respuesta como PDF
+		$pdfOutput = $dompdf->output();
+		$response = new Response($pdfOutput);
+		$response->headers->set('Content-Type', 'application/pdf');
+		$response->headers->set('Content-Disposition', 'attachment;filename="work_certificate.pdf"');
+
+		return $response;
+	}
+
 }
+
+function prepareContractData($contract, $doctrine)
+{
+    $assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
+
+    $assignmentsProfiles = [];
+    $assignmentsCharges = [];
+    foreach ($assignmentContract as $assignment) {
+        $profile = $assignment->getProfile();
+        $charge = $assignment->getCharge();
+
+        if ($profile) {
+            $assignmentsProfiles[] = [
+                'id' => $profile->getId(),
+                'name' => $profile->getName(),
+            ];
+        }
+
+        if ($charge) {
+            $assignmentsCharges[] = [
+                'id' => $charge->getId(),
+                'name' => $charge->getName(),
+            ];
+        }
+    }
+
+    $salary = $contract->getSalary();
+    $startDate = $contract->getWorkStart()->format('Y-m-d');
+    $endDate = $contract->getExpirationContract()->format('Y-m-d');
+
+    return [
+        'contract' => [
+            'id' => $contract->getId(),
+            'type_contract' => $contract->getTypeContract(),
+            'work_start' => formatDate($startDate),
+            'initial_contract' => $contract->getInitialContract(),
+            'expiration_contract' => formatDate($endDate),
+            'work_dedication' => formatDate($endDate),
+            'salary' => $salary,
+            'salary_in_words' => numberToWords($salary),
+            'weekly_hours' => $contract->getWeeklyHours(),
+            'functions' => $contract->getFunctions(),
+            'specific_functions' => $contract->getSpecificFunctions(),
+            'contract_file' => $contract->getContractFile(),
+            'contract_file_pdf' => $contract->getContractFilePdf(),
+        ],
+        'assignmentsProfiles' => $assignmentsProfiles,
+        'assignmentsCharges' => $assignmentsCharges,
+    ];
+}
+
+function numberToWords($num) {
+    $ones = [
+        0 => 'cero', 1 => 'un', 2 => 'dos', 3 => 'tres', 4 => 'cuatro', 
+        5 => 'cinco', 6 => 'seis', 7 => 'siete', 8 => 'ocho', 9 => 'nueve', 
+        10 => 'diez', 11 => 'once', 12 => 'doce', 13 => 'trece', 
+        14 => 'catorce', 15 => 'quince', 16 => 'dieciséis', 17 => 'diecisiete', 
+        18 => 'dieciocho', 19 => 'diecinueve'
+    ];
+
+    $tens = [
+        20 => 'veinte', 30 => 'treinta', 40 => 'cuarenta', 50 => 'cincuenta', 
+        60 => 'sesenta', 70 => 'setenta', 80 => 'ochenta', 90 => 'noventa'
+    ];
+
+    $hundreds = [
+        100 => 'cien', 200 => 'doscientos', 300 => 'trescientos', 
+        400 => 'cuatrocientos', 500 => 'quinientos', 600 => 'seiscientos', 
+        700 => 'setecientos', 800 => 'ochocientos', 900 => 'novecientos'
+    ];
+
+    // Para millones
+    if ($num < 20) return $ones[$num];
+    if ($num < 100) return $tens[10 * floor($num / 10)] . (($num % 10 !== 0) ? ' y ' . $ones[$num % 10] : '');
+    if ($num < 1000) return $hundreds[100 * floor($num / 100)] . (($num % 100 !== 0) ? ' ' . numberToWords($num % 100) : '');
+    
+    if ($num < 1000000) {
+        return numberToWords(floor($num / 1000)) . ' mil' . (($num % 1000 !== 0) ? ' ' . numberToWords($num % 1000) : '');
+    }
+
+    if ($num < 2000000) { // Para 1.000.000 hasta 1.999.999
+		return numberToWords(floor($num / 1000000)) . ' millon' . (($num % 1000000 !== 0) ? ' ' . numberToWords($num % 1000000) : '');
+    } elseif ($num < 1000000000) {
+        return numberToWords(floor($num / 1000000)) . ' millones' . (($num % 1000000 !== 0) ? ' ' . numberToWords($num % 1000000) : '');
+    }
+	return 'número demasiado grande';
+}
+
+function numberToText($num) {
+    $ones = [
+        1 => 'uno', 2 => 'dos', 3 => 'tres', 4 => 'cuatro', 5 => 'cinco', 
+        6 => 'seis', 7 => 'siete', 8 => 'ocho', 9 => 'nueve', 10 => 'diez',
+        11 => 'once', 12 => 'doce', 13 => 'trece', 14 => 'catorce', 15 => 'quince', 
+        16 => 'dieciséis', 17 => 'diecisiete', 18 => 'dieciocho', 19 => 'diecinueve',
+        20 => 'veinte', 21 => 'veintiuno', 22 => 'veintidós', 23 => 'veintitrés', 
+        24 => 'veinticuatro', 25 => 'veinticinco', 26 => 'veintiséis', 
+        27 => 'veintisiete', 28 => 'veintiocho', 29 => 'veintinueve', 30 => 'treinta',
+        31 => 'treinta y uno'
+    ];
+    
+    return $ones[$num];
+}
+
+function monthToText($month) {
+    $months = [
+        1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
+        7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+    ];
+    
+    return $months[$month];
+}
+
+function yearToText($year) {
+    // Desglosa el año para obtener cada parte en palabras
+    $thousands = floor($year / 1000) * 1000;
+    $hundreds = $year % 1000;
+    
+    $yearWords = "dos mil";
+    
+    if ($hundreds > 0) {
+        $yearWords .= " " . numberToWords($hundreds);
+    }
+    
+    return $yearWords;
+}
+
+function formatDate($dateString) {
+    try {
+        $date = new DateTime($dateString);
+        $day = (int)$date->format('d');
+        $month = (int)$date->format('m');
+        $year = (int)$date->format('Y');
+
+        $dayInText = numberToText($day);
+        $monthInText = monthToText($month);
+        $yearInText = yearToText($year);
+
+        return "{$dayInText} ({$day}) de {$monthInText} de {$year}";
+    } catch (\Exception $e) {
+        // Manejar la excepción si hay un problema con el formato de la fecha
+        return "Fecha inválida";
+    }
+}
+
+function formatDateShort($dateString) {
+    try {
+        $date = new DateTime($dateString);
+        $day = (int)$date->format('d');
+        $month = (int)$date->format('m');
+        $year = (int)$date->format('Y');
+
+        $monthInText = monthToText($month);
+
+        return "{$day} de {$monthInText} de {$year}";
+    } catch (\Exception $e) {
+        // Manejar la excepción si hay un problema con el formato de la fecha
+        return "Fecha inválida";
+    }
+}
+
+
