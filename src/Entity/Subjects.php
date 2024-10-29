@@ -51,7 +51,7 @@ class Subjects
         return $this->materia;
     }
 
-    public function setMateria(?Materias $materia): self
+    public function setMateria(?Materias $materia): static
     {
         $this->materia = $materia;
 
@@ -63,7 +63,7 @@ class Subjects
         return $this->subprofile;
     }
 
-    public function setSubprofile(?Subprofile $subprofile): self
+    public function setSubprofile(?Subprofile $subprofile): static
     {
         $this->subprofile = $subprofile;
 

@@ -98,7 +98,7 @@ class Incapacity
         return $this->solicitudeDate;
     }
 
-    public function setSolicitudeDate(\DateTimeInterface $solicitudeDate): self
+    public function setSolicitudeDate(\DateTimeInterface $solicitudeDate): static
     {
         $this->solicitudeDate = $solicitudeDate;
 
@@ -110,7 +110,7 @@ class Incapacity
         return $this->incapacityDate;
     }
 
-    public function setIncapacityDate(\DateTimeInterface $incapacityDate): self
+    public function setIncapacityDate(\DateTimeInterface $incapacityDate): static
     {
         $this->incapacityDate = $incapacityDate;
 
@@ -122,7 +122,7 @@ class Incapacity
         return $this->numberDaysIncapacity;
     }
 
-    public function setNumberDaysIncapacity(int $numberDaysIncapacity): self
+    public function setNumberDaysIncapacity(int $numberDaysIncapacity): static
     {
         $this->numberDaysIncapacity = $numberDaysIncapacity;
 
@@ -134,7 +134,7 @@ class Incapacity
         return $this->originIncapacity;
     }
 
-    public function setOriginIncapacity(string $originIncapacity): self
+    public function setOriginIncapacity(string $originIncapacity): static
     {
         $this->originIncapacity = $originIncapacity;
 
@@ -146,7 +146,7 @@ class Incapacity
         return $this->medicalSupportPdf;
     }
 
-    public function setMedicalSupportPdf(?string $medicalSupportPdf): self
+    public function setMedicalSupportPdf(?string $medicalSupportPdf): static
     {
         $this->medicalSupportPdf = $medicalSupportPdf;
 
@@ -158,7 +158,7 @@ class Incapacity
         return $this->epsSupportPdf;
     }
 
-    public function setEpsSupportPdf(?string $epsSupportPdf): self
+    public function setEpsSupportPdf(?string $epsSupportPdf): static
     {
         $this->epsSupportPdf = $epsSupportPdf;
 
@@ -170,7 +170,7 @@ class Incapacity
         return $this->state;
     }
 
-    public function setState(int $state): self
+    public function setState(int $state): static
     {
         $this->state = $state;
 
@@ -182,7 +182,7 @@ class Incapacity
         return $this->history;
     }
 
-    public function setHistory(?string $history): self
+    public function setHistory(?string $history): static
     {
         $this->history = $history;
 
@@ -194,7 +194,7 @@ class Incapacity
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

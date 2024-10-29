@@ -53,7 +53,7 @@ class Competence
         return $this->name;
     }
 
-    public function setName(string $name): self
+    public function setName(string $name): static
     {
         $this->name = $name;
 
@@ -65,7 +65,7 @@ class Competence
         return $this->description;
     }
 
-    public function setDescription(string $description): self
+    public function setDescription(string $description): static
     {
         $this->description = $description;
 
@@ -77,7 +77,7 @@ class Competence
         return $this->icon;
     }
 
-    public function setIcon(string $icon): self
+    public function setIcon(string $icon): static
     {
         $this->icon = $icon;
 

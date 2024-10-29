@@ -156,7 +156,7 @@ class ContractController extends AbstractController
 			try{
 					$email = (new TemplatedEmail())
 							->from('santipo12@gmail.com')
-							->to($user->getEmail(),'pasante.santiago@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
+							->to($user->getEmail()) //remplazar correo de seguridad y salud
 							->subject('Actualización Cita Médica')
 							->htmlTemplate('email/medicalTestEmail.html.twig')
 							->context([

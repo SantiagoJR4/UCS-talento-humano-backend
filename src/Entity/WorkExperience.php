@@ -140,7 +140,7 @@ class WorkExperience
         return $this->companyName;
     }
 
-    public function setCompanyName(string $companyName): self
+    public function setCompanyName(string $companyName): static
     {
         $this->companyName = $companyName;
 
@@ -152,7 +152,7 @@ class WorkExperience
         return $this->position;
     }
 
-    public function setPosition(string $position): self
+    public function setPosition(string $position): static
     {
         $this->position = $position;
 
@@ -164,7 +164,7 @@ class WorkExperience
         return $this->dependence;
     }
 
-    public function setDependence(string $dependence): self
+    public function setDependence(string $dependence): static
     {
         $this->dependence = $dependence;
 
@@ -176,7 +176,7 @@ class WorkExperience
         return $this->department;
     }
 
-    public function setDepartment(string $department): self
+    public function setDepartment(string $department): static
     {
         $this->department = $department;
 
@@ -188,7 +188,7 @@ class WorkExperience
         return $this->municipality;
     }
 
-    public function setMunicipality(string $municipality): self
+    public function setMunicipality(string $municipality): static
     {
         $this->municipality = $municipality;
 
@@ -200,7 +200,7 @@ class WorkExperience
         return $this->companyAddress;
     }
 
-    public function setCompanyAddress(string $companyAddress): self
+    public function setCompanyAddress(string $companyAddress): static
     {
         $this->companyAddress = $companyAddress;
 
@@ -212,7 +212,7 @@ class WorkExperience
         return $this->bossName;
     }
 
-    public function setBossName(string $bossName): self
+    public function setBossName(string $bossName): static
     {
         $this->bossName = $bossName;
 
@@ -224,7 +224,7 @@ class WorkExperience
         return $this->phone;
     }
 
-    public function setPhone(string $phone): self
+    public function setPhone(string $phone): static
     {
         $this->phone = $phone;
 
@@ -236,7 +236,7 @@ class WorkExperience
         return $this->admissionDate;
     }
 
-    public function setAdmissionDate(\DateTimeInterface $admissionDate): self
+    public function setAdmissionDate(\DateTimeInterface $admissionDate): static
     {
         $this->admissionDate = $admissionDate;
 
@@ -248,7 +248,7 @@ class WorkExperience
         return $this->isWorking;
     }
 
-    public function setIsWorking(?bool $isWorking): self
+    public function setIsWorking(?bool $isWorking): static
     {
         $this->isWorking = $isWorking;
 
@@ -260,7 +260,7 @@ class WorkExperience
         return $this->retirementDate;
     }
 
-    public function setRetirementDate(?\DateTimeInterface $retirementDate): self
+    public function setRetirementDate(?\DateTimeInterface $retirementDate): static
     {
         $this->retirementDate = $retirementDate;
 
@@ -272,7 +272,7 @@ class WorkExperience
         return $this->timeWorked;
     }
 
-    public function setTimeWorked(?string $timeWorked): self
+    public function setTimeWorked(?string $timeWorked): static
     {
         $this->timeWorked = $timeWorked;
 
@@ -284,7 +284,7 @@ class WorkExperience
         return $this->certifiedPdf;
     }
 
-    public function setCertifiedPdf(?string $certifiedPdf): self
+    public function setCertifiedPdf(?string $certifiedPdf): static
     {
         $this->certifiedPdf = $certifiedPdf;
 
@@ -296,7 +296,7 @@ class WorkExperience
         return $this->history;
     }
 
-    public function setHistory(?string $history): self
+    public function setHistory(?string $history): static
     {
         $this->history = $history;
 
@@ -308,7 +308,7 @@ class WorkExperience
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

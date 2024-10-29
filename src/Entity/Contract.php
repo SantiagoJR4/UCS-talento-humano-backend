@@ -119,7 +119,7 @@ class Contract
         return $this->typeContract;
     }
 
-    public function setTypeContract(string $typeContract): self
+    public function setTypeContract(string $typeContract): static
     {
         $this->typeContract = $typeContract;
 
@@ -131,7 +131,7 @@ class Contract
         return $this->workStart;
     }
 
-    public function setWorkStart(\DateTimeInterface $workStart): self
+    public function setWorkStart(\DateTimeInterface $workStart): static
     {
         $this->workStart = $workStart;
 
@@ -143,7 +143,7 @@ class Contract
         return $this->initialContract;
     }
 
-    public function setInitialContract(string $initialContract): self
+    public function setInitialContract(string $initialContract): static
     {
         $this->initialContract = $initialContract;
 
@@ -155,7 +155,7 @@ class Contract
         return $this->expirationContract;
     }
 
-    public function setExpirationContract(\DateTimeInterface $expirationContract): self
+    public function setExpirationContract(\DateTimeInterface $expirationContract): static
     {
         $this->expirationContract = $expirationContract;
 
@@ -167,7 +167,7 @@ class Contract
         return $this->workDedication;
     }
 
-    public function setWorkDedication(string $workDedication): self
+    public function setWorkDedication(string $workDedication): static
     {
         $this->workDedication = $workDedication;
 
@@ -179,7 +179,7 @@ class Contract
         return $this->salary;
     }
 
-    public function setSalary(int $salary): self
+    public function setSalary(int $salary): static
     {
         $this->salary = $salary;
 
@@ -191,7 +191,7 @@ class Contract
         return $this->weeklyHours;
     }
 
-    public function setWeeklyHours(int $weeklyHours): self
+    public function setWeeklyHours(int $weeklyHours): static
     {
         $this->weeklyHours = $weeklyHours;
 
@@ -203,7 +203,7 @@ class Contract
         return $this->functions;
     }
 
-    public function setFunctions(string $functions): self
+    public function setFunctions(string $functions): static
     {
         $this->functions = $functions;
 
@@ -215,7 +215,7 @@ class Contract
         return $this->specificFunctions;
     }
 
-    public function setSpecificFunctions(string $specificFunctions): self
+    public function setSpecificFunctions(string $specificFunctions): static
     {
         $this->specificFunctions = $specificFunctions;
 
@@ -227,7 +227,7 @@ class Contract
         return $this->contractFile;
     }
 
-    public function setContractFile(string $contractFile): self
+    public function setContractFile(string $contractFile): static
     {
         $this->contractFile = $contractFile;
 
@@ -239,7 +239,7 @@ class Contract
         return $this->workload;
     }
 
-    public function setWorkload(?string $workload): self
+    public function setWorkload(?string $workload): static
     {
         $this->workload = $workload;
 
@@ -251,7 +251,7 @@ class Contract
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

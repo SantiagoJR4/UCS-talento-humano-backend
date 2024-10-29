@@ -119,7 +119,7 @@ class License
         return $this->solicitudeDate;
     }
 
-    public function setSolicitudeDate(\DateTimeInterface $solicitudeDate): self
+    public function setSolicitudeDate(\DateTimeInterface $solicitudeDate): static
     {
         $this->solicitudeDate = $solicitudeDate;
 
@@ -131,7 +131,7 @@ class License
         return $this->typeCompensation;
     }
 
-    public function setTypeCompensation(string $typeCompensation): self
+    public function setTypeCompensation(string $typeCompensation): static
     {
         $this->typeCompensation = $typeCompensation;
 
@@ -143,7 +143,7 @@ class License
         return $this->typeLicense;
     }
 
-    public function setTypeLicense(string $typeLicense): self
+    public function setTypeLicense(string $typeLicense): static
     {
         $this->typeLicense = $typeLicense;
 
@@ -155,7 +155,7 @@ class License
         return $this->license;
     }
 
-    public function setLicense(?string $license): self
+    public function setLicense(?string $license): static
     {
         $this->license = $license;
 
@@ -167,7 +167,7 @@ class License
         return $this->othertypeLicense;
     }
 
-    public function setOthertypeLicense(?string $othertypeLicense): self
+    public function setOthertypeLicense(?string $othertypeLicense): static
     {
         $this->othertypeLicense = $othertypeLicense;
 
@@ -179,7 +179,7 @@ class License
         return $this->reason;
     }
 
-    public function setReason(string $reason): self
+    public function setReason(string $reason): static
     {
         $this->reason = $reason;
 
@@ -191,7 +191,7 @@ class License
         return $this->initialDate;
     }
 
-    public function setInitialDate(\DateTimeInterface $initialDate): self
+    public function setInitialDate(\DateTimeInterface $initialDate): static
     {
         $this->initialDate = $initialDate;
 
@@ -203,7 +203,7 @@ class License
         return $this->finalDate;
     }
 
-    public function setFinalDate(\DateTimeInterface $finalDate): self
+    public function setFinalDate(\DateTimeInterface $finalDate): static
     {
         $this->finalDate = $finalDate;
 
@@ -215,7 +215,7 @@ class License
         return $this->supportPdf;
     }
 
-    public function setSupportPdf(?string $supportPdf): self
+    public function setSupportPdf(?string $supportPdf): static
     {
         $this->supportPdf = $supportPdf;
 
@@ -227,7 +227,7 @@ class License
         return $this->state;
     }
 
-    public function setState(int $state): self
+    public function setState(int $state): static
     {
         $this->state = $state;
 
@@ -239,7 +239,7 @@ class License
         return $this->history;
     }
 
-    public function setHistory(?string $history): self
+    public function setHistory(?string $history): static
     {
         $this->history = $history;
 
@@ -251,7 +251,7 @@ class License
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

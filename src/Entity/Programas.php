@@ -94,7 +94,7 @@ class Programas
         return $this->nombre;
     }
 
-    public function setNombre(?string $nombre): self
+    public function setNombre(?string $nombre): static
     {
         $this->nombre = $nombre;
 
@@ -106,7 +106,7 @@ class Programas
         return $this->numerosemestres;
     }
 
-    public function setNumerosemestres(?int $numerosemestres): self
+    public function setNumerosemestres(?int $numerosemestres): static
     {
         $this->numerosemestres = $numerosemestres;
 
@@ -118,7 +118,7 @@ class Programas
         return $this->totalcreditos;
     }
 
-    public function setTotalcreditos(?int $totalcreditos): self
+    public function setTotalcreditos(?int $totalcreditos): static
     {
         $this->totalcreditos = $totalcreditos;
 
@@ -130,7 +130,7 @@ class Programas
         return $this->codigosnies;
     }
 
-    public function setCodigosnies(?string $codigosnies): self
+    public function setCodigosnies(?string $codigosnies): static
     {
         $this->codigosnies = $codigosnies;
 
@@ -142,7 +142,7 @@ class Programas
         return $this->codigo;
     }
 
-    public function setCodigo(?string $codigo): self
+    public function setCodigo(?string $codigo): static
     {
         $this->codigo = $codigo;
 
@@ -154,7 +154,7 @@ class Programas
         return $this->director;
     }
 
-    public function setDirector(?string $director): self
+    public function setDirector(?string $director): static
     {
         $this->director = $director;
 
@@ -166,7 +166,7 @@ class Programas
         return $this->cargo;
     }
 
-    public function setCargo(?string $cargo): self
+    public function setCargo(?string $cargo): static
     {
         $this->cargo = $cargo;
 
@@ -178,7 +178,7 @@ class Programas
         return $this->correo;
     }
 
-    public function setCorreo(?string $correo): self
+    public function setCorreo(?string $correo): static
     {
         $this->correo = $correo;
 
@@ -190,7 +190,7 @@ class Programas
         return $this->tipo;
     }
 
-    public function setTipo(?string $tipo): self
+    public function setTipo(?string $tipo): static
     {
         $this->tipo = $tipo;
 

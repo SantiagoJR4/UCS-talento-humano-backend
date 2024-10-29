@@ -126,7 +126,7 @@ class WorkHistory
         return $this->typeDocument;
     }
 
-    public function setTypeDocument(string $typeDocument): self
+    public function setTypeDocument(string $typeDocument): static
     {
         $this->typeDocument = $typeDocument;
 
@@ -138,7 +138,7 @@ class WorkHistory
         return $this->newCharge;
     }
 
-    public function setNewCharge(?string $newCharge): self
+    public function setNewCharge(?string $newCharge): static
     {
         $this->newCharge = $newCharge;
 
@@ -150,7 +150,7 @@ class WorkHistory
         return $this->newProfile;
     }
 
-    public function setNewProfile(?string $newProfile): self
+    public function setNewProfile(?string $newProfile): static
     {
         $this->newProfile = $newProfile;
 
@@ -162,7 +162,7 @@ class WorkHistory
         return $this->newWorkDedication;
     }
 
-    public function setNewWorkDedication(?string $newWorkDedication): self
+    public function setNewWorkDedication(?string $newWorkDedication): static
     {
         $this->newWorkDedication = $newWorkDedication;
 
@@ -174,7 +174,7 @@ class WorkHistory
         return $this->dateDocumentFinal;
     }
 
-    public function setDateDocumentFinal(?\DateTimeInterface $dateDocumentFinal): self
+    public function setDateDocumentFinal(?\DateTimeInterface $dateDocumentFinal): static
     {
         $this->dateDocumentFinal = $dateDocumentFinal;
 
@@ -186,7 +186,7 @@ class WorkHistory
         return $this->newDuration;
     }
 
-    public function setNewDuration(?string $newDuration): self
+    public function setNewDuration(?string $newDuration): static
     {
         $this->newDuration = $newDuration;
 
@@ -198,7 +198,7 @@ class WorkHistory
         return $this->newSalary;
     }
 
-    public function setNewSalary(?int $newSalary): self
+    public function setNewSalary(?int $newSalary): static
     {
         $this->newSalary = $newSalary;
 
@@ -210,7 +210,7 @@ class WorkHistory
         return $this->newWeeklyHours;
     }
 
-    public function setNewWeeklyHours(?int $newWeeklyHours): self
+    public function setNewWeeklyHours(?int $newWeeklyHours): static
     {
         $this->newWeeklyHours = $newWeeklyHours;
 
@@ -222,7 +222,7 @@ class WorkHistory
         return $this->hour;
     }
 
-    public function setHour(?\DateTimeInterface $hour): self
+    public function setHour(?\DateTimeInterface $hour): static
     {
         $this->hour = $hour;
 
@@ -234,7 +234,7 @@ class WorkHistory
         return $this->dateDocumentInitial;
     }
 
-    public function setDateDocumentInitial(?\DateTimeInterface $dateDocumentInitial): self
+    public function setDateDocumentInitial(?\DateTimeInterface $dateDocumentInitial): static
     {
         $this->dateDocumentInitial = $dateDocumentInitial;
 
@@ -246,7 +246,7 @@ class WorkHistory
         return $this->description;
     }
 
-    public function setDescription(?string $description): self
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
 
@@ -258,7 +258,7 @@ class WorkHistory
         return $this->documentPdf;
     }
 
-    public function setDocumentPdf(string $documentPdf): self
+    public function setDocumentPdf(string $documentPdf): static
     {
         $this->documentPdf = $documentPdf;
 
@@ -270,7 +270,7 @@ class WorkHistory
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

@@ -119,7 +119,7 @@ class Permission
         return $this->solicitudeDate;
     }
 
-    public function setSolicitudeDate(\DateTimeInterface $solicitudeDate): self
+    public function setSolicitudeDate(\DateTimeInterface $solicitudeDate): static
     {
         $this->solicitudeDate = $solicitudeDate;
 
@@ -131,7 +131,7 @@ class Permission
         return $this->typePermission;
     }
 
-    public function setTypePermission(string $typePermission): self
+    public function setTypePermission(string $typePermission): static
     {
         $this->typePermission = $typePermission;
 
@@ -143,7 +143,7 @@ class Permission
         return $this->typeFlexibility;
     }
 
-    public function setTypeFlexibility(?string $typeFlexibility): self
+    public function setTypeFlexibility(?string $typeFlexibility): static
     {
         $this->typeFlexibility = $typeFlexibility;
 
@@ -155,7 +155,7 @@ class Permission
         return $this->typeCompensation;
     }
 
-    public function setTypeCompensation(?string $typeCompensation): self
+    public function setTypeCompensation(?string $typeCompensation): static
     {
         $this->typeCompensation = $typeCompensation;
 
@@ -167,7 +167,7 @@ class Permission
         return $this->typeDatePermission;
     }
 
-    public function setTypeDatePermission(string $typeDatePermission): self
+    public function setTypeDatePermission(string $typeDatePermission): static
     {
         $this->typeDatePermission = $typeDatePermission;
 
@@ -179,7 +179,7 @@ class Permission
         return $this->reason;
     }
 
-    public function setReason(string $reason): self
+    public function setReason(string $reason): static
     {
         $this->reason = $reason;
 
@@ -191,7 +191,7 @@ class Permission
         return $this->supportPdf;
     }
 
-    public function setSupportPdf(?string $supportPdf): self
+    public function setSupportPdf(?string $supportPdf): static
     {
         $this->supportPdf = $supportPdf;
 
@@ -203,7 +203,7 @@ class Permission
         return $this->datesArray;
     }
 
-    public function setDatesArray(?string $datesArray): self
+    public function setDatesArray(?string $datesArray): static
     {
         $this->datesArray = $datesArray;
 
@@ -215,7 +215,7 @@ class Permission
         return $this->datesCompensation;
     }
 
-    public function setDatesCompensation(?string $datesCompensation): self
+    public function setDatesCompensation(?string $datesCompensation): static
     {
         $this->datesCompensation = $datesCompensation;
 
@@ -227,7 +227,7 @@ class Permission
         return $this->state;
     }
 
-    public function setState(int $state): self
+    public function setState(int $state): static
     {
         $this->state = $state;
 
@@ -239,7 +239,7 @@ class Permission
         return $this->history;
     }
 
-    public function setHistory(?string $history): self
+    public function setHistory(?string $history): static
     {
         $this->history = $history;
 
@@ -251,7 +251,7 @@ class Permission
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

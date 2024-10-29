@@ -91,7 +91,7 @@ class FurtherTraining
         return $this->complementaryModality;
     }
 
-    public function setComplementaryModality(string $complementaryModality): self
+    public function setComplementaryModality(string $complementaryModality): static
     {
         $this->complementaryModality = $complementaryModality;
 
@@ -103,7 +103,7 @@ class FurtherTraining
         return $this->titleName;
     }
 
-    public function setTitleName(string $titleName): self
+    public function setTitleName(string $titleName): static
     {
         $this->titleName = $titleName;
 
@@ -115,7 +115,7 @@ class FurtherTraining
         return $this->institution;
     }
 
-    public function setInstitution(string $institution): self
+    public function setInstitution(string $institution): static
     {
         $this->institution = $institution;
 
@@ -127,7 +127,7 @@ class FurtherTraining
         return $this->hours;
     }
 
-    public function setHours(int $hours): self
+    public function setHours(int $hours): static
     {
         $this->hours = $hours;
 
@@ -139,7 +139,7 @@ class FurtherTraining
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): self
+    public function setDate(\DateTimeInterface $date): static
     {
         $this->date = $date;
 
@@ -151,7 +151,7 @@ class FurtherTraining
         return $this->certifiedPdf;
     }
 
-    public function setCertifiedPdf(?string $certifiedPdf): self
+    public function setCertifiedPdf(?string $certifiedPdf): static
     {
         $this->certifiedPdf = $certifiedPdf;
 
@@ -163,7 +163,7 @@ class FurtherTraining
         return $this->history;
     }
 
-    public function setHistory(?string $history): self
+    public function setHistory(?string $history): static
     {
         $this->history = $history;
 
@@ -175,7 +175,7 @@ class FurtherTraining
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    public function setUser(?User $user): static
     {
         $this->user = $user;
 

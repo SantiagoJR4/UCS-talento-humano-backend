@@ -59,7 +59,7 @@ class ContractCharges
         return $this->typeEmployee;
     }
 
-    public function setTypeEmployee(string $typeEmployee): self
+    public function setTypeEmployee(string $typeEmployee): static
     {
         $this->typeEmployee = $typeEmployee;
 
@@ -71,7 +71,7 @@ class ContractCharges
         return $this->name;
     }
 
-    public function setName(string $name): self
+    public function setName(string $name): static
     {
         $this->name = $name;
 
@@ -83,7 +83,7 @@ class ContractCharges
         return $this->workDedication;
     }
 
-    public function setWorkDedication(string $workDedication): self
+    public function setWorkDedication(string $workDedication): static
     {
         $this->workDedication = $workDedication;
 
@@ -95,7 +95,7 @@ class ContractCharges
         return $this->salary;
     }
 
-    public function setSalary(int $salary): self
+    public function setSalary(int $salary): static
     {
         $this->salary = $salary;
 
