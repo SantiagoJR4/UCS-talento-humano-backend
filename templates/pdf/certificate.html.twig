@@ -91,6 +91,9 @@
         {% for contractProfile in contracts.assignmentsProfiles %}
             {{contractProfile.name}}
         {% endfor %}
+        {% if ud.id == 68 %}
+         y Psicóloga
+        {% endif %}
         {% if includeSalary %}
             , con una asignación salarial mensual de 
             {{contracts.contract.salary_in_words |upper}} M/CTE ({{ contracts.contract.salary|number_format(0, ',', '.') }}) mensuales.</p>
@@ -111,7 +114,13 @@
                 {% for contract in contractsHistory %}
                     {% for profile in contract.assignmentsProfiles %}
                         <tr>
-                            <td>{{ profile.name }}</td>
+                            <td>
+                                {% if ud.id == 68 and profile.name == 'Asistente' %}
+                                    Psicóloga Asistente
+                                {% else %}
+                                    {{ profile.name }}{% if typeCharge is defined and typeCharge %} de {{ typeCharge }}{% endif %}
+                                {% endif %}
+                            </td>
                             <td>{{ contract.start_date }}</td>
                             <td>{{ contract.end_date }}</td>
                         </tr>

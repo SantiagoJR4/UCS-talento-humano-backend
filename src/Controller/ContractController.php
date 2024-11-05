@@ -1951,8 +1951,9 @@ class ContractController extends AbstractController
 			$requisition->setApprobationDirective($data['approbation_directive']);
 			$requisition->setApprobationRector($data['approbation_rector']);
 			$requisition->setNumberAct($data['number_act']);
-			$requisition->setState(0); //Pendiente
 			$requisition->setUser($userLogueado);
+
+			$requisition->setState($specialUser === 'VF' ? 1: 0);
 
 			// $initialDate = $data['initial_date'];
 			// $finalDate = $data['final_date'];
@@ -1971,7 +1972,7 @@ class ContractController extends AbstractController
 			$addToHistory = json_encode(array(array(
 				'user' => $userLogueado->getId(),
 				'responsible' => $userLogueado->getSpecialUser(),
-				'state' => 0,
+				'state' => $specialUser === 'VF' ? 1 : 0,
 				'message' => 'La requisición fue solicitada por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
 				'date' => date('Y-m-d H:i:s'),
 			)));
@@ -3166,7 +3167,7 @@ class ContractController extends AbstractController
 			$requisitionId = $data['requisitionId'];
 			$requisition = $entityManager->getRepository(Requisition::class)->find($requisitionId);
 
-			$requisition->setState(3); //requisición efectuada
+			$requisition->setState($specialUser === 'VF' ? 1: 0);
 
 			$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user']);
 			$namesUserSelected = $dataUserRequisition->getNames().''.$dataUserRequisition->getLastNames();
@@ -3509,6 +3510,7 @@ class ContractController extends AbstractController
 	$directContract = $doctrine->getRepository(DirectContract::class)->find($idDirectContract);
 	$idRequisition = $directContract->getRequisition();
 	$requisition = $entityManager->getRepository(Requisition::class)->find($idRequisition);
+	$requisition->setState(1); //Aprobada requisición
 
 
 	if(!$directContract){
@@ -3594,6 +3596,7 @@ class ContractController extends AbstractController
 	$directContract = $doctrine->getRepository(DirectContract::class)->find($directContractId);
 	$idRequisition = $directContract->getRequisition();
 	$requisition = $entityManager->getRepository(Requisition::class)->find($idRequisition);
+	$requisition->setState(2); //Requisicion rechazada
 	$userSelected = $directContract->getUser();
 	$namesUserSelected = $userSelected->getNames().''.$userSelected->getLastNames();
 
@@ -3965,16 +3968,9 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
 		$user = $vToken->getUserIdFromToken($token);
 	
-		// Cambiar para recibir datos JSON correctamente
 		$data = json_decode($request->getContent(), true);
-		// if (!isset($data['periods']) || !is_array($data['periods'])) {
-		// 	return new JsonResponse([
-		// 		'status' => false,
-		// 		'message' => 'Los periodos no se han proporcionado correctamente.'
-		// 	], 400);
-		// }
 
-		//$periods = $data['periods'];
+		$typeCharge = $data['typeCharge'];
 		$includeHistory = isset($data['history']) ? (bool)$data['history'] : false;
 		$includeSalary = isset($data['salary']) ? (bool)$data['salary'] : false;
 		$includeFunctions = isset($data['functions']) ? (bool)$data['functions'] : false;
@@ -4013,6 +4009,7 @@ class ContractController extends AbstractController
 		$user = $doctrine->getRepository(User::class)->find($user);
 		$userData = [
 			'user' =>[
+				'id' => $user->getId(),
 				'fullname' => $user->getNames() . ' ' . $user->getLastNames(),
 				'fullidentification' => $user->getTypeIdentification() . ' ' . $user->getIdentification()
 			]
@@ -4074,6 +4071,7 @@ class ContractController extends AbstractController
 		
 		$html = $this->renderView('pdf/certificate.html.twig', [
 			'ud' => [
+				'id' => $userData['user']['id'],
 				'fullname' => strtoupper($userData['user']['fullname']),
 				'fullidentification' => $userData['user']['fullidentification']
 			],
@@ -4085,7 +4083,8 @@ class ContractController extends AbstractController
 			'includeSalary' => $includeSalary,
 			'includeHistory' => $includeHistory,
 			'includeFunctions' => $includeFunctions,
-			'formattedCurrentDate' => $formattedCurrentDate
+			'formattedCurrentDate' => $formattedCurrentDate,
+			'typeCharge' => $typeCharge
 		]);
 
 		// Configurar Dompdf
