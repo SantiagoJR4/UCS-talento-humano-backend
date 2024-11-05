@@ -3970,7 +3970,7 @@ class ContractController extends AbstractController
 	
 		$data = json_decode($request->getContent(), true);
 
-		$typeCharge = $data['typeCharge'];
+		$typeCharge = isset($data['typeCharge']) ? $data['typeCharge'] : '';
 		$includeHistory = isset($data['history']) ? (bool)$data['history'] : false;
 		$includeSalary = isset($data['salary']) ? (bool)$data['salary'] : false;
 		$includeFunctions = isset($data['functions']) ? (bool)$data['functions'] : false;
