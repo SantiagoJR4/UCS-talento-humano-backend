@@ -42,6 +42,7 @@
             margin-left: 50px; /* Ajusta el margen izquierdo para que el contenido no se superponga con la imagen */
             margin-right: 40px;
             padding-top: 20px; /* Ajuste de margen superior si es necesario */
+            text-align: justify;
         }
         .signature {
             margin-top: 100px;
@@ -74,10 +75,10 @@
     </style>
 </head>
 <body>
-    <img src="http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/assets/ladoIzquierdo.png" class="left-image" alt="Imagen Vertical">
+    <img src="https://www.unicatolicadelsur.edu.co/catsur/wp-content/uploads/ladoIzquierdo.png" class="left-image" alt="Imagen Vertical">
 
     <div class="header">
-        <img src="http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/assets/cabecera.png" alt="Logo Universidad">
+        <img src="https://www.unicatolicadelsur.edu.co/catsur/wp-content/uploads/cabecera.png" alt="Logo Universidad">
     </div>
     
     <div class="title">LA SUSCRITA COORDINADORA DE TALENTO HUMANO</div>
@@ -87,7 +88,7 @@
         <p>Que, <span class="bold">{{ ud.fullname|upper }}</span> identificado(a) con la cédula de ciudadanía No. 
         {{ ud.fullidentification }} de {{ dp.nom_mpio | capitalize }}, se encuentra actualmente vinculada a la 
         <span class="bold">FUNDACIÓN UNIVERSITARIA CATÓLICA DEL SUR</span>, a través de contrato de trabajo a término fijo,
-        Desde {{ contracts.contract.work_start }} al {{ contracts.contract.expiration_contract }} desempeñando el cargo de
+        Desde el {{ contracts.contract.work_start }} al {{ contracts.contract.expiration_contract }} desempeñando el cargo de
         {% for contractProfile in contracts.assignmentsProfiles %}
             {{contractProfile.name}}
         {% endfor %}
@@ -132,6 +133,9 @@
         
         <p>Dada en San Juan de Pasto, el {{ formattedCurrentDate }}.</p>
 
+
+
+
         <p>Atentamente,</p>
 
         <div class="signature">
@@ -142,7 +146,7 @@
     </div>
 
     <div class="footer">
-        <img src="http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/assets/piedepagina.png" alt="Logo Universidad">
+        <img src="https://www.unicatolicadelsur.edu.co/catsur/wp-content/uploads/piedepagina.png" alt="Logo Universidad">
     </div>
     
 </body>

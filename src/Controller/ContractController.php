@@ -19,6 +19,7 @@ use App\Entity\User;
 use App\Entity\UsersInRequisition;
 use App\Entity\WorkHistory;
 use App\Service\DateUtilities;
+use App\Service\PdfService;
 use App\Service\ValidateToken;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
@@ -35,6 +36,8 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\DBAL\Connection;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Ordinary9843\Constants\GhostscriptConstant;
+use Ordinary9843\Ghostscript;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -46,11 +49,13 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 class ContractController extends AbstractController
 {
 	private $dateUtilities;
+	private $pdfService;
 
 
-	public function __construct(DateUtilities $dateUtilities)
+	public function __construct(DateUtilities $dateUtilities, PdfService $pdfService)
 	{
 		$this->dateUtilities = $dateUtilities;	
+		$this->pdfService = $pdfService;	
 	}
 
     //TODO: HACER TOKEN PARA SUPERUSUARIOS
@@ -1248,9 +1253,7 @@ class ContractController extends AbstractController
 			}
 
 			$license -> setTypeCompensation($data['type_compensation']);
-			$license -> setTypeLicense($data['type_license']);
 			$license -> setLicense($data['license'] ?? NULL);
-			$license -> setOthertypeLicense($data['othertype_license'] ?? NULL);
 			$license -> setReason($data['reason']);
 			$license -> setState(0);
 			$license -> setUser($user);
@@ -1329,10 +1332,8 @@ class ContractController extends AbstractController
 				'license' => [
 					'id' => $license->getId(),
 					'solicitude_date' => $license->getSolicitudeDate()->format('Y-m-d'),
-					'type_license' => $license->getTypelicense(),
 					'type_compensation' => $license->getTypeCompensation(),
 					'license' => $license->getLicense(),
-					'othertype_license' => $license->getOthertypeLicense(),
 					'reason' => $license->getReason(),
 					'initial_date' => $license->getInitialDate()->format('Y-m-d'),
 					'final_date' => $license->getFinalDate()->format('Y-m-d'),
@@ -1359,13 +1360,10 @@ class ContractController extends AbstractController
 
 		$user = $license->getUser();
 		$licenseData = [
-			'license' => [
 				'id' => $license->getId(),
 				'solicitude_date' => $license->getSolicitudeDate()->format('Y-m-d'),
-				'type_license' => $license->getTypelicense(),
 				'type_compensation' => $license->getTypeCompensation(),
 				'license' => $license->getLicense(),
-				'othertype_license' => $license->getOthertypeLicense(),
 				'reason' => $license->getReason(),
 				'initial_date' => $license->getInitialDate()->format('Y-m-d'),
 				'final_date' => $license->getFinalDate()->format('Y-m-d'),
@@ -1374,7 +1372,7 @@ class ContractController extends AbstractController
 				'history' => $license->getHistory(),
 				'username' => $user->getNames().' '.$user->getLastNames(),
 				'userIdentification' => $user->getIdentification()
-			]
+			
 		];
 		return new JsonResponse(['status'=>true, 'license'=>$licenseData]);
 	}
@@ -1513,10 +1511,8 @@ class ContractController extends AbstractController
 				'license' => [
 					'id' => $license->getId(),
 					'solicitude_date' => $license->getSolicitudeDate()->format('Y-m-d'),
-					'type_license' => $license->getTypelicense(),
 					'type_compensation' => $license->getTypeCompensation(),
 					'license' => $license->getLicense(),
-					'otherLicense' => $license->getOthertypeLicense(),
 					'reason' => $license->getReason(),
 					'initial_date' => $license->getInitialDate()->format('Y-m-d'),
 					'final_date' => $license->getFinalDate()->format('Y-m-d'),
@@ -1604,7 +1600,7 @@ class ContractController extends AbstractController
 				'entity' => 'incapacity'    
 			);
 
-			if ($specialUser !== 'CTH') {
+			if ($specialUser !== 'CTH') {	
 				$newNotification->setRelatedEntity(json_encode($relatedEntity));
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser' => 'CTH', 'userType' => 8]);
 				$newNotification->setUser($userForNotification);
@@ -1677,7 +1673,6 @@ class ContractController extends AbstractController
 		foreach($incapacitys as $incapacity){
 			$user = $incapacity->getUser();
 			$incapacityData[] = [
-				'incapacity' => [
 					'id' => $incapacity->getId(),
 					'solicitude_date' => $incapacity->getSolicitudeDate()->format('Y-m-d'),
 					'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
@@ -1691,7 +1686,7 @@ class ContractController extends AbstractController
 					'emailUser' => $user->getEmail(),
 					'phoneUser' => $user->getPhone(),
 					'charge'=>$assignmentsCharges
-				]
+				
 			];
 		}
 		return new JsonResponse(['status'=>true, 'incapacity'=>$incapacityData]);
@@ -1726,7 +1721,6 @@ class ContractController extends AbstractController
 		}
 
 		$incapacityData = [
-			'incapacity' => [
 				'id' => $incapacity->getId(),
 				'solicitude_date' => $incapacity->getSolicitudeDate()->format('Y-m-d'),
 				'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
@@ -1740,7 +1734,6 @@ class ContractController extends AbstractController
 				'emailUser' => $user->getEmail(),
 				'phoneUser' => $user->getPhone(),
 				'charge'=>$assignmentsCharges
-			]
 		];
 		return new JsonResponse(['status'=>true, 'incapacity'=>$incapacityData]);
 	}
@@ -1899,7 +1892,6 @@ class ContractController extends AbstractController
 			}
 
 			$incapacityData[] = [
-				'incapacity' => [
 					'id' => $incapacity->getId(),
 					'solicitude_date' => $incapacity->getSolicitudeDate()->format('Y-m-d'),
 					'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
@@ -1913,7 +1905,7 @@ class ContractController extends AbstractController
 					'emailUser' => $user->getEmail(),
 					'phoneUser' => $user->getPhone(),
 					'charge' => $assignmentsCharges,
-				]
+				
 			];
    			return new JsonResponse(['status'=>true, 'incapacities'=>$incapacityData]);
 		}
@@ -4103,6 +4095,8 @@ class ContractController extends AbstractController
 		$response->headers->set('Content-Disposition', 'attachment;filename="work_certificate.pdf"');
 
 		return $response;
+
+		// $pdfContent = $this->pdfService->generatePdf($html);
 	}
 
 }
