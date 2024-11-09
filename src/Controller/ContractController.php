@@ -3665,7 +3665,7 @@ class ContractController extends AbstractController
 	  // Obtener el EntityManager
 	  $conn = $doctrine->getManager()->getConnection();
   
-	  // Consulta SQL para obtener los datos
+	  // Consulta SQL para obtener los datos 
 	  $sql = "
 			SELECT 
 			  CASE 
@@ -4098,7 +4098,146 @@ class ContractController extends AbstractController
 
 		// $pdfContent = $this->pdfService->generatePdf($html);
 	}
+	//----------------------------------------------------------------------------------------
+//-------------------------- CONSOLIDADO PERMISOS, LICENCIAS E INCAPACIDADES -------------
+#[Route('contract/generate-excel-pli', name:'app_contract_generate_excel_pli')]
+public function generateExcelPLI(Request $request, ManagerRegistry $doctrine): BinaryFileResponse
+{
+	$token = $request->query->get('token');
+	$data = $request->request->all();
 
+	$userId = $data['userId'];
+	if ($token === false) {
+		throw new \Exception('Token no válido'); // Puedes manejar los errores de otra manera si prefieres
+	}
+
+	// Obtener el EntityManager
+	$conn = $doctrine->getManager()->getConnection();
+
+	$sqlPermissions = "
+	SELECT 
+		permission.solicitude_date,
+		user.identification,
+		user.names,
+		user.last_names,
+		
+		-- CASE para typePermission
+		CASE 
+			WHEN permission.type_permission = 'P' THEN 'Personal'
+			WHEN permission.type_permission = 'L' THEN 'Laboral'
+			ELSE permission.type_permission
+		END AS Tipo_Permiso,
+		
+		-- CASE para typeCompensation
+		CASE 
+			WHEN permission.type_compensation = 'R' THEN 'Remunerado'
+			WHEN permission.type_compensation = 'NR' THEN 'No Remunerado'
+			ELSE permission.type_compensation
+		END AS Tipo_compensacion,
+		
+		-- CASE para typeFlexibility
+		CASE 
+			WHEN permission.type_flexibility = 'JC' THEN 'Jornada continua'
+			WHEN permission.type_flexibility = 'C' THEN 'Compensada'
+			WHEN permission.type_flexibility = 'TC' THEN 'Trabajo desde casa'
+			ELSE permission.type_flexibility
+		END AS Tipo_flexibilidad,
+		
+		-- CASE para typeDatePermission
+		CASE 
+			WHEN permission.type_date_permission = 'H' THEN 'Por horas'
+			WHEN permission.type_date_permission = 'D' THEN 'Por días'
+			ELSE permission.type_date_permission
+		END AS Fecha_permiso,
+
+		permission.reason,
+		
+		-- Formato de fecha para 'date'
+		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].date')) AS DATETIME), '%Y-%m-%d') AS date,
+		
+		-- Formato de hora para 'start_hour'
+		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].start_hour')) AS DATETIME), '%h:%i %p') AS start_hour,
+		
+		-- Formato de hora para 'final_hour'
+		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].final_hour')) AS DATETIME), '%h:%i %p') AS final_hour,
+		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].initial_date')) AS DATETIME), '%Y-%m-%d') AS Fecha_inicial,
+		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].final_date')) AS DATETIME), '%Y-%m-%d') AS Fecha_final,
+		
+		-- FECHAS DE COMPENSACIÓN
+		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].dateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_Compensacion,
+		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].startHourCompensation')) AS DATETIME), '%h:%i %p') AS Hora_inicial_Compensacion,
+		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].finalHourCompensation')) AS DATETIME), '%h:%i %p') AS Hora_final_Compensacion,
+		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].initialDateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_inicial_Compensacion,
+		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].finalDateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_final_Compensacion
+		
+	FROM 
+		permission
+	JOIN 
+		user ON permission.user_id = user.id 
+	WHERE 
+		user.id = 757$userId;
+	";
+
+	$stmt = $conn->executeQuery($sqlPermissions);
+	$resultsPermissions = $stmt->fetchAllAssociative();
+	$spreadsheet = new Spreadsheet();
+	$sheet = $spreadsheet->getActiveSheet();
+
+	$headers = [
+		'Fecha de solicitud', 'Identificación', 'Nombres', 'Apellidos', 'Tipo de permiso',
+		'Tipo de compensación', 'Tipo de flexibilidad', 'Tipo de fecha', 'Razón permiso',
+		'Fecha de permiso', 'Hora inicial', 'Hora final', 'Fecha inicial', 'Fecha final',
+		'Fecha de compensación', 'Hora inicial compensación', 'Hora final compensación',
+		'Fecha inicial compensación', 'Fecha final compensación'
+	];
+
+	$sheet->fromArray($headers, null, 'A1');
+	// Aplica estilos a los encabezados
+	$headerStyle = [
+		'font' => [
+			'bold' => true, // Negrita
+			'size' => 12, // Tamaño de fuente
+			'color' => ['rgb' => 'FFFFFF'], // Color de texto blanco
+		],
+		'fill' => [
+			'fillType' => Fill::FILL_SOLID,
+			'startColor' => [
+				'rgb' => '4F81BD' // Color de fondo azul
+			]
+		],
+		'alignment' => [
+			'horizontal' => Alignment::HORIZONTAL_CENTER, // Centrado horizontal
+			'vertical' => Alignment::VERTICAL_CENTER, // Centrado vertical
+		],
+	];
+
+	// Ajusta el ancho de las columnas automáticamente
+	foreach (range('A', 'Z') as $columnID) {
+		$sheet->getColumnDimension($columnID)->setAutoSize(true);
+	}
+
+	// Aplica estilos a todas las celdas de los encabezados
+	$sheet->getStyle('A1:AZ1')->applyFromArray($headerStyle);
+
+	// Ajusta la altura de la fila de los encabezados
+	$sheet->getRowDimension(1)->setRowHeight(35);
+	  
+	// Guardar el archivo temporalmente
+	$writer = new WriterXlsx($spreadsheet);
+	$fileName = 'consolidadoGeneral.xlsx';
+	$temp_file = tempnam(sys_get_temp_dir(), $fileName);
+	$writer->save($temp_file);
+	
+	// Retornar el archivo como respuesta para descarga
+	$response = new BinaryFileResponse($temp_file);
+	$response->setContentDisposition(
+		ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+		$fileName
+	);
+
+	return $response;
+	
+	}
 }
 
 function prepareContractData($contract, $doctrine)
@@ -4259,5 +4398,3 @@ function formatDateShort($dateString) {
         return "Fecha inválida";
     }
 }
-
-
