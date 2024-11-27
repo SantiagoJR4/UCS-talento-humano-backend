@@ -119,7 +119,7 @@ class UserController extends AbstractController
             throw $this->createNotFoundException('El usuario no fue encontrado.');
         }
 
-        // Actualizar los datos del usuario según los parámetros recibido   s
+        // Actualizar los datos del usuario según los parámetros recibidos
         $user->setNames($data['names']);
         $user->setLastNames($data['lastNames']);
         $user->setTypeIdentification($data['type_identification']);

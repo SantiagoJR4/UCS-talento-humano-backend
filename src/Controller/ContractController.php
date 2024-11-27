@@ -36,8 +36,6 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Doctrine\DBAL\Connection;
 use Dompdf\Dompdf;
 use Dompdf\Options;
-use Ordinary9843\Constants\GhostscriptConstant;
-use Ordinary9843\Ghostscript;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -49,13 +47,10 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 class ContractController extends AbstractController
 {
 	private $dateUtilities;
-	private $pdfService;
 
-
-	public function __construct(DateUtilities $dateUtilities, PdfService $pdfService)
+	public function __construct(DateUtilities $dateUtilities)
 	{
 		$this->dateUtilities = $dateUtilities;	
-		$this->pdfService = $pdfService;	
 	}
 
     //TODO: HACER TOKEN PARA SUPERUSUARIOS
@@ -443,7 +438,9 @@ class ContractController extends AbstractController
 				'period' => $currentPeriod
 			]);
 			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy([
-				'id' => $idContract]);
+				'id' => $idContract,
+				'period' => $currentPeriod
+			]);
 			
 			$entityManager = $doctrine->getManager();
 			
@@ -687,6 +684,90 @@ class ContractController extends AbstractController
             ];
         }
 
+        return new JsonResponse([
+            'status' => true,
+            'contract_data' => $contractData,
+        ]); 
+	}
+	//--------------------------------------------------------------------------------------------
+	//--------------------------- ALL CONTRACTS --------------------------------------------------
+	#[Route('/contract/get-all-contracts', name:'app_get_all_contracts')]
+	public function allContracts(ManagerRegistry $doctrine, Request $request): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$data = $request->request->all();
+
+		$period = $data['period'];
+
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+						
+			if(!$period){
+				throw new \Exception('Periodo no válido'); 
+			}
+
+			$contracts = $doctrine->getRepository(Contract::class)->findBy([
+    			'period' => $period,
+			]);
+			if(empty($contracts)){
+			return new JsonResponse(['status'=>false, 'message'=>'No se encontraton contratos solicitados']);
+			}
+			foreach($contracts as $contract){
+				$user = $contract->getUser();
+				$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
+
+            	$assignmentsProfiles = [];
+            	$assignmentsCharges = [];
+            	foreach ($assignmentContract as $assignment) {
+                	$profile = $assignment->getProfile();
+                	$charge = $assignment->getCharge();
+
+					if ($profile) {
+						$assignmentsProfiles[] = [
+							'id' => $profile->getId(),
+							'name' => $profile->getName(),
+							// Agregar más campos del perfil según tu modelo
+						];
+					}
+
+					if ($charge) {
+						$assignmentsCharges[] = [
+							'id' => $charge->getId(),
+							'name' => $charge->getName(),
+							// Agregar más campos del cargo según tu modelo
+						];
+					}
+            	}
+				$contractData[] = [
+					'contract' => [
+						'id' => $contract->getId(),
+						'type_contract' => $contract->getTypeContract(),
+						'work_start' => $contract->getWorkStart()->format('Y-m-d'),
+						'initial_contract' => $contract->getInitialContract(),
+						'expiration_contract' => $contract->getExpirationContract()->format('Y-m-d'),
+						'work_dedication' => json_decode($contract->getWorkDedication(), true),
+						'salary' => $contract->getSalary(),
+						'weekly_hours' => $contract->getWeeklyHours(),
+						'functions' => $contract->getFunctions(),
+						'specific_functions' => $contract->getSpecificFunctions(),
+						'period' => $contract->getPeriod(),
+						'state' => $contract->getState(),
+						'contract_file' => $contract->getContractFile(),
+						'contract_file_pdf' => $contract->getContractFilePdf(),
+						// Agregar más campos del contrato según tu modelo
+						'user' => $user->getNames().' '.$user->getLastNames(),
+						'userId' => $user->getId(),
+						'specialUser' => $user->getSpecialUser(),
+						'identification' => $user->getIdentification(),
+						'email' => $user->getEmail(),
+						'phone' => $user->getPhone()
+					],
+					'assignmentsProfiles' => $assignmentsProfiles,
+					'assignmentsCharges' => $assignmentsCharges,
+					];
+				}
+			}
         return new JsonResponse([
             'status' => true,
             'contract_data' => $contractData,
@@ -1082,6 +1163,7 @@ class ContractController extends AbstractController
 
 				$newNotification->setUser($userWhoMadePermission);
 				$newNotification->setMessage('Revisión de permiso finalizada.');
+				$newNotification->setSeen(1);
 				break;
 			default:
 				$newStateForPermission = 1;
@@ -1143,6 +1225,7 @@ class ContractController extends AbstractController
 				$newNotification->setMessage('Permiso rechazado por Talento humano');
 				$userWhoMadePermission = $permission->getUser();
 				$newNotification->setUser($userWhoMadePermission);
+				$newNotification->setSeen(1);
 				break;
 			default:
                 $newNotification->setMessage('Permiso rechazado por Jefe inmediato');
@@ -1371,6 +1454,7 @@ class ContractController extends AbstractController
 				'state' => $license->getState(),
 				'history' => $license->getHistory(),
 				'username' => $user->getNames().' '.$user->getLastNames(),
+				'idUser' => $user->getId(),
 				'userIdentification' => $user->getIdentification()
 			
 		];
@@ -1409,6 +1493,7 @@ class ContractController extends AbstractController
 				$userWhoMadeLicense = $license->getUser();
 				$newNotification->setUser($userWhoMadeLicense);
 				$newNotification->setMessage('Revisión de licencia finalizada.');
+				$newNotification->setSeen(1);
 				break;
 			default:
 				$newStateForLicense = 1;
@@ -1815,7 +1900,6 @@ class ContractController extends AbstractController
 			return new JsonResponse(['message'=>'No existe ninguna incapacidad solicitada'],400,[]);
 		}
 		$newNotification = new Notification();
-		$newNotification->setSeen(0);
 		$userNames = $doctrine->getRepository(User::class)->find($applicant);
 	
 		$userNames= $userNames->getNames();
@@ -1831,11 +1915,13 @@ class ContractController extends AbstractController
 				$userWhoMadeIncapacity = $incapacity->getUser();
 				$newNotification->setUser($userWhoMadeIncapacity);
                 $newNotification->setMessage('Incapacidad rechazada por Asistente seguridad y salud en el trabajo');
+				$newNotification->setSeen(1);
 				break;
 			case 'CTH':
 				$userWhoMadeIncapacity = $incapacity->getUser();
 				$newNotification->setUser($userWhoMadeIncapacity);
 				$newNotification->setMessage('Incapacidad rechazada por Talento humano');
+				$newNotification->setSeen(1);
 				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
@@ -1873,22 +1959,20 @@ class ContractController extends AbstractController
 			$user = $incapacity->getUser();
 			$assignmentsCharges = [];
 
-			// Obtener todos los contratos del usuario actual
-			$contracts = $doctrine->getRepository(Contract::class)->findBy(['user' => $user]);
-
-			foreach ($contracts as $contract) {
-				// Obtener todas las asignaciones del contrato actual
-				$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
-
-				foreach ($assignmentContract as $assignment) {
-					$charge = $assignment->getCharge();
-
-					if ($charge) {
-						$assignmentsCharges[] = [
-							'nameCharge' => $charge->getName(),
-						];
-					}
-				}
+			$qb = $doctrine->getRepository(ContractAssignment::class)->createQueryBuilder('ca')
+			->join('ca.contract', 'c')
+			->where('c.user = :userId') // Suponiendo que los contratos están vinculados a un usuario
+			->setParameter('userId', $user->getId())
+			->orderBy('c.expirationContract', 'DESC') // Ordenar por fecha de fin descendente (o cualquier otro criterio)
+			->setMaxResults(1) // Obtener solo el último
+			->getQuery()
+			->getOneOrNullResult();
+			
+			if ($qb && $qb->getCharge()) {
+				$charge = $qb->getCharge();
+				$assignmentsCharges[] = [
+					'nameCharge' => $charge->getName(),
+				];
 			}
 
 			$incapacityData[] = [
@@ -3516,7 +3600,7 @@ class ContractController extends AbstractController
 	]);
 
 	$usersInRequisition = $existingUserInRequisition->getUser();
-	$namesUserSelected = $usersInRequisition->getNames().''.$usersInRequisition->getLastNames();
+	$namesUserSelected = $usersInRequisition->getNames().' '.$usersInRequisition->getLastNames();
 
 	// Si existe la relación, actualizamos el usuario; si no, lanzamos una excepción
 	if ($existingUserInRequisition) {
@@ -4100,145 +4184,251 @@ class ContractController extends AbstractController
 	}
 	//----------------------------------------------------------------------------------------
 //-------------------------- CONSOLIDADO PERMISOS, LICENCIAS E INCAPACIDADES -------------
-#[Route('contract/generate-excel-pli', name:'app_contract_generate_excel_pli')]
-public function generateExcelPLI(Request $request, ManagerRegistry $doctrine): BinaryFileResponse
-{
-	$token = $request->query->get('token');
-	$data = $request->request->all();
+	#[Route('contract/generate-excel-pli', name:'app_contract_generate_excel_pli')]
+	public function generateExcelPLI(Request $request, ManagerRegistry $doctrine): BinaryFileResponse
+	{
+		$token = $request->query->get('token');
+		$data = $request->request->all();
 
-	$userId = $data['userId'];
-	if ($token === false) {
-		throw new \Exception('Token no válido'); // Puedes manejar los errores de otra manera si prefieres
-	}
+		//$userId = $data['userId'];
+		if ($token === false) {
+			throw new \Exception('Token no válido'); // Puedes manejar los errores de otra manera si prefieres
+		}
 
-	// Obtener el EntityManager
-	$conn = $doctrine->getManager()->getConnection();
+		// Obtener el EntityManager
+		$conn = $doctrine->getManager()->getConnection();
 
-	$sqlPermissions = "
-	SELECT 
-		permission.solicitude_date,
-		user.identification,
-		user.names,
-		user.last_names,
-		
-		-- CASE para typePermission
-		CASE 
-			WHEN permission.type_permission = 'P' THEN 'Personal'
-			WHEN permission.type_permission = 'L' THEN 'Laboral'
-			ELSE permission.type_permission
-		END AS Tipo_Permiso,
-		
-		-- CASE para typeCompensation
-		CASE 
-			WHEN permission.type_compensation = 'R' THEN 'Remunerado'
-			WHEN permission.type_compensation = 'NR' THEN 'No Remunerado'
-			ELSE permission.type_compensation
+		$sqlPermissions = "
+		SELECT 
+			permission.solicitude_date,
+			user.identification,
+			user.names,
+			user.last_names,
+			
+			-- CASE para typePermission
+			CASE 
+				WHEN permission.type_permission = 'P' THEN 'Personal'
+				WHEN permission.type_permission = 'L' THEN 'Laboral'
+				ELSE permission.type_permission
+			END AS Tipo_Permiso,
+			
+			-- CASE para typeCompensation
+			CASE 
+				WHEN permission.type_compensation = 'R' THEN 'Remunerado'
+				WHEN permission.type_compensation = 'NR' THEN 'No Remunerado'
+				ELSE permission.type_compensation
+			END AS Tipo_compensacion,
+			
+			-- CASE para typeFlexibility
+			CASE 
+				WHEN permission.type_flexibility = 'JC' THEN 'Jornada continua'
+				WHEN permission.type_flexibility = 'C' THEN 'Compensada'
+				WHEN permission.type_flexibility = 'TC' THEN 'Trabajo desde casa'
+				ELSE permission.type_flexibility
+			END AS Tipo_flexibilidad,
+			
+			-- CASE para typeDatePermission
+			CASE 
+				WHEN permission.type_date_permission = 'H' THEN 'Por horas'
+				WHEN permission.type_date_permission = 'D' THEN 'Por días'
+				ELSE permission.type_date_permission
+			END AS Fecha_permiso,
+
+			permission.reason,
+			
+			-- Formato de fecha para 'date'
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].date')) AS DATETIME), '%Y-%m-%d') AS date,
+			
+			-- Formato de hora para 'start_hour'
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].start_hour')) AS DATETIME), '%h:%i %p') AS start_hour,
+			
+			-- Formato de hora para 'final_hour'
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].final_hour')) AS DATETIME), '%h:%i %p') AS final_hour,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].initial_date')) AS DATETIME), '%Y-%m-%d') AS Fecha_inicial,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].final_date')) AS DATETIME), '%Y-%m-%d') AS Fecha_final,
+			
+			-- FECHAS DE COMPENSACIÓN
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].dateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_Compensacion,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].startHourCompensation')) AS DATETIME), '%h:%i %p') AS Hora_inicial_Compensacion,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].finalHourCompensation')) AS DATETIME), '%h:%i %p') AS Hora_final_Compensacion,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].initialDateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_inicial_Compensacion,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].finalDateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_final_Compensacion
+			
+		FROM 
+			permission
+		JOIN 
+			user ON permission.user_id = user.id
+		WHERE 
+			permission.state = 1
+		";
+
+		$stmt = $conn->executeQuery($sqlPermissions);
+		$resultsPermissions = $stmt->fetchAllAssociative();
+		$stmt->free();
+
+		$sqlLicenses = "
+		SELECT li.solicitude_date, u.names, u.last_names, u.identification ,
+		-- Case para type_compensation
+		CASE
+			WHEN li.type_compensation = 'R' THEN 'Remunerada'
+			WHEN li.type_compensation = 'NR' THEN 'No Remunerada'
+			ELSE li.type_compensation
 		END AS Tipo_compensacion,
-		
-		-- CASE para typeFlexibility
+		-- Case para license
 		CASE 
-			WHEN permission.type_flexibility = 'JC' THEN 'Jornada continua'
-			WHEN permission.type_flexibility = 'C' THEN 'Compensada'
-			WHEN permission.type_flexibility = 'TC' THEN 'Trabajo desde casa'
-			ELSE permission.type_flexibility
-		END AS Tipo_flexibilidad,
+			WHEN li.license = 'ES' THEN 'Ejercicio del sufragio'
+			WHEN li.license = 'JV' THEN 'Jurado votación'
+			WHEN li.license = 'GC' THEN 'Grave calamidad doméstica'
+			WHEN li.license = 'LL' THEN 'Licencia por luto'
+			WHEN li.license = 'AE' THEN 'Asistir a entierros'
+			WHEN li.license = 'LM' THEN 'Licencia maternidad'
+			WHEN li.license = 'LP' THEN 'Licencia paternidad'
+			WHEN li.license = 'LPC' THEN 'Licencia parental compartida'
+			WHEN li.license = 'LPF' THEN 'Licencia parental flexible de tiempo parcial'
+			WHEN li.license = 'DRA' THEN 'Descanso remunerado en caso de aborto'
+			WHEN li.license = 'DL' THEN 'Descanso por lactancia'
+			ELSE li.license
+		END AS Tipo_licencia,
+		li.reason, li.initial_date, li.final_date 
+		FROM license li JOIN user u ON li.user_id = u.id 
+		WHERE li.state = 1;	
+		";
 		
-		-- CASE para typeDatePermission
-		CASE 
-			WHEN permission.type_date_permission = 'H' THEN 'Por horas'
-			WHEN permission.type_date_permission = 'D' THEN 'Por días'
-			ELSE permission.type_date_permission
-		END AS Fecha_permiso,
+		$stmtLicenses = $conn->executeQuery($sqlLicenses);
+		$resultLicenses = $stmtLicenses->fetchAllAssociative();
+		$stmtLicenses->free();
 
-		permission.reason,
-		
-		-- Formato de fecha para 'date'
-		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].date')) AS DATETIME), '%Y-%m-%d') AS date,
-		
-		-- Formato de hora para 'start_hour'
-		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].start_hour')) AS DATETIME), '%h:%i %p') AS start_hour,
-		
-		-- Formato de hora para 'final_hour'
-		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].final_hour')) AS DATETIME), '%h:%i %p') AS final_hour,
-		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].initial_date')) AS DATETIME), '%Y-%m-%d') AS Fecha_inicial,
-		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].final_date')) AS DATETIME), '%Y-%m-%d') AS Fecha_final,
-		
-		-- FECHAS DE COMPENSACIÓN
-		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].dateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_Compensacion,
-		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].startHourCompensation')) AS DATETIME), '%h:%i %p') AS Hora_inicial_Compensacion,
-		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].finalHourCompensation')) AS DATETIME), '%h:%i %p') AS Hora_final_Compensacion,
-		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].initialDateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_inicial_Compensacion,
-		DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].finalDateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_final_Compensacion
-		
-	FROM 
-		permission
-	JOIN 
-		user ON permission.user_id = user.id 
-	WHERE 
-		user.id = 757$userId;
-	";
+		$sqlIncapacities = "
+		SELECT inc.solicitude_date, u.names, u.last_names, u.identification, inc.incapacity_date, inc.number_days_incapacity, 
+		CASE
+			WHEN inc.origin_incapacity = 'EG' THEN 'Enfermedad General'
+			WHEN inc.origin_incapacity = 'L' THEN 'Laboral'
+			ELSE inc.origin_incapacity
+		END AS incapacidad_origen
+		FROM incapacity inc JOIN user u ON inc.user_id = u.id
+		WHERE inc.state = 2;
+		";
 
-	$stmt = $conn->executeQuery($sqlPermissions);
-	$resultsPermissions = $stmt->fetchAllAssociative();
-	$spreadsheet = new Spreadsheet();
-	$sheet = $spreadsheet->getActiveSheet();
+		$stmtIncapacities = $conn->executeQuery($sqlIncapacities);
+		$resultIncapacities = $stmtIncapacities->fetchAllAssociative();
+		$stmtIncapacities->free();
 
-	$headers = [
-		'Fecha de solicitud', 'Identificación', 'Nombres', 'Apellidos', 'Tipo de permiso',
-		'Tipo de compensación', 'Tipo de flexibilidad', 'Tipo de fecha', 'Razón permiso',
-		'Fecha de permiso', 'Hora inicial', 'Hora final', 'Fecha inicial', 'Fecha final',
-		'Fecha de compensación', 'Hora inicial compensación', 'Hora final compensación',
-		'Fecha inicial compensación', 'Fecha final compensación'
-	];
+		$spreadsheet = new Spreadsheet();
 
-	$sheet->fromArray($headers, null, 'A1');
-	// Aplica estilos a los encabezados
-	$headerStyle = [
-		'font' => [
-			'bold' => true, // Negrita
-			'size' => 12, // Tamaño de fuente
-			'color' => ['rgb' => 'FFFFFF'], // Color de texto blanco
-		],
-		'fill' => [
-			'fillType' => Fill::FILL_SOLID,
-			'startColor' => [
-				'rgb' => '4F81BD' // Color de fondo azul
-			]
-		],
-		'alignment' => [
-			'horizontal' => Alignment::HORIZONTAL_CENTER, // Centrado horizontal
-			'vertical' => Alignment::VERTICAL_CENTER, // Centrado vertical
-		],
-	];
+		//----- Hoja para permisos
+		$sheetPermission = $spreadsheet->getActiveSheet();
+		$sheetPermission->setTitle('Permisos');
 
-	// Ajusta el ancho de las columnas automáticamente
-	foreach (range('A', 'Z') as $columnID) {
-		$sheet->getColumnDimension($columnID)->setAutoSize(true);
+		$headersPermission = [
+			'Fecha de solicitud', 'Identificación', 'Nombres', 'Apellidos', 'Tipo de permiso',
+			'Tipo de compensación', 'Tipo de flexibilidad', 'Tipo de fecha', 'Razón permiso',
+			'Fecha de permiso', 'Hora inicial', 'Hora final', 'Fecha inicial', 'Fecha final',
+			'Fecha de compensación', 'Hora inicial compensación', 'Hora final compensación',
+			'Fecha inicial compensación', 'Fecha final compensación'
+		];
+
+		$sheetPermission->fromArray($headersPermission, null, 'A1');
+		// Aplica estilos a los encabezados
+		$headerStyle = [
+			'font' => [
+				'bold' => true, // Negrita
+				'size' => 12, // Tamaño de fuente
+				'color' => ['rgb' => 'FFFFFF'], // Color de texto blanco
+			],
+			'fill' => [
+				'fillType' => Fill::FILL_SOLID,
+				'startColor' => [
+					'rgb' => '4F81BD' // Color de fondo azul
+				]
+			],
+			'alignment' => [
+				'horizontal' => Alignment::HORIZONTAL_CENTER, // Centrado horizontal
+				'vertical' => Alignment::VERTICAL_CENTER, // Centrado vertical
+			],
+		];
+
+		// Ajusta el ancho de las columnas automáticamente
+		foreach (range('A', 'S') as $columnID) {
+			$sheetPermission->getColumnDimension($columnID)->setAutoSize(true);
+		}
+
+		// Aplica estilos a todas las celdas de los encabezados
+		$sheetPermission->getStyle('A1:S1')->applyFromArray($headerStyle);
+
+		// Ajusta la altura de la fila de los encabezados
+		$sheetPermission->getRowDimension(1)->setRowHeight(35);
+
+		// Agregar los datos
+		$row = 2;
+		foreach ($resultsPermissions as $data) {
+			$sheetPermission->fromArray($data, null, 'A' . $row);
+			$row++;
+		}
+
+		// Nueva hoja para licencias
+		$sheetLicenses = $spreadsheet->createSheet();
+		$sheetLicenses->setTitle('Licencias');
+		$headersLicenses = [
+			'Fecha de solicitud', 'Nombres', 'Apellidos', 'Identificación', 'Tipo Compensación',
+			'Tipo de licencia', 'Razón', 'Fecha inicial', 'Fecha final'
+		];
+
+		// Ajusta el ancho de las columnas automáticamente
+		foreach (range('A', 'S') as $columnID) {
+			$sheetLicenses->getColumnDimension($columnID)->setAutoSize(true);
+		}
+		
+		$sheetLicenses->fromArray($headersLicenses, null, 'A1');
+		$sheetLicenses->getStyle('A1:I1')->applyFromArray($headerStyle);
+		$sheetLicenses->getRowDimension(1)->setRowHeight(35);
+
+		// Agregar datos de licencias
+		$row = 2;
+		foreach ($resultLicenses as $data) {
+			$sheetLicenses->fromArray($data, null, 'A' . $row);
+			$row++;
+		}
+
+		// Nueva hoja para Incapacidades
+		$sheetIncapacities = $spreadsheet->createSheet();
+		$sheetIncapacities->setTitle('Incapacidades');
+		$headersIncapacities = [
+			'Fecha de solicitud', 'Nombres', 'Apellidos', 'Identificación', 'Fecha incapacidad',
+			'Número de días', 'Origen incapacidad'
+		];
+
+		foreach (range('A', 'S') as $columnID) {
+			$sheetIncapacities->getColumnDimension($columnID)->setAutoSize(true);
+		}
+		
+		$sheetIncapacities->fromArray($headersIncapacities, null, 'A1');
+		$sheetIncapacities->getStyle('A1:G1')->applyFromArray($headerStyle);
+		$sheetIncapacities->getRowDimension(1)->setRowHeight(35);
+
+		// Agregar datos de licencias
+		$row = 2;
+		foreach ($resultIncapacities as $data) {
+			$sheetIncapacities->fromArray($data, null, 'A' . $row);
+			$row++;
+		}
+		
+		// Guardar el archivo temporalmente
+		$writer = new WriterXlsx($spreadsheet);
+		$fileName = 'consolidadoGeneral.xlsx';
+		$temp_file = tempnam(sys_get_temp_dir(), $fileName);
+		$writer->save($temp_file);
+		
+		// Retornar el archivo como respuesta para descarga
+		$response = new BinaryFileResponse($temp_file);
+		$response->setContentDisposition(
+			ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+			$fileName
+		);
+
+		return $response;
+		
+		}
 	}
-
-	// Aplica estilos a todas las celdas de los encabezados
-	$sheet->getStyle('A1:AZ1')->applyFromArray($headerStyle);
-
-	// Ajusta la altura de la fila de los encabezados
-	$sheet->getRowDimension(1)->setRowHeight(35);
-	  
-	// Guardar el archivo temporalmente
-	$writer = new WriterXlsx($spreadsheet);
-	$fileName = 'consolidadoGeneral.xlsx';
-	$temp_file = tempnam(sys_get_temp_dir(), $fileName);
-	$writer->save($temp_file);
-	
-	// Retornar el archivo como respuesta para descarga
-	$response = new BinaryFileResponse($temp_file);
-	$response->setContentDisposition(
-		ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-		$fileName
-	);
-
-	return $response;
-	
-	}
-}
 
 function prepareContractData($contract, $doctrine)
 {

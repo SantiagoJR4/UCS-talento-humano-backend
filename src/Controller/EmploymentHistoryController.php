@@ -26,7 +26,7 @@ class EmploymentHistoryController extends AbstractController
     public function getEmployees(ManagerRegistry $doctrine): JsonResponse
     {
         $query = $doctrine->getManager()->createQueryBuilder();
-        $query->select('u.id', 'u.names', 'u.lastNames', 'u.identification', 'u.email', 'u.phone', 'u.userType', 'u.history')
+        $query->select('u.id', 'u.names', 'u.lastNames', 'u.identification', 'u.email', 'u.phone', 'u.userType', 'u.history', 'u.specialUser')
         ->from('App\Entity\User', 'u')
         ->where('u.userType IN (:userType)')
         ->setParameter('userType', [1,2,8]);
