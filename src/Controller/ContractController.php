@@ -111,14 +111,15 @@ class ContractController extends AbstractController
     
             try{
                 $email = (new TemplatedEmail())
-                    ->from('santipo12@gmail.com')
+                    ->from('sgsst@unicatolicadelsur.edu.co')
                     ->to($user->getEmail())
                     ->subject('Asignación de cita médica')
                     ->htmlTemplate('email/medicalTestEmail.html.twig')
                     ->context([
                         'user' => $user,
                         'medicalTest' => $medicalTest
-                    ]);         
+                    ]);  
+				$email->getHeaders()->addTextHeader('X-Transport','alternative');       
                 $mailer->send($email);
                 $message = 'El examén médico fue programado con éxito, se envío un correo con la información a ' . $user->getEmail();
             } catch (\Throwable $th) {
@@ -212,14 +213,15 @@ class ContractController extends AbstractController
 
 			try{
 					$email = (new TemplatedEmail())
-							->from('santipo12@gmail.com')
+							->from('sgsst@unicatolicadelsur.edu.co')
 							->to($user->getEmail(),'pasante.santiago@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
 							->subject('Actualización Cita Médica')
 							->htmlTemplate('email/medicalTestUpdateEmail.html.twig')
 							->context([
 									'user' => $user,
 									'fields' => $fields,
-							]);         
+							]);   
+					$email->getHeaders()->addTextHeader('X-Transport','alternative');         
 					$mailer->send($email);
 					$message = 'El examén médico fue actualizado con éxito, se envío un correo con la información a ' . $user->getEmail();
 			} catch (\Throwable $th) {
@@ -1137,7 +1139,7 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
 		if($token === false){
 			return new JsonResponse(['ERROR' => 'Token no válido']);
-		}else{
+		}else{	
 			$permission = $entityManager->getRepository(Permission::class)->find($id);
 			if(!$permission){
 				throw $this->createNotFoundException(
