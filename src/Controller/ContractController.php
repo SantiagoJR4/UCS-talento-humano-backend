@@ -1129,6 +1129,29 @@ class ContractController extends AbstractController
 		];
 		return new JsonResponse(['status'=>true, 'permission'=>$permissionData]);
 	}
+
+	#[Route('contract/delete-permission/{id}', name:'app_delete_permission')]
+	public function deletePermission(ManagerRegistry $doctrine, Request $request, int $id): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$permission = $entityManager->getRepository(Permission::class)->find($id);
+			if(!$permission){
+				throw $this->createNotFoundException(
+					'No permission found for id'.$id['id']
+				);	
+			}
+
+			$entityManager->remove($permission);
+			$entityManager->flush();
+		}
+
+		return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'permiso eliminado']);
+	}
+
 	#[Route('contract/approve-permission', name:'app_approve_permission')]
 	public function approvePermission(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request): JsonResponse
 	{
@@ -1460,6 +1483,29 @@ class ContractController extends AbstractController
 		];
 		return new JsonResponse(['status'=>true, 'license'=>$licenseData]);
 	}
+
+	#[Route('contract/delete-license/{id}', name:'app_delete_license')]
+	public function deleteLicense(ManagerRegistry $doctrine, Request $request, int $id): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$license = $entityManager->getRepository(License::class)->find($id);
+			if(!$license){
+				throw $this->createNotFoundException(
+					'No license found for id'.$id['id']
+				);	
+			}
+
+			$entityManager->remove($license);
+			$entityManager->flush();
+		}
+
+		return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Licencia eliminada']);
+	}
+
 	#[Route('contract/approve-license', name:'app_approve_license')]
 	public function approveLicense(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request): JsonResponse
 	{
@@ -1949,13 +1995,13 @@ class ContractController extends AbstractController
 	#[Route('contract/all-incapacities', name:'incapacities')]
 	public function allIncapacities(ManagerRegistry $doctrine): JsonResponse
 	{
+		$incapacityData = [];
 		$incapacities = $doctrine->getRepository(Incapacity::class)->findAll();
 		if (empty($incapacities)) {
 			return new JsonResponse(['status'=>false, 'message'=>'No se encontró ninguna solicitud de incapacidades']);
 		}
 
-		$incapacityData = [];
-		foreach ($incapacities as $incapacity) {
+		foreach($incapacities as $incapacity) {
 			$user = $incapacity->getUser();
 			$assignmentsCharges = [];
 
@@ -1991,8 +2037,8 @@ class ContractController extends AbstractController
 					'charge' => $assignmentsCharges,
 				
 			];
-   			return new JsonResponse(['status'=>true, 'incapacities'=>$incapacityData]);
 		}
+		return new JsonResponse(['status'=>true, 'incapacities'=>$incapacityData]);
 	}
 	//--****************************************REQUISITON*********************************************----
 	///-------------------------------------------------------------------------------------------
@@ -4105,6 +4151,7 @@ class ContractController extends AbstractController
 		// Preparar datos del último contrato
 		$lastContractData = prepareContractData($lastContract, $doctrine);
 
+		$workDedication=json_decode($lastContract->getWorkDedication(), true);
 		// Preparar datos para contratos históricos (si corresponde)
 		$contractsHistoryData = [];
 		if ($includeHistory) {
@@ -4155,6 +4202,7 @@ class ContractController extends AbstractController
 				'nom_mpio' => $userPersonalData['nom_mpio']
 			],
 			'contracts' => $lastContractData, // Enviar todos los contratos obtenidos
+			'workDedication' => $workDedication,
 			'contractsHistory' => $contractsHistoryData,
 			'includeSalary' => $includeSalary,
 			'includeHistory' => $includeHistory,
@@ -4259,7 +4307,7 @@ class ContractController extends AbstractController
 		JOIN 
 			user ON permission.user_id = user.id
 		WHERE 
-			permission.state = 1
+			permission.state IN (1, 2)
 		";
 
 		$stmt = $conn->executeQuery($sqlPermissions);
@@ -4291,7 +4339,7 @@ class ContractController extends AbstractController
 		END AS Tipo_licencia,
 		li.reason, li.initial_date, li.final_date 
 		FROM license li JOIN user u ON li.user_id = u.id 
-		WHERE li.state = 1;	
+		WHERE li.state IN (1,2);	
 		";
 		
 		$stmtLicenses = $conn->executeQuery($sqlLicenses);
