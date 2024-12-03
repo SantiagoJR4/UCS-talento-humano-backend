@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Notification;
 use App\Service\ValidateToken;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\NoResultException;
@@ -30,6 +31,34 @@ class NotificationController extends AbstractController
             ->leftJoin('n.user', 'u')
             ->andWhere('n.user = :user')
             ->andWhere('n.seen = false')
+            ->orderBy('n.id', 'DESC')
+            ->setMaxResults(5) //TODO: uncomment when all notifications is ready
+            ->setParameter('user', $user);
+        $allNotification = $query->getQuery()->getArrayResult();
+        foreach($allNotification as &$value)
+        {
+            $value['relatedEntity'] = json_decode($value['relatedEntity'], true);
+            $value['names'] = $value['names'] . ' ' . $value['lastNames'];
+            unset($value['names']);
+            unset($value['lastNames']);
+        }
+        return new JsonResponse($allNotification, 200, []);
+    }
+
+    #[Route('/get-all-notifications', name: 'app_get_all_notifications')]
+    public function getAllNotifications(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request): JsonResponse
+    {
+        $token= $request->query->get('token');
+        if($token === 'null' || $token === NULL || $token ==='')
+        {
+            return new JsonResponse([], 200, []);
+        }
+        $user =  $vToken->getUserIdFromToken($token);
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select('n.id', 'n.message', 'n.seen', 'n.relatedEntity', 'u.names', 'u.lastNames')
+            ->from('App\Entity\Notification', 'n')
+            ->leftJoin('n.user', 'u')
+            ->andWhere('n.user = :user')
             ->orderBy('n.id', 'DESC')
             // ->setMaxResults(5) TODO: uncomment when all notifications is ready
             ->setParameter('user', $user);
@@ -72,5 +101,34 @@ class NotificationController extends AbstractController
             return new JsonResponse(['message' => 'Esta notificación no corresponde o no existe'], 400, []);
         }
        
+    }
+
+    #[Route('/update-single-notification', name:'app_update_single_notification')]
+    public function updateSingleNotification(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $data = $request->request->all();
+        if($token === 'null' || $token === NULL || $token ==='')
+        {
+            return new JsonResponse(['message' => 'There is not Token'], 403, []);
+        }
+
+        $notificationId = $data['notificationId'];
+        $seen = $data['seen']; // Convertir a booleano
+        $notification = $doctrine->getRepository(Notification::class)->find($notificationId);
+                
+        if(!$notification){
+            throw $this->createNotFoundException('La notificación no fue encontrada');
+        }
+
+        //Actualizar estado de notificación
+        $notification->setSeen($seen);
+
+        $entityManager = $doctrine->getManager();
+        $entityManager->persist($notification);
+        $entityManager->flush();
+
+        return new JsonResponse(['status'=>'Success', 'code'=>'200','message'=>'Notificación marcada como vista']);
+
     }
 }

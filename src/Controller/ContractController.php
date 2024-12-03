@@ -19,6 +19,7 @@ use App\Entity\User;
 use App\Entity\UsersInRequisition;
 use App\Entity\WorkHistory;
 use App\Service\DateUtilities;
+use App\Service\PdfService;
 use App\Service\ValidateToken;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
@@ -46,7 +47,6 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 class ContractController extends AbstractController
 {
 	private $dateUtilities;
-
 
 	public function __construct(DateUtilities $dateUtilities)
 	{
@@ -111,14 +111,15 @@ class ContractController extends AbstractController
     
             try{
                 $email = (new TemplatedEmail())
-                    ->from('santipo12@gmail.com')
+                    ->from('sgsst@unicatolicadelsur.edu.co')
                     ->to($user->getEmail())
                     ->subject('Asignación de cita médica')
                     ->htmlTemplate('email/medicalTestEmail.html.twig')
                     ->context([
                         'user' => $user,
                         'medicalTest' => $medicalTest
-                    ]);         
+                    ]);  
+				$email->getHeaders()->addTextHeader('X-Transport','alternative');       
                 $mailer->send($email);
                 $message = 'El examén médico fue programado con éxito, se envío un correo con la información a ' . $user->getEmail();
             } catch (\Throwable $th) {
@@ -212,14 +213,15 @@ class ContractController extends AbstractController
 
 			try{
 					$email = (new TemplatedEmail())
-							->from('santipo12@gmail.com')
+							->from('sgsst@unicatolicadelsur.edu.co')
 							->to($user->getEmail(),'pasante.santiago@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
 							->subject('Actualización Cita Médica')
 							->htmlTemplate('email/medicalTestUpdateEmail.html.twig')
 							->context([
 									'user' => $user,
 									'fields' => $fields,
-							]);         
+							]);   
+					$email->getHeaders()->addTextHeader('X-Transport','alternative');         
 					$mailer->send($email);
 					$message = 'El examén médico fue actualizado con éxito, se envío un correo con la información a ' . $user->getEmail();
 			} catch (\Throwable $th) {
@@ -438,7 +440,9 @@ class ContractController extends AbstractController
 				'period' => $currentPeriod
 			]);
 			$activedDirectContract = $doctrine->getRepository(DirectContract::class)->findOneBy([
-				'id' => $idContract]);
+				'id' => $idContract,
+				'period' => $currentPeriod
+			]);
 			
 			$entityManager = $doctrine->getManager();
 			
@@ -682,6 +686,90 @@ class ContractController extends AbstractController
             ];
         }
 
+        return new JsonResponse([
+            'status' => true,
+            'contract_data' => $contractData,
+        ]); 
+	}
+	//--------------------------------------------------------------------------------------------
+	//--------------------------- ALL CONTRACTS --------------------------------------------------
+	#[Route('/contract/get-all-contracts', name:'app_get_all_contracts')]
+	public function allContracts(ManagerRegistry $doctrine, Request $request): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$data = $request->request->all();
+
+		$period = $data['period'];
+
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+						
+			if(!$period){
+				throw new \Exception('Periodo no válido'); 
+			}
+
+			$contracts = $doctrine->getRepository(Contract::class)->findBy([
+    			'period' => $period,
+			]);
+			if(empty($contracts)){
+			return new JsonResponse(['status'=>false, 'message'=>'No se encontraton contratos solicitados']);
+			}
+			foreach($contracts as $contract){
+				$user = $contract->getUser();
+				$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
+
+            	$assignmentsProfiles = [];
+            	$assignmentsCharges = [];
+            	foreach ($assignmentContract as $assignment) {
+                	$profile = $assignment->getProfile();
+                	$charge = $assignment->getCharge();
+
+					if ($profile) {
+						$assignmentsProfiles[] = [
+							'id' => $profile->getId(),
+							'name' => $profile->getName(),
+							// Agregar más campos del perfil según tu modelo
+						];
+					}
+
+					if ($charge) {
+						$assignmentsCharges[] = [
+							'id' => $charge->getId(),
+							'name' => $charge->getName(),
+							// Agregar más campos del cargo según tu modelo
+						];
+					}
+            	}
+				$contractData[] = [
+					'contract' => [
+						'id' => $contract->getId(),
+						'type_contract' => $contract->getTypeContract(),
+						'work_start' => $contract->getWorkStart()->format('Y-m-d'),
+						'initial_contract' => $contract->getInitialContract(),
+						'expiration_contract' => $contract->getExpirationContract()->format('Y-m-d'),
+						'work_dedication' => json_decode($contract->getWorkDedication(), true),
+						'salary' => $contract->getSalary(),
+						'weekly_hours' => $contract->getWeeklyHours(),
+						'functions' => $contract->getFunctions(),
+						'specific_functions' => $contract->getSpecificFunctions(),
+						'period' => $contract->getPeriod(),
+						'state' => $contract->getState(),
+						'contract_file' => $contract->getContractFile(),
+						'contract_file_pdf' => $contract->getContractFilePdf(),
+						// Agregar más campos del contrato según tu modelo
+						'user' => $user->getNames().' '.$user->getLastNames(),
+						'userId' => $user->getId(),
+						'specialUser' => $user->getSpecialUser(),
+						'identification' => $user->getIdentification(),
+						'email' => $user->getEmail(),
+						'phone' => $user->getPhone()
+					],
+					'assignmentsProfiles' => $assignmentsProfiles,
+					'assignmentsCharges' => $assignmentsCharges,
+					];
+				}
+			}
         return new JsonResponse([
             'status' => true,
             'contract_data' => $contractData,
@@ -1043,6 +1131,29 @@ class ContractController extends AbstractController
 		];
 		return new JsonResponse(['status'=>true, 'permission'=>$permissionData]);
 	}
+
+	#[Route('contract/delete-permission/{id}', name:'app_delete_permission')]
+	public function deletePermission(ManagerRegistry $doctrine, Request $request, int $id): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{	
+			$permission = $entityManager->getRepository(Permission::class)->find($id);
+			if(!$permission){
+				throw $this->createNotFoundException(
+					'No permission found for id'.$id['id']
+				);	
+			}
+
+			$entityManager->remove($permission);
+			$entityManager->flush();
+		}
+
+		return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'permiso eliminado']);
+	}
+
 	#[Route('contract/approve-permission', name:'app_approve_permission')]
 	public function approvePermission(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request): JsonResponse
 	{
@@ -1077,6 +1188,7 @@ class ContractController extends AbstractController
 
 				$newNotification->setUser($userWhoMadePermission);
 				$newNotification->setMessage('Revisión de permiso finalizada.');
+				$newNotification->setSeen(1);
 				break;
 			default:
 				$newStateForPermission = 1;
@@ -1138,6 +1250,7 @@ class ContractController extends AbstractController
 				$newNotification->setMessage('Permiso rechazado por Talento humano');
 				$userWhoMadePermission = $permission->getUser();
 				$newNotification->setUser($userWhoMadePermission);
+				$newNotification->setSeen(1);
 				break;
 			default:
                 $newNotification->setMessage('Permiso rechazado por Jefe inmediato');
@@ -1248,9 +1361,7 @@ class ContractController extends AbstractController
 			}
 
 			$license -> setTypeCompensation($data['type_compensation']);
-			$license -> setTypeLicense($data['type_license']);
 			$license -> setLicense($data['license'] ?? NULL);
-			$license -> setOthertypeLicense($data['othertype_license'] ?? NULL);
 			$license -> setReason($data['reason']);
 			$license -> setState(0);
 			$license -> setUser($user);
@@ -1329,10 +1440,8 @@ class ContractController extends AbstractController
 				'license' => [
 					'id' => $license->getId(),
 					'solicitude_date' => $license->getSolicitudeDate()->format('Y-m-d'),
-					'type_license' => $license->getTypelicense(),
 					'type_compensation' => $license->getTypeCompensation(),
 					'license' => $license->getLicense(),
-					'othertype_license' => $license->getOthertypeLicense(),
 					'reason' => $license->getReason(),
 					'initial_date' => $license->getInitialDate()->format('Y-m-d'),
 					'final_date' => $license->getFinalDate()->format('Y-m-d'),
@@ -1359,13 +1468,10 @@ class ContractController extends AbstractController
 
 		$user = $license->getUser();
 		$licenseData = [
-			'license' => [
 				'id' => $license->getId(),
 				'solicitude_date' => $license->getSolicitudeDate()->format('Y-m-d'),
-				'type_license' => $license->getTypelicense(),
 				'type_compensation' => $license->getTypeCompensation(),
 				'license' => $license->getLicense(),
-				'othertype_license' => $license->getOthertypeLicense(),
 				'reason' => $license->getReason(),
 				'initial_date' => $license->getInitialDate()->format('Y-m-d'),
 				'final_date' => $license->getFinalDate()->format('Y-m-d'),
@@ -1373,11 +1479,35 @@ class ContractController extends AbstractController
 				'state' => $license->getState(),
 				'history' => $license->getHistory(),
 				'username' => $user->getNames().' '.$user->getLastNames(),
+				'idUser' => $user->getId(),
 				'userIdentification' => $user->getIdentification()
-			]
+			
 		];
 		return new JsonResponse(['status'=>true, 'license'=>$licenseData]);
 	}
+
+	#[Route('contract/delete-license/{id}', name:'app_delete_license')]
+	public function deleteLicense(ManagerRegistry $doctrine, Request $request, int $id): JsonResponse
+	{
+		$token = $request->query->get('token');
+		$entityManager = $doctrine->getManager();
+		if($token === false){
+			return new JsonResponse(['ERROR' => 'Token no válido']);
+		}else{
+			$license = $entityManager->getRepository(License::class)->find($id);
+			if(!$license){
+				throw $this->createNotFoundException(
+					'No license found for id'.$id['id']
+				);	
+			}
+
+			$entityManager->remove($license);
+			$entityManager->flush();
+		}
+
+		return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Licencia eliminada']);
+	}
+
 	#[Route('contract/approve-license', name:'app_approve_license')]
 	public function approveLicense(ManagerRegistry $doctrine, ValidateToken $vToken, Request $request): JsonResponse
 	{
@@ -1411,6 +1541,7 @@ class ContractController extends AbstractController
 				$userWhoMadeLicense = $license->getUser();
 				$newNotification->setUser($userWhoMadeLicense);
 				$newNotification->setMessage('Revisión de licencia finalizada.');
+				$newNotification->setSeen(1);
 				break;
 			default:
 				$newStateForLicense = 1;
@@ -1513,10 +1644,8 @@ class ContractController extends AbstractController
 				'license' => [
 					'id' => $license->getId(),
 					'solicitude_date' => $license->getSolicitudeDate()->format('Y-m-d'),
-					'type_license' => $license->getTypelicense(),
 					'type_compensation' => $license->getTypeCompensation(),
 					'license' => $license->getLicense(),
-					'otherLicense' => $license->getOthertypeLicense(),
 					'reason' => $license->getReason(),
 					'initial_date' => $license->getInitialDate()->format('Y-m-d'),
 					'final_date' => $license->getFinalDate()->format('Y-m-d'),
@@ -1604,7 +1733,7 @@ class ContractController extends AbstractController
 				'entity' => 'incapacity'    
 			);
 
-			if ($specialUser !== 'CTH') {
+			if ($specialUser !== 'CTH') {	
 				$newNotification->setRelatedEntity(json_encode($relatedEntity));
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser' => 'CTH', 'userType' => 8]);
 				$newNotification->setUser($userForNotification);
@@ -1677,7 +1806,6 @@ class ContractController extends AbstractController
 		foreach($incapacitys as $incapacity){
 			$user = $incapacity->getUser();
 			$incapacityData[] = [
-				'incapacity' => [
 					'id' => $incapacity->getId(),
 					'solicitude_date' => $incapacity->getSolicitudeDate()->format('Y-m-d'),
 					'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
@@ -1691,7 +1819,7 @@ class ContractController extends AbstractController
 					'emailUser' => $user->getEmail(),
 					'phoneUser' => $user->getPhone(),
 					'charge'=>$assignmentsCharges
-				]
+				
 			];
 		}
 		return new JsonResponse(['status'=>true, 'incapacity'=>$incapacityData]);
@@ -1726,7 +1854,6 @@ class ContractController extends AbstractController
 		}
 
 		$incapacityData = [
-			'incapacity' => [
 				'id' => $incapacity->getId(),
 				'solicitude_date' => $incapacity->getSolicitudeDate()->format('Y-m-d'),
 				'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
@@ -1740,7 +1867,6 @@ class ContractController extends AbstractController
 				'emailUser' => $user->getEmail(),
 				'phoneUser' => $user->getPhone(),
 				'charge'=>$assignmentsCharges
-			]
 		];
 		return new JsonResponse(['status'=>true, 'incapacity'=>$incapacityData]);
 	}
@@ -1822,7 +1948,6 @@ class ContractController extends AbstractController
 			return new JsonResponse(['message'=>'No existe ninguna incapacidad solicitada'],400,[]);
 		}
 		$newNotification = new Notification();
-		$newNotification->setSeen(0);
 		$userNames = $doctrine->getRepository(User::class)->find($applicant);
 	
 		$userNames= $userNames->getNames();
@@ -1838,11 +1963,13 @@ class ContractController extends AbstractController
 				$userWhoMadeIncapacity = $incapacity->getUser();
 				$newNotification->setUser($userWhoMadeIncapacity);
                 $newNotification->setMessage('Incapacidad rechazada por Asistente seguridad y salud en el trabajo');
+				$newNotification->setSeen(1);
 				break;
 			case 'CTH':
 				$userWhoMadeIncapacity = $incapacity->getUser();
 				$newNotification->setUser($userWhoMadeIncapacity);
 				$newNotification->setMessage('Incapacidad rechazada por Talento humano');
+				$newNotification->setSeen(1);
 				break;
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
@@ -1870,36 +1997,33 @@ class ContractController extends AbstractController
 	#[Route('contract/all-incapacities', name:'incapacities')]
 	public function allIncapacities(ManagerRegistry $doctrine): JsonResponse
 	{
+		$incapacityData = [];
 		$incapacities = $doctrine->getRepository(Incapacity::class)->findAll();
 		if (empty($incapacities)) {
 			return new JsonResponse(['status'=>false, 'message'=>'No se encontró ninguna solicitud de incapacidades']);
 		}
 
-		$incapacityData = [];
-		foreach ($incapacities as $incapacity) {
+		foreach($incapacities as $incapacity) {
 			$user = $incapacity->getUser();
 			$assignmentsCharges = [];
 
-			// Obtener todos los contratos del usuario actual
-			$contracts = $doctrine->getRepository(Contract::class)->findBy(['user' => $user]);
-
-			foreach ($contracts as $contract) {
-				// Obtener todas las asignaciones del contrato actual
-				$assignmentContract = $doctrine->getRepository(ContractAssignment::class)->findBy(['contract' => $contract->getId()]);
-
-				foreach ($assignmentContract as $assignment) {
-					$charge = $assignment->getCharge();
-
-					if ($charge) {
-						$assignmentsCharges[] = [
-							'nameCharge' => $charge->getName(),
-						];
-					}
-				}
+			$qb = $doctrine->getRepository(ContractAssignment::class)->createQueryBuilder('ca')
+			->join('ca.contract', 'c')
+			->where('c.user = :userId') // Suponiendo que los contratos están vinculados a un usuario
+			->setParameter('userId', $user->getId())
+			->orderBy('c.expirationContract', 'DESC') // Ordenar por fecha de fin descendente (o cualquier otro criterio)
+			->setMaxResults(1) // Obtener solo el último
+			->getQuery()
+			->getOneOrNullResult();
+			
+			if ($qb && $qb->getCharge()) {
+				$charge = $qb->getCharge();
+				$assignmentsCharges[] = [
+					'nameCharge' => $charge->getName(),
+				];
 			}
 
 			$incapacityData[] = [
-				'incapacity' => [
 					'id' => $incapacity->getId(),
 					'solicitude_date' => $incapacity->getSolicitudeDate()->format('Y-m-d'),
 					'incapacity_date' => $incapacity->getIncapacityDate()->format('Y-m-d'),
@@ -1913,10 +2037,10 @@ class ContractController extends AbstractController
 					'emailUser' => $user->getEmail(),
 					'phoneUser' => $user->getPhone(),
 					'charge' => $assignmentsCharges,
-				]
+				
 			];
-   			return new JsonResponse(['status'=>true, 'incapacities'=>$incapacityData]);
 		}
+		return new JsonResponse(['status'=>true, 'incapacities'=>$incapacityData]);
 	}
 	//--****************************************REQUISITON*********************************************----
 	///-------------------------------------------------------------------------------------------
@@ -1951,8 +2075,9 @@ class ContractController extends AbstractController
 			$requisition->setApprobationDirective($data['approbation_directive']);
 			$requisition->setApprobationRector($data['approbation_rector']);
 			$requisition->setNumberAct($data['number_act']);
-			$requisition->setState(0); //Pendiente
 			$requisition->setUser($userLogueado);
+
+			$requisition->setState($specialUser === 'VF' ? 1: 0);
 
 			// $initialDate = $data['initial_date'];
 			// $finalDate = $data['final_date'];
@@ -1971,7 +2096,7 @@ class ContractController extends AbstractController
 			$addToHistory = json_encode(array(array(
 				'user' => $userLogueado->getId(),
 				'responsible' => $userLogueado->getSpecialUser(),
-				'state' => 0,
+				'state' => $specialUser === 'VF' ? 1 : 0,
 				'message' => 'La requisición fue solicitada por '.$userLogueado->getNames()." ".$userLogueado->getLastNames(),
 				'date' => date('Y-m-d H:i:s'),
 			)));
@@ -3166,7 +3291,7 @@ class ContractController extends AbstractController
 			$requisitionId = $data['requisitionId'];
 			$requisition = $entityManager->getRepository(Requisition::class)->find($requisitionId);
 
-			$requisition->setState(3); //requisición efectuada
+			$requisition->setState($specialUser === 'VF' ? 1: 0);
 
 			$dataUserRequisition = $entityManager->getRepository(User::class)->find($data['user']);
 			$namesUserSelected = $dataUserRequisition->getNames().''.$dataUserRequisition->getLastNames();
@@ -3509,6 +3634,7 @@ class ContractController extends AbstractController
 	$directContract = $doctrine->getRepository(DirectContract::class)->find($idDirectContract);
 	$idRequisition = $directContract->getRequisition();
 	$requisition = $entityManager->getRepository(Requisition::class)->find($idRequisition);
+	$requisition->setState(1); //Aprobada requisición
 
 
 	if(!$directContract){
@@ -3522,7 +3648,7 @@ class ContractController extends AbstractController
 	]);
 
 	$usersInRequisition = $existingUserInRequisition->getUser();
-	$namesUserSelected = $usersInRequisition->getNames().''.$usersInRequisition->getLastNames();
+	$namesUserSelected = $usersInRequisition->getNames().' '.$usersInRequisition->getLastNames();
 
 	// Si existe la relación, actualizamos el usuario; si no, lanzamos una excepción
 	if ($existingUserInRequisition) {
@@ -3594,6 +3720,7 @@ class ContractController extends AbstractController
 	$directContract = $doctrine->getRepository(DirectContract::class)->find($directContractId);
 	$idRequisition = $directContract->getRequisition();
 	$requisition = $entityManager->getRepository(Requisition::class)->find($idRequisition);
+	$requisition->setState(2); //Requisicion rechazada
 	$userSelected = $directContract->getUser();
 	$namesUserSelected = $userSelected->getNames().''.$userSelected->getLastNames();
 
@@ -3670,7 +3797,7 @@ class ContractController extends AbstractController
 	  // Obtener el EntityManager
 	  $conn = $doctrine->getManager()->getConnection();
   
-	  // Consulta SQL para obtener los datos
+	  // Consulta SQL para obtener los datos 
 	  $sql = "
 			SELECT 
 			  CASE 
@@ -3965,16 +4092,9 @@ class ContractController extends AbstractController
 		$entityManager = $doctrine->getManager();
 		$user = $vToken->getUserIdFromToken($token);
 	
-		// Cambiar para recibir datos JSON correctamente
 		$data = json_decode($request->getContent(), true);
-		// if (!isset($data['periods']) || !is_array($data['periods'])) {
-		// 	return new JsonResponse([
-		// 		'status' => false,
-		// 		'message' => 'Los periodos no se han proporcionado correctamente.'
-		// 	], 400);
-		// }
 
-		//$periods = $data['periods'];
+		$typeCharge = isset($data['typeCharge']) ? $data['typeCharge'] : '';
 		$includeHistory = isset($data['history']) ? (bool)$data['history'] : false;
 		$includeSalary = isset($data['salary']) ? (bool)$data['salary'] : false;
 		$includeFunctions = isset($data['functions']) ? (bool)$data['functions'] : false;
@@ -4013,6 +4133,7 @@ class ContractController extends AbstractController
 		$user = $doctrine->getRepository(User::class)->find($user);
 		$userData = [
 			'user' =>[
+				'id' => $user->getId(),
 				'fullname' => $user->getNames() . ' ' . $user->getLastNames(),
 				'fullidentification' => $user->getTypeIdentification() . ' ' . $user->getIdentification()
 			]
@@ -4032,6 +4153,7 @@ class ContractController extends AbstractController
 		// Preparar datos del último contrato
 		$lastContractData = prepareContractData($lastContract, $doctrine);
 
+		$workDedication=json_decode($lastContract->getWorkDedication(), true);
 		// Preparar datos para contratos históricos (si corresponde)
 		$contractsHistoryData = [];
 		if ($includeHistory) {
@@ -4074,6 +4196,7 @@ class ContractController extends AbstractController
 		
 		$html = $this->renderView('pdf/certificate.html.twig', [
 			'ud' => [
+				'id' => $userData['user']['id'],
 				'fullname' => strtoupper($userData['user']['fullname']),
 				'fullidentification' => $userData['user']['fullidentification']
 			],
@@ -4081,11 +4204,13 @@ class ContractController extends AbstractController
 				'nom_mpio' => $userPersonalData['nom_mpio']
 			],
 			'contracts' => $lastContractData, // Enviar todos los contratos obtenidos
+			'workDedication' => $workDedication,
 			'contractsHistory' => $contractsHistoryData,
 			'includeSalary' => $includeSalary,
 			'includeHistory' => $includeHistory,
 			'includeFunctions' => $includeFunctions,
-			'formattedCurrentDate' => $formattedCurrentDate
+			'formattedCurrentDate' => $formattedCurrentDate,
+			'typeCharge' => $typeCharge
 		]);
 
 		// Configurar Dompdf
@@ -4104,9 +4229,256 @@ class ContractController extends AbstractController
 		$response->headers->set('Content-Disposition', 'attachment;filename="work_certificate.pdf"');
 
 		return $response;
-	}
 
-}
+		// $pdfContent = $this->pdfService->generatePdf($html);
+	}
+	//----------------------------------------------------------------------------------------
+//-------------------------- CONSOLIDADO PERMISOS, LICENCIAS E INCAPACIDADES -------------
+	#[Route('contract/generate-excel-pli', name:'app_contract_generate_excel_pli')]
+	public function generateExcelPLI(Request $request, ManagerRegistry $doctrine): BinaryFileResponse
+	{
+		$token = $request->query->get('token');
+		$data = $request->request->all();
+
+		//$userId = $data['userId'];
+		if ($token === false) {
+			throw new \Exception('Token no válido'); // Puedes manejar los errores de otra manera si prefieres
+		}
+
+		// Obtener el EntityManager
+		$conn = $doctrine->getManager()->getConnection();
+
+		$sqlPermissions = "
+		SELECT 
+			permission.solicitude_date,
+			user.identification,
+			user.names,
+			user.last_names,
+			
+			-- CASE para typePermission
+			CASE 
+				WHEN permission.type_permission = 'P' THEN 'Personal'
+				WHEN permission.type_permission = 'L' THEN 'Laboral'
+				ELSE permission.type_permission
+			END AS Tipo_Permiso,
+			
+			-- CASE para typeCompensation
+			CASE 
+				WHEN permission.type_compensation = 'R' THEN 'Remunerado'
+				WHEN permission.type_compensation = 'NR' THEN 'No Remunerado'
+				ELSE permission.type_compensation
+			END AS Tipo_compensacion,
+			
+			-- CASE para typeFlexibility
+			CASE 
+				WHEN permission.type_flexibility = 'JC' THEN 'Jornada continua'
+				WHEN permission.type_flexibility = 'C' THEN 'Compensada'
+				WHEN permission.type_flexibility = 'TC' THEN 'Trabajo desde casa'
+				ELSE permission.type_flexibility
+			END AS Tipo_flexibilidad,
+			
+			-- CASE para typeDatePermission
+			CASE 
+				WHEN permission.type_date_permission = 'H' THEN 'Por horas'
+				WHEN permission.type_date_permission = 'D' THEN 'Por días'
+				ELSE permission.type_date_permission
+			END AS Fecha_permiso,
+
+			permission.reason,
+			
+			-- Formato de fecha para 'date'
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].date')) AS DATETIME), '%Y-%m-%d') AS date,
+			
+			-- Formato de hora para 'start_hour'
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].start_hour')) AS DATETIME), '%h:%i %p') AS start_hour,
+			
+			-- Formato de hora para 'final_hour'
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].final_hour')) AS DATETIME), '%h:%i %p') AS final_hour,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].initial_date')) AS DATETIME), '%Y-%m-%d') AS Fecha_inicial,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_array, '$[0].final_date')) AS DATETIME), '%Y-%m-%d') AS Fecha_final,
+			
+			-- FECHAS DE COMPENSACIÓN
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].dateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_Compensacion,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].startHourCompensation')) AS DATETIME), '%h:%i %p') AS Hora_inicial_Compensacion,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].finalHourCompensation')) AS DATETIME), '%h:%i %p') AS Hora_final_Compensacion,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].initialDateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_inicial_Compensacion,
+			DATE_FORMAT(CAST(JSON_UNQUOTE(JSON_EXTRACT(permission.dates_compensation, '$[0].finalDateCompensation')) AS DATETIME), '%Y-%m-%d') AS Fecha_final_Compensacion
+			
+		FROM 
+			permission
+		JOIN 
+			user ON permission.user_id = user.id
+		WHERE 
+			permission.state IN (1, 2)
+		";
+
+		$stmt = $conn->executeQuery($sqlPermissions);
+		$resultsPermissions = $stmt->fetchAllAssociative();
+		$stmt->free();
+
+		$sqlLicenses = "
+		SELECT li.solicitude_date, u.names, u.last_names, u.identification ,
+		-- Case para type_compensation
+		CASE
+			WHEN li.type_compensation = 'R' THEN 'Remunerada'
+			WHEN li.type_compensation = 'NR' THEN 'No Remunerada'
+			ELSE li.type_compensation
+		END AS Tipo_compensacion,
+		-- Case para license
+		CASE 
+			WHEN li.license = 'ES' THEN 'Ejercicio del sufragio'
+			WHEN li.license = 'JV' THEN 'Jurado votación'
+			WHEN li.license = 'GC' THEN 'Grave calamidad doméstica'
+			WHEN li.license = 'LL' THEN 'Licencia por luto'
+			WHEN li.license = 'AE' THEN 'Asistir a entierros'
+			WHEN li.license = 'LM' THEN 'Licencia maternidad'
+			WHEN li.license = 'LP' THEN 'Licencia paternidad'
+			WHEN li.license = 'LPC' THEN 'Licencia parental compartida'
+			WHEN li.license = 'LPF' THEN 'Licencia parental flexible de tiempo parcial'
+			WHEN li.license = 'DRA' THEN 'Descanso remunerado en caso de aborto'
+			WHEN li.license = 'DL' THEN 'Descanso por lactancia'
+			ELSE li.license
+		END AS Tipo_licencia,
+		li.reason, li.initial_date, li.final_date 
+		FROM license li JOIN user u ON li.user_id = u.id 
+		WHERE li.state IN (1,2);	
+		";
+		
+		$stmtLicenses = $conn->executeQuery($sqlLicenses);
+		$resultLicenses = $stmtLicenses->fetchAllAssociative();
+		$stmtLicenses->free();
+
+		$sqlIncapacities = "
+		SELECT inc.solicitude_date, u.names, u.last_names, u.identification, inc.incapacity_date, inc.number_days_incapacity, 
+		CASE
+			WHEN inc.origin_incapacity = 'EG' THEN 'Enfermedad General'
+			WHEN inc.origin_incapacity = 'L' THEN 'Laboral'
+			ELSE inc.origin_incapacity
+		END AS incapacidad_origen
+		FROM incapacity inc JOIN user u ON inc.user_id = u.id
+		WHERE inc.state = 2;
+		";
+
+		$stmtIncapacities = $conn->executeQuery($sqlIncapacities);
+		$resultIncapacities = $stmtIncapacities->fetchAllAssociative();
+		$stmtIncapacities->free();
+
+		$spreadsheet = new Spreadsheet();
+
+		//----- Hoja para permisos
+		$sheetPermission = $spreadsheet->getActiveSheet();
+		$sheetPermission->setTitle('Permisos');
+
+		$headersPermission = [
+			'Fecha de solicitud', 'Identificación', 'Nombres', 'Apellidos', 'Tipo de permiso',
+			'Tipo de compensación', 'Tipo de flexibilidad', 'Tipo de fecha', 'Razón permiso',
+			'Fecha de permiso', 'Hora inicial', 'Hora final', 'Fecha inicial', 'Fecha final',
+			'Fecha de compensación', 'Hora inicial compensación', 'Hora final compensación',
+			'Fecha inicial compensación', 'Fecha final compensación'
+		];
+
+		$sheetPermission->fromArray($headersPermission, null, 'A1');
+		// Aplica estilos a los encabezados
+		$headerStyle = [
+			'font' => [
+				'bold' => true, // Negrita
+				'size' => 12, // Tamaño de fuente
+				'color' => ['rgb' => 'FFFFFF'], // Color de texto blanco
+			],
+			'fill' => [
+				'fillType' => Fill::FILL_SOLID,
+				'startColor' => [
+					'rgb' => '4F81BD' // Color de fondo azul
+				]
+			],
+			'alignment' => [
+				'horizontal' => Alignment::HORIZONTAL_CENTER, // Centrado horizontal
+				'vertical' => Alignment::VERTICAL_CENTER, // Centrado vertical
+			],
+		];
+
+		// Ajusta el ancho de las columnas automáticamente
+		foreach (range('A', 'S') as $columnID) {
+			$sheetPermission->getColumnDimension($columnID)->setAutoSize(true);
+		}
+
+		// Aplica estilos a todas las celdas de los encabezados
+		$sheetPermission->getStyle('A1:S1')->applyFromArray($headerStyle);
+
+		// Ajusta la altura de la fila de los encabezados
+		$sheetPermission->getRowDimension(1)->setRowHeight(35);
+
+		// Agregar los datos
+		$row = 2;
+		foreach ($resultsPermissions as $data) {
+			$sheetPermission->fromArray($data, null, 'A' . $row);
+			$row++;
+		}
+
+		// Nueva hoja para licencias
+		$sheetLicenses = $spreadsheet->createSheet();
+		$sheetLicenses->setTitle('Licencias');
+		$headersLicenses = [
+			'Fecha de solicitud', 'Nombres', 'Apellidos', 'Identificación', 'Tipo Compensación',
+			'Tipo de licencia', 'Razón', 'Fecha inicial', 'Fecha final'
+		];
+
+		// Ajusta el ancho de las columnas automáticamente
+		foreach (range('A', 'S') as $columnID) {
+			$sheetLicenses->getColumnDimension($columnID)->setAutoSize(true);
+		}
+		
+		$sheetLicenses->fromArray($headersLicenses, null, 'A1');
+		$sheetLicenses->getStyle('A1:I1')->applyFromArray($headerStyle);
+		$sheetLicenses->getRowDimension(1)->setRowHeight(35);
+
+		// Agregar datos de licencias
+		$row = 2;
+		foreach ($resultLicenses as $data) {
+			$sheetLicenses->fromArray($data, null, 'A' . $row);
+			$row++;
+		}
+
+		// Nueva hoja para Incapacidades
+		$sheetIncapacities = $spreadsheet->createSheet();
+		$sheetIncapacities->setTitle('Incapacidades');
+		$headersIncapacities = [
+			'Fecha de solicitud', 'Nombres', 'Apellidos', 'Identificación', 'Fecha incapacidad',
+			'Número de días', 'Origen incapacidad'
+		];
+
+		foreach (range('A', 'S') as $columnID) {
+			$sheetIncapacities->getColumnDimension($columnID)->setAutoSize(true);
+		}
+		
+		$sheetIncapacities->fromArray($headersIncapacities, null, 'A1');
+		$sheetIncapacities->getStyle('A1:G1')->applyFromArray($headerStyle);
+		$sheetIncapacities->getRowDimension(1)->setRowHeight(35);
+
+		// Agregar datos de licencias
+		$row = 2;
+		foreach ($resultIncapacities as $data) {
+			$sheetIncapacities->fromArray($data, null, 'A' . $row);
+			$row++;
+		}
+		
+		// Guardar el archivo temporalmente
+		$writer = new WriterXlsx($spreadsheet);
+		$fileName = 'consolidadoGeneral.xlsx';
+		$temp_file = tempnam(sys_get_temp_dir(), $fileName);
+		$writer->save($temp_file);
+		
+		// Retornar el archivo como respuesta para descarga
+		$response = new BinaryFileResponse($temp_file);
+		$response->setContentDisposition(
+			ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+			$fileName
+		);
+
+		return $response;
+		
+		}
+	}
 
 function prepareContractData($contract, $doctrine)
 {
@@ -4266,5 +4638,3 @@ function formatDateShort($dateString) {
         return "Fecha inválida";
     }
 }
-
-
