@@ -1043,7 +1043,7 @@ class CurriculumVitaeController extends AbstractController
                             JSON_EXTRACT(
                                 history,
                                 CONCAT('$[', JSON_LENGTH(history) - 1, ']'))
-                        ,'$.state') = 1);";
+                        ,'$.state') != 2);";
             $connectionCV = $doctrine->getManager()->getConnection();
             $resultSetCV = $connectionCV->executeQuery($sql);
             $results = $resultSetCV->fetchAllAssociative();
@@ -1149,7 +1149,7 @@ class CurriculumVitaeController extends AbstractController
                             JSON_EXTRACT(
                                 history,
                                 CONCAT('$[', JSON_LENGTH(history) - 1, ']'))
-                        ,'$.state') = 1)";
+                        ,'$.state') != 2)";
 
             $connectionCV = $doctrine->getManager()->getConnection();
             $stmt = $connectionCV->executeQuery($sql);
