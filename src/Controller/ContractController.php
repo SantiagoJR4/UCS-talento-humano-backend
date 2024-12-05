@@ -493,6 +493,9 @@ class ContractController extends AbstractController
 			$identificationUser = $data['identificationUser'];
 			//$namesUser = $data['user']; 
 			$fileName = $data['fileName'];
+
+			// Reemplazar espacios en blanco por guiones bajos en el nombre del archivo
+			$fileName = str_replace(' ', '_', $fileName);
 						
 			if ($file instanceof UploadedFile) {
 				$folderDestination = $this->getParameter('contract')
@@ -2517,63 +2520,77 @@ class ContractController extends AbstractController
 		$user = $doctrine->getRepository(User::class)->find($id);
 		$entityManager = $doctrine->getManager();
 
-		if($token === false){
-			return new JsonResponse(['ERROR'=>'Token no válido']);
-		}else{
-			if(!$user){
-				return new JsonResponse(['status'=>false, 'message'=>'No se encontró el usuario']);
-			}
-			$usersInRequisitions = $doctrine->getRepository(UsersInRequisition::class)->findBy(['user' => $user]);
-			if(empty($usersInRequisitions)){
-				return new JsonResponse(['status'=>false,'message'=>'No se encontró usuarios en requisiciones']);
-			}else{
-				foreach ($usersInRequisitions as $userInRequisition) {
-					$user = $userInRequisition->getUser();
-					$requisition = $userInRequisition->getRequisition();
-					$state = $userInRequisition->getState();
-					
-					$existingDirectContract = $entityManager->getRepository(DirectContract::class)->findOneBy([
-						'requisition' => $requisition
-					]);
-	
-					if ($user) {
-						$requisitionUser = [
-							'user' => $user->getNames().' '.$user->getLastNames(),
-							'userId' => $user->getId(),
-							'email' => $user->getEmail(),
-							'phone' => $user->getPhone(),
-							'typeIdentification' => $user->getTypeIdentification(),
-							'identification' => $user->getIdentification(),
-
-							'id' => $existingDirectContract->getId(),
-							'work_dedication' => $existingDirectContract->getWorkDedication(),
-							'hours' => $existingDirectContract->getHours(),
-							'initial_date' => $existingDirectContract->getInitialDate()->format('Y-m-d'),
-							'final_date' => $existingDirectContract->getFinalDate()->format('Y-m-d'),
-							'duration' => $existingDirectContract->getDurationContract(),
-							'specific_functions' => $existingDirectContract->getSpecificFunctions(),
-							'salary' => $existingDirectContract->getSalary(),
-							'solicitude_date' => $existingDirectContract->getSolicitudeDate()->format('Y-m-d'),
-							'state' => $existingDirectContract->getState(),
-							'history' => json_decode($existingDirectContract->getHistory(),true),
-							'chargeId' => $existingDirectContract->getCharge()->getId(),
-							'chargeName' => $existingDirectContract->getCharge()->getName(),
-							'typeEmployee' => $existingDirectContract->getCharge()->getTypeEmployee(),
-							'profileId' => $existingDirectContract->getProfile()->getId(),
-							'profileName' => $existingDirectContract->getProfile()->getName(),
-							'type_requisition' => $requisition->getTypeRequisition(),
-							'type_contract' => $requisition->getTypeContract(),
-							'type_anotherIF' => $requisition->getTypeAnotherif(),
-							'names_charge' => $requisition->getNamesCharge(),
-							'justification' => $requisition->getJustification(),
-							'stateUsersInRequisition' => $state,
-						];
-					}
-				}
-			}
+		if (!$token) {
+			return new JsonResponse(['ERROR' => 'Token no válido']);
 		}
+
+		if (!$user) {
+			return new JsonResponse(['status' => false, 'message' => 'No se encontró el usuario']);
+		}
+
+		// Buscar la última requisición del usuario
+		$userInRequisition = $doctrine->getRepository(UsersInRequisition::class)->findOneBy(
+			['user' => $user],
+			['id' => 'DESC'] // Ordenar por ID en orden descendente para obtener el último registro
+		);
+
+		if (!$userInRequisition) {
+			return new JsonResponse(['status' => false, 'message' => 'No se encontró usuarios en requisiciones']);
+		}
+
+		$requisition = $userInRequisition->getRequisition();
+		$state = $userInRequisition->getState();
+
+		// Buscar contrato directo relacionado con esta requisición
+		$existingDirectContract = $entityManager->getRepository(DirectContract::class)->findOneBy([
+			'requisition' => $requisition,
+		]);
+
+		$requisitionUser = [
+			'user' => $user->getNames() . ' ' . $user->getLastNames(),
+			'userId' => $user->getId(),
+			'email' => $user->getEmail(),
+			'phone' => $user->getPhone(),
+			'typeIdentification' => $user->getTypeIdentification(),
+			'identification' => $user->getIdentification(),
+			'stateUsersInRequisition' => $state,
+		];
+
+		// Si hay un contrato directo, añadir sus datos
+		if ($existingDirectContract) {
+			$requisitionUser = array_merge($requisitionUser, [
+				'id' => $existingDirectContract->getId(),
+				'work_dedication' => $existingDirectContract->getWorkDedication(),
+				'hours' => $existingDirectContract->getHours(),
+				'initial_date' => $existingDirectContract->getInitialDate()->format('Y-m-d'),
+				'final_date' => $existingDirectContract->getFinalDate()->format('Y-m-d'),
+				'duration' => $existingDirectContract->getDurationContract(),
+				'specific_functions' => $existingDirectContract->getSpecificFunctions(),
+				'salary' => $existingDirectContract->getSalary(),
+				'solicitude_date' => $existingDirectContract->getSolicitudeDate()->format('Y-m-d'),
+				'state' => $existingDirectContract->getState(),
+				'history' => json_decode($existingDirectContract->getHistory(), true),
+				'chargeId' => $existingDirectContract->getCharge()->getId(),
+				'chargeName' => $existingDirectContract->getCharge()->getName(),
+				'typeEmployee' => $existingDirectContract->getCharge()->getTypeEmployee(),
+				'profileId' => $existingDirectContract->getProfile()->getId(),
+				'profileName' => $existingDirectContract->getProfile()->getName(),
+			]);
+		}
+
+		// Añadir datos de la requisición
+		$requisitionUser = array_merge($requisitionUser, [
+			'type_requisition' => $requisition->getTypeRequisition(),
+			'type_contract' => $requisition->getTypeContract(),
+			'type_anotherIF' => $requisition->getTypeAnotherif(),
+			'names_charge' => $requisition->getNamesCharge(),
+			'justification' => $requisition->getJustification(),
+		]);
+
 		return new JsonResponse(['status' => true, 'requisition_data' => $requisitionUser]);
 	}
+
+	
 	//-------------------------------------------------------------------------------------------
 	//-----------------------------Reemployment-------------------------------------------------
 	#[Route('/contract/create-reemployment', name:'app_contract_create_reemployment')]
@@ -2844,21 +2861,29 @@ class ContractController extends AbstractController
 		$userLogueado = $vToken->getUserIdFromToken($token);
 		$specialUser = $userLogueado->getSpecialUser();
 
+		$data =$request->request->all();
+
+		$isAll = filter_var($data['isAll'], FILTER_VALIDATE_BOOLEAN);
+
 		if($token === false){
 			return new JsonResponse(['ERROR' => 'Token no válido']);
 		}else{
 
-			$queryUser = $doctrine->getManager()->createQueryBuilder();
-			$queryUser
-				->select('r')
-				->from(Reemployment::class, 'r')
-				->leftJoin('r.charges', 'cc') 
-				->where('r.finalDate >= :expirationPeriod')
-				->setParameters([
-					'expirationPeriod' => date('Y-m-d')
-				]);
-
-			$reemploymentsUsers = $queryUser->getQuery()->getResult();
+			if($isAll){
+				$reemploymentsUsers = $doctrine->getRepository(Reemployment::class)->findAll();
+			}else{
+				$queryUser = $doctrine->getManager()->createQueryBuilder();
+				$queryUser
+					->select('r')
+					->from('App\Entity\Reemployment', 'r')
+					->leftJoin('r.charges', 'cc') 
+					->where('r.finalDate >= :expirationPeriod')
+					->setParameters([
+						'expirationPeriod' => date('Y-m-d')
+					]);
+	
+				$reemploymentsUsers = $queryUser->getQuery()->getResult();
+			}
 
 			if(empty($reemploymentsUsers)){
 				return new JsonResponse(['status'=>false, 'message'=>'No existen registros de revinculación']);
@@ -3556,11 +3581,25 @@ class ContractController extends AbstractController
 	$token = $request->query->get('token');
 	$userLogueado = $vToken->getUserIdFromToken($token);
 	$entityManager = $doctrine->getManager();
+	$data = $request->request->all();
+
+	$isAll = filter_var($data['isAll'], FILTER_VALIDATE_BOOLEAN);
 
 	if($token === false){
 		return new JsonResponse(['ERROR' => 'Token no Válido']);
 	}else{
-		$allDirectContracts = $doctrine->getRepository(DirectContract::class)->findAll();
+		if($isAll){
+			$allDirectContracts = $doctrine->getRepository(DirectContract::class)->findAll();
+		}else{
+			$query = $doctrine->getManager()->createQueryBuilder();
+			$query
+				->select('dc')
+				->from('App\Entity\DirectContract', 'dc')
+				->where('dc.finalDate >= :expirationDate')
+				->setParameters(array('expirationDate'=>date('Y-m-d')));
+			
+			$allDirectContracts = $query->getQuery()->getResult();
+		}
 
 		if(empty($allDirectContracts)){
 			return new JsonResponse(['status'=>false, 'message'=>'No se encontraron contrataciones directas']);
