@@ -63,7 +63,7 @@ function parseCvData($data) {
         } elseif($key === 'timeWorked'){
             $decodedValue = json_decode($value, true);
             $data[$key] = formatTimeWorked($decodedValue);
-        } elseif(in_array($key, ['placeOfResidence', 'placeOfBirth', 'placeOfExpedition', 'workDates', 'datacomplementary'])){
+        } elseif(in_array($key, ['placeOfResidence', 'placeOfBirth', 'placeOfExpedition', 'workDates', 'datacomplementary', 'dataPet'])){
             $data[$key] = json_decode($value, true);
         }
     }
