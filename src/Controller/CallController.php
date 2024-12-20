@@ -446,10 +446,10 @@ class CallController extends AbstractController
         // }
         $allActiveCalls = $queryCommon->getQuery()->getArrayResult();
         foreach ($allActiveCalls as $key => $value) {
-            // $isPrivateObject = json_decode($value['isPrivate'], true);
-            // if($isPrivateObject['value'] === true){
-            //     $allActiveCalls[$key]['isPrivate'] = $isPrivateObject;
-            // }
+            $isPrivateObject = json_decode($value['isPrivate'], true);
+            if($isPrivateObject['value'] === true){
+                $allActiveCalls[$key]['isPrivate'] = $isPrivateObject;
+            }
             $allActiveCalls[$key]['jury'] = json_decode($value['jury'], true);
         }
         $response = convertDateTimeToString2($allActiveCalls);
