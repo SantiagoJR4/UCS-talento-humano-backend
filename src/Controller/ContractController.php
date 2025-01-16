@@ -1901,13 +1901,13 @@ class ContractController extends AbstractController
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
 		switch($specialUser){
-			case 'ATHSST':
+			case 'CTH':
 				$newStateForIncapacity = 1;
 				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
                 $newNotification->setUser($userForNotification);
                 $newNotification->setMessage('solicita la aprobación de una incapacidad por parte de Coordinación de talento humano');
 				break;
-			case 'CTH':
+			case 'ASS':
 				$newStateForIncapacity = 2;
 				$userWhoMadeIncapacity = $incapacity->getUser();
 				$newNotification->setUser($userWhoMadeIncapacity);
@@ -1962,7 +1962,7 @@ class ContractController extends AbstractController
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
 		switch($specialUser){
-			case 'ATHSST':
+			case 'ASS':
 				$userWhoMadeIncapacity = $incapacity->getUser();
 				$newNotification->setUser($userWhoMadeIncapacity);
                 $newNotification->setMessage('Incapacidad rechazada por Asistente seguridad y salud en el trabajo');
@@ -4185,7 +4185,8 @@ class ContractController extends AbstractController
 			'user' =>[
 				'id' => $user->getId(),
 				'fullname' => $user->getNames() . ' ' . $user->getLastNames(),
-				'fullidentification' => $user->getTypeIdentification() . ' ' . $user->getIdentification()
+				'fullidentification' => $user->getTypeIdentification() . ' ' . $user->getIdentification(),
+				'userType' => $user->getUserType()
 			]
 		];
 

@@ -86,7 +86,8 @@
     
     <div class="content">
         <p>Que, <span class="bold">{{ ud.fullname|upper }}</span> identificado(a) con la cédula de ciudadanía No. 
-        {{ ud.fullidentification }} de {{ dp.nom_mpio | capitalize }}, se encuentra actualmente vinculado(a) a la 
+        {{ ud.fullidentification }} de {{ dp.nom_mpio | capitalize }}, {% if ud.userType == 9 %} estuvo {% endif %} 
+        {% if ud.userType == 1 || ud.userType == 2 %} se encuentra actualmente {% endif %} vinculado(a) a la 
         <span class="bold">FUNDACIÓN UNIVERSITARIA CATÓLICA DEL SUR</span>, a través de contrato de trabajo a término fijo {{workDedication[0]}},
         Desde el {{ contracts.contract.work_start }} al {{ contracts.contract.expiration_contract }} desempeñando el cargo de
         {% for contractProfile in contracts.assignmentsProfiles %}
