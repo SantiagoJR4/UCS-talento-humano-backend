@@ -200,7 +200,7 @@ class UserController extends AbstractController
         $array = $query->getQuery()->getArrayResult();
         $isUserInOpenCall = !empty($array) ? true : false;
         if ($user !== NULL) {
-            return createJwtResponse($user, $isUserInOpenCall);
+            return createJwtResponse($user, false);
         }
         $client = HttpClient::create();
         $data["tipoIdentificacion"] = $data["IDType"];
@@ -221,7 +221,7 @@ class UserController extends AbstractController
             $json = json_encode($decodedToken);
             $array = json_decode($json, true);
             $registerUser = $userService->createUser($array);
-            return createJwtResponse($registerUser, $isUserInOpenCall);
+            return createJwtResponse($registerUser, false);
         }
     }
 

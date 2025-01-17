@@ -348,6 +348,7 @@ class CallController extends AbstractController
                 }
             }
         }
+        $newCall->setIsPrivate(json_encode(['value' => false, 'candidates' => []]));
         $newCall->setJury(json_encode($jury));
         $newCall->setState(0);
         date_default_timezone_set('America/Bogota');
