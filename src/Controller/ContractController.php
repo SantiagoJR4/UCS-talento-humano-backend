@@ -4185,8 +4185,7 @@ class ContractController extends AbstractController
 			'user' =>[
 				'id' => $user->getId(),
 				'fullname' => $user->getNames() . ' ' . $user->getLastNames(),
-				'fullidentification' => $user->getTypeIdentification() . ' ' . $user->getIdentification(),
-				'userType' => $user->getUserType()
+				'fullidentification' => $user->getTypeIdentification() . ' ' . $user->getIdentification()
 			]
 		];
 
