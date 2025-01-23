@@ -3268,6 +3268,12 @@ class ContractController extends AbstractController
 		$userLogueado = $user->getSpecialUser();
 
 		$users = $doctrine->getRepository(User::class)->findBy(['userType' => $typeId]);
+
+		if($typeId === 1 ){
+			$extraCTH = $doctrine->getRepository(User::class)->findOneBy(['userType' => 8]);
+			$users[] = $extraCTH;
+		}
+
 	
 		$userData = [];
 		foreach ($users as $user) {
