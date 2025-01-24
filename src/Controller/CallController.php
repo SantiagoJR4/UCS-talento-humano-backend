@@ -1659,96 +1659,34 @@ class CallController extends AbstractController
         return new JsonResponse($array, 200, []);
     }
 
-    #[Route('/email-test-interview', name: 'app_email_test_interview')]
+    #[Route('/email-recordatory', name: 'app_email_test_interview')]
     public function testEmailInterview(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
     {
-        $type = $request->request->get('type');
-        // $data = [
-        //     [
-        //         "fullname" => "Stephanny Alejandra Rojas Trujillo",
-        //         "callName" => "43",
-        //         "email" => "santipo12@gmail.com"
-        //     ],
-        // ];
         $data = [
-            [
-                "fullname" => "Stephanny Alejandra Rojas Trujillo",
-                "callName" => "43",
-                "email" => "sart710@hotmail.com"
-            ],
-            [
-                "fullname" => "Frank David Florez Tapia",
-                "callName" => "40",
-                "email" => "frankflorez1989@gmail.com"
-            ],
-            [
-                "fullname" => "Luis Walter Nayidt Vallejo Benavides",
-                "callName" => "40",
-                "email" => "luisvallejobenavides@gmail.com"
-            ],
-            [
-                "fullname" => "Nathaly Viviana Chavez Patiño",
-                "callName" => "42",
-                "email" => "naticapat85@hotmail.com"
-            ],
-            [
-                "fullname" => "Aida Lucy Enriquez Guerrero",
-                "callName" => "42",
-                "email" => "aida.enriquezg@gmail.com"
-            ],
-            [
-                "fullname" => "Claudia Janneth Barrera Hidalgo",
-                "callName" => "42",
-                "email" => "clau0516@icloud.com"
-            ],
-            [
-                "fullname" => "Liliana Fabiola Castro Morillo",
-                "callName" => "42",
-                "email" => "lilcasmor@gmail.com"
-            ],
-            [
-                "fullname" => "Stefanny Nathaly	Narvaez Gamboa",
-                "callName" => "42",
-                "email" => "stefannynar1988@gmail.com"
-            ],
-            [
-                "fullname" => "Edgar Rolando Erazo Santander",
-                "callName" => "42",
-                "email" => "rolosst@outlook.com"
-            ],
-            [
-                "fullname" => "Nilcen Gabriela Obando Botina",
-                "callName" => "42",
-                "email" => "gabrielaobandobotina@gmail.com"
-            ],
-            [
-                "fullname" => "Sandra Milena Cabrera Cortez",
-                "callName" => "42",
-                "email" => "sandry24.04@hotmail.com"
-            ],
-            [
-                "fullname" => "Silvana Lorena Moran Zambrano",
-                "callName" => "41",
-                "email" => "silvanarom96@gmail.com"
-            ],
-            [
-                "fullname" => "Dilsan Zuleima Yepez Chaves",
-                "callName" => "41",
-                "email" => "zuleimayepez@hotmail.com"
-            ],
+            ["fullname" => "Sebastian de Belacazar", "callName" => "60", "email" => "luisportilla009@gmail.com", "identification" => 45454545],
+            // ["fullname" => "Nelson Felipe Benavides Paz", "callName" => "55", "email" => "felipebenavidespaz@gmail.com", "identification" => 1061705376],
+            // ["fullname" => "Maria Fernanda Ortega Sarria", "callName" => "55", "email" => "mafesitaortga1@hotmail.com", "identification" => 1085245666],
+            // ["fullname" => "Eduard Erazo", "callName" => "55", "email" => "eduardosociologist@gmail.com", "identification" => 13068070],
+            // ["fullname" => "Jenith Cristina Aguirre Bravo", "callName" => "55", "email" => "cristinaguirre@gmail.com", "identification" => 59826219],
+            // ["fullname" => "Lilia Del Carmen Rosales Romero", "callName" => "56", "email" => "lyly25.lili@gmail.com", "identification" => 36953216],
+            // ["fullname" => "Eduard Erazo", "callName" => "56", "email" => "eduardosociologist@gmail.com", "identification" => 13068070],
+            // ["fullname" => "Paula Riascos", "callName" => "56", "email" => "paulariascos12@gmail.com", "identification" => 1085324243],
+            // ["fullname" => "Jesus Hosmander Hidalgo Rengifo", "callName" => "60", "email" => "chuchoosc@gmail.com", "identification" => 13072704],
+            // ["fullname" => "Angie Sandalie Enriquez Jaramillo", "callName" => "60", "email" => "azandy18@gmail.com", "identification" => 1085312638],
+            // ["fullname" => "Luis Carlos Bravo Melo", "callName" => "60", "email" => "bravomelo.lc@gmail.com", "identification" => 1086329137],
         ];
+        
         foreach ($data as $key => $value) {
             try{
                 $email = (new TemplatedEmail())
                     ->from('convocatorias@unicatolicadelsur.edu.co')
                     ->to($value['email'])
-                    ->subject($type === 'not' ? 'Resultado Convocatoria' : 'Recordatorio de Citación')
-                    ->htmlTemplate($type === 'not' ? 'email/notSelectedForCall.html.twig' : 'email/interviewCitationEmail.html.twig')
+                    ->subject('Nueva fecha de citación en convocatoria')
+                    ->htmlTemplate('email/recordatoryChangesToDates.html.twig')
                     ->context([
                         'fullname' => $value['fullname'],
+                        'identification' => $value['identification'],
                         'callName' => $value['callName'],
-                        'date' => $type === 'not' ? null : $value['date'],
-                        'hour' => $type === 'not' ? null : $value['hour']
                     ]);         
                 $mailer->send($email);
                 $message = 'La revisión fue enviada con éxito';
