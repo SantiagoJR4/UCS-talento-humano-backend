@@ -9,7 +9,9 @@ use App\Service\UserService;
 use App\Entity\User;
 use App\Service\ValidateToken;
 use DateTime;
+use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\ManagerRegistry;
+use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -34,7 +36,7 @@ function createJwtResponse($user, $isUserInOpenCall) {
         'userPhoto' => $user->getUrlPhoto()
     ];
     $payload = [
-        'sub' => $user->getSub(),
+        // 'sub' => $user->getSub(),
         'userID' => $user->getId(),
         'userType' => $user->getUserType(),
         'specialUser' => $user->getSpecialUser(),
@@ -75,7 +77,6 @@ class UserController extends AbstractController
             'identification' => $dataUser->getIdentification(),
             'email' => $dataUser->getEmail(),
             'phone' => $dataUser->getPhone(),
-            'sub' => $dataUser->getSub()
         ];
 
         $json = $helpers->serializador($data);
@@ -134,94 +135,81 @@ class UserController extends AbstractController
         return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Actualización de datos Correctamente']);
     }
     
-    #[Route('/register', name:'user_register')]
-    public function registerUser(ManagerRegistry $doctrine): Response
+    #[Route('/register', name:'app_user_register')]
+    public function registerUser(ManagerRegistry $doctrine, Request $request): JsonResponse
     {
-        $request = Request::createFromGlobals();
-        $dataRegister = json_decode($request->getContent(), true);
-
+        $data = $request->request->all();
+        
         $data_db = $doctrine->getRepository(User::class)->findOneBy([
-            'typeIdentification' => $dataRegister['typeIdentification'],
-            'identification' => $dataRegister['identification']
+            'identification' => $data['identification']
         ]);
         if($data_db !== NULL){
-            $response = new Response();
-            $response->setStatusCode(404);
-            $response->setContent('El usuario ya existe!!');
-            $response->headers->set('Content-Type', 'application/json');
-            return $response;
+            return new JsonResponse(['message' => 'Está identificación no está disponible.'], 404);
         }
-        else{
-            $userData = new User();
-            $userData->setNames($dataRegister['names']);
-            $userData->setLastNames($dataRegister['lastNames']);
-            $userData->setTypeIdentification($dataRegister['typeIdentification']);
-            $userData->setIdentification($dataRegister['identification']);
-            $userData->setEmail($dataRegister['email']);
-            $userData->setPhone($dataRegister['phone']);
-            $userData->setPassword(hash('sha256',$dataRegister['password']));
-            $userData->setHistory('[]');
-    
+        try {
+            $newUser = new User();
+            $newUser->setNames($data['names']);
+            $newUser->setLastNames($data['lastNames']);
+            $newUser->setTypeIdentification($data['typeIdentification']);
+            $newUser->setIdentification($data['identification']);
+            $newUser->setEmail($data['email']);
+            $newUser->setPhone($data['phone']);
+            $newUser->setPassword(hash('sha256',$data['password']));
+            $newUser->setHistory('[]');
+            $newUser->setUserType(6);
+            
             $entityManager=$doctrine->getManager();
-            $entityManager->persist($userData);
+            $entityManager->persist($newUser);
             $entityManager->flush();
-    
-            $response= new Response();
-            $response->setContent(json_encode(['respuesta' => 'Usuario registrado exitosamente']));
-            $response->headers->set('Content-Type', 'application/json');
-    
-            return $response;
+            
+            return new JsonResponse(['message' => 'Usuario registrado exitosamente']);
+        } catch (\Throwable $th) {
+            return new JsonResponse([
+                'message' => 'Ha ocurrido un error, por favor intente de nuevo, si el error persiste por favor contactenos.',
+                'data' => $th
+            ], 500);
         }
     }
 
-    #[Route('/login', name: 'login')]
+    #[Route('/login', name: 'app_login')]
     public function loginJwt(Request $request, ManagerRegistry $doctrine, UserService $userService): JsonResponse
     {
         $jwtKey = $_ENV['JWT_SECRET'];
-        $data = json_decode($request->request->get('json'), true);
+        $data =  $request->request->all();
+        // $data = json_decode($request->request->get('json'), true);
         $passHash = hash('sha256', $data['password']);
-        $user = $doctrine->getRepository(User::class)->findOneBy([
-            'typeIdentification' => $data['IDType'],
-            'identification' => $data['number'],
-            'password' => $passHash
-        ]);
-        $callOpenState = 4;
-        $queryBuilder = $doctrine->getManager()->createQueryBuilder();
-        $query = $queryBuilder
-            ->select('c.id')
-            ->from('App\Entity\UsersInCall', 'uc')
-            ->join('uc.call', 'c')
-            ->where($queryBuilder->expr()->andX(
-                $queryBuilder->expr()->eq('c.state',':callOpenState'),
-                $queryBuilder->expr()->eq('uc.user',':user'),
-            ))
-            ->setParameter('user', $user)
-            ->setParameter('callOpenState', $callOpenState);
-        $array = $query->getQuery()->getArrayResult();
-        $isUserInOpenCall = !empty($array) ? true : false;
-        if ($user !== NULL) {
-            return createJwtResponse($user, false);
-        }
-        $client = HttpClient::create();
-        $data["tipoIdentificacion"] = $data["IDType"];
-        $data["numero"] = $data["number"];
-        // unset($data["IDType"]);
-        // unset($data["number"]);
-        $responseIctus = $client->request('POST', 'https://ictus.unicatolicadelsur.edu.co/unicat/web/login', [
-            'headers' => ['Content-Type' => 'application/x-www-form-urlencoded'],
-            'body' => http_build_query(['json' => json_encode($data)])
-        ]);
-        if ($responseIctus->getStatusCode() === 200) {
-            $content = $responseIctus->getContent();
-            $verifyError = json_decode($content, true);
-            if (isset($verifyError['status']) && $verifyError['status'] === 'error') {
-                return new JsonResponse(['status' => $verifyError['status'], 'data' => $verifyError['data']]);
+        try {
+            $user = $doctrine->getRepository(User::class)->findOneBy([
+                'typeIdentification' => $data['IDType'],
+                'identification' => $data['number'],
+                'password' => $passHash
+            ]);
+            if ($user === NULL) {
+                return new JsonResponse(['message' => 'Usuario o contraseña invalidos'], 401);
             }
-            $decodedToken = JWT::decode(trim($content, '"'), new Key($jwtKey, 'HS256'));
-            $json = json_encode($decodedToken);
-            $array = json_decode($json, true);
-            $registerUser = $userService->createUser($array);
-            return createJwtResponse($registerUser, false);
+            $callOpenState = 4;
+            $queryBuilder = $doctrine->getManager()->createQueryBuilder();
+            $query = $queryBuilder
+                ->select('c.id')
+                ->from('App\Entity\UsersInCall', 'uc')
+                ->join('uc.call', 'c')
+                ->where($queryBuilder->expr()->andX(
+                    $queryBuilder->expr()->eq('c.state',':callOpenState'),
+                    $queryBuilder->expr()->eq('uc.user',':user'),
+                ))
+                ->setParameter('user', $user)
+                ->setParameter('callOpenState', $callOpenState);
+            $array = $query->getQuery()->getArrayResult();
+            $isUserInOpenCall = !empty($array) ? true : false; # TODO I should use this variable once calls are over
+            return createJwtResponse($user, false);
+        } catch (ORMException $e) {
+            return new JsonResponse(['message' => 'Ha ocurrido un error durante el login'], 500);
+        }
+        catch (\Throwable $th) {
+            return new JsonResponse(['
+            message' => 'Ha ocurrido un error, por favor intente de nuevo, si el error persiste por favor contactenos.',
+            'data' => $th
+        ], 404);
         }
     }
 

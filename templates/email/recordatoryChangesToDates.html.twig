@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Nueva fecha de citación en convocatoria</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333333;
+        }
+
+        h1 {
+            color: #166838;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f8f8;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+        }
+
+        p {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {# <img src="{{asset('http://yeshua.unicatolicadelsur.edu.co:4200/nephesh/public/uploads/imagenes/logo_institucional_UniCat%c3%b3lica-02.png')}}"
+            alt="logo Institucional" style="display: block; margin: 0 auto; max-width: 100%;"> #}
+        <h1>Nueva fecha de citación en convocatoria</h1>
+        <p>
+        <p>Señor(a)</p>
+        <p>{{ fullname }}</p>
+        <p>Identificado(a) con la cédula de ciudadanía: {{ identification }}</p>
+        <p>Cordial saludo,</p>
+        <p>A continuación le informo que la fecha de la prueba de conocimientos para la convocatoria número {{callName}} queda estipulada para el día de <strong>MAÑANA</strong>, por tanto la nueva fecha y hora es la siguiente:</p>
+        <p><strong>FECHA:</strong> Viernes, 24 de enero de 2025 (24/01/2025)</p>
+        <p><strong>HORA:</strong> 8:30 AM</p>
+        <p><strong>LUGAR:</strong> Unicatólica del Sur - Calle 18 No. 56-02 Torobajo.</p>
+        <br>
+        <p><strong>TENGA EN CUENTA</strong></p>
+        <p>
+            <p>1. Debe estar en las instalaciones al menos con 10 minutos de anticipación, la prueba iniciará a las 8:30 AM en punto, por lo cual no se permitirá el acceso posterior a dicha hora. </p>
+            <p>2. Debe presentarse con cedula de ciudadanía y traer lapicero. </p>
+            <p>3. Debe escribir con letra legible so pena de que su punto no sea calificado. Igualmente no se aceptan tachones o enmendaduras. </p>
+            <p>4. No se acepta el uso de celulares y otros medios tecnológicos. </p>
+        </p>
+        <br>
+        <p>Atentamente,</p>
+        <br>
+        <p>Maria Alejandra Ibarra Yepes.<p>
+        <p>Coordinadora de Talento Humano.<p>
+        <p>Fundación Universitaria Católica del Sur.</p>
+        <br>
+    </div>
+</body>
+</html>

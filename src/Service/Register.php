@@ -17,7 +17,6 @@ class UserService
     public function createUser(array $data): User
     {
         $user = new User();
-        $user->setSub($data['sub']);
         $user->setTypeIdentification($data['tipo']);
         $user->setIdentification($data['numero']);
         $user->setNames($data['nombres']);
