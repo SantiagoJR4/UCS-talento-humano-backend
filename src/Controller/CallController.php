@@ -76,34 +76,40 @@ function setEmailInfo($nextStep){
         case 'NS':
             return array(
                 'title' => 'Resultado de Convocatoria',
-                'template' => 'email/notSelectedForCall.html.twig'
+                'template' => 'email/notSelectedForCall.html.twig',
+                'approved' => false
             );
         case 'KT':
             return array(
                 'title' => 'Citación Prueba de conocimientos',
-                'template' => 'email/knowledgeTestCitationEmail.html.twig'
+                'template' => 'email/knowledgeTestCitationEmail.html.twig',
+                'approved' => true
             );
         case 'PT':
             return array(
                 'title' => 'Citación Prueba Psicotecnica',
-                'template' => 'email/psychoTestCitationEmail.html.twig'
+                'template' => 'email/psychoTestCitationEmail.html.twig',
+                'approved' => true
             );
         case 'IN':
             return array(
                 'title' => 'Citación Entrevista',
-                'template' => 'email/interviewCitationEmail.html.twig'
+                'template' => 'email/interviewCitationEmail.html.twig',
+                'approved' => true
             );
         case 'FI':
             return false;
         case 'SE':
             return array(
                 'title' => 'Resultado de Convocatoria',
-                'template' => 'email/selectedForCall.html.twig'
+                'template' => 'email/selectedForCall.html.twig',
+                'approved' => true
             );
         default:
             return array(
                 'title' => 'Resultado de Convocatoria',
-                'template' => 'email/notSelectedForCall.html.twig'
+                'template' => 'email/notSelectedForCall.html.twig',
+                'approved' => false
             );
     }
 }
@@ -996,7 +1002,8 @@ class CallController extends AbstractController
         $data = json_decode( $request->request->get('data'), true);
         $callId = $request->request->get('callId');
         $callName = $request->request->get('callName');
-        $sendEmail = $request->request->get('sendEmail');
+        $sendEmailToNonApproved = $request->request->get('sendEmailToNonApproved');
+        $sendEmailToApproved = $request->request->get('sendEmailToApproved');
         $date = $request->request->get('date');
         $hour = $request->request->get('hour');
         $step = $request->request->get('step');
@@ -1191,7 +1198,10 @@ class CallController extends AbstractController
             $entityManager->flush();
             $userEmail = $user->getEmail();
             $fullname = $user->getNames().' '.$user->getlastNames();
-            if ($emailInfo && $sendEmail !== 'false'){
+            if(
+                ($emailInfo && $emailInfo['approved'] && $sendEmailToApproved === 'true')
+                || ($emailInfo && !$emailInfo['approved'] && $sendEmailToNonApproved === 'true')
+            ){
                 try {
                     $email = (new TemplatedEmail())
                         ->from('convocatorias@unicatolicadelsur.edu.co')
@@ -1662,31 +1672,101 @@ class CallController extends AbstractController
     #[Route('/email-recordatory', name: 'app_email_test_interview')]
     public function testEmailInterview(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
     {
+        // $data = [
+        //     ["fullname" => "Sebastian de Belacazar", "callName" => "60", "email" => "luisportilla009@gmail.com", "identification" => 45454545, 'date' => '27/01/2025', 'hour' => '3:00 PM', 'fulldate' => ],
+        //     ["fullname" => "Dario Esteban Delgado Maigual", "callName" => "58", "email" => "estebandelgadoinc@gmail.com", "identification" => 1085278208, 'date' => '27/01/2025', 'hour' => '3:00 PM', 'fulldate' => ],
+        //     ["fullname" => "Helmer Fernando Jaguandoy Tobar", "callName" => "58", "email" => "hfjt822@gmail.com", "identification" => 10852093813, 'date' => '28/01/2025', 'hour' => '3:40 PM', 'fulldate' => ],
+        //     ["fullname" => "Jim Dennis Benavides Melo", "callName" => "52", "email" => "jimbenavides@gmail.com", "identification" => 98400008, 'date' => '28/01/2025', 'hour' => '8:00 AM', 'fulldate' => ],
+        //     ["fullname" => "Diego Mauricio Diaz Velásquez", "callName" => "50", "email" => "dmdiazv@gmail.com", "identification" => 1085245429, 'date' => '28/01/2025', 'hour' => '8:40 AM', 'fulldate' => ],
+        //     ["fullname" => "Lisseth Vanessa Acosta Ordoñez", "callName" => "50", "email" => "lisethao1@gmail.com", "identification" => 1085336288, 'date' => '28/01/2025', 'hour' => '9:20 AM', 'fulldate' => ],
+        //     ["fullname" => "María Paula Melo Delgado", "callName" => "50", "email" => "mariapaulamelo19@gmail.com", "identification" => 1085335245, 'date' => '28/01/2025', 'hour' => '10:30 AM', 'fulldate' => ],
+        //     // ["fullname" => "Paula Riascos", "callName" => "56", "email" => "paulariascos12@gmail.com", "identification" => 1085324243],
+        //     // ["fullname" => "Jesus Hosmander Hidalgo Rengifo", "callName" => "60", "email" => "chuchoosc@gmail.com", "identification" => 13072704],
+        //     // ["fullname" => "Angie Sandalie Enriquez Jaramillo", "callName" => "60", "email" => "azandy18@gmail.com", "identification" => 1085312638],
+        //     // ["fullname" => "Luis Carlos Bravo Melo", "callName" => "60", "email" => "bravomelo.lc@gmail.com", "identification" => 1086329137],
+        // ];
+
         $data = [
-            ["fullname" => "Sebastian de Belacazar", "callName" => "60", "email" => "luisportilla009@gmail.com", "identification" => 45454545],
-            // ["fullname" => "Nelson Felipe Benavides Paz", "callName" => "55", "email" => "felipebenavidespaz@gmail.com", "identification" => 1061705376],
-            // ["fullname" => "Maria Fernanda Ortega Sarria", "callName" => "55", "email" => "mafesitaortga1@hotmail.com", "identification" => 1085245666],
-            // ["fullname" => "Eduard Erazo", "callName" => "55", "email" => "eduardosociologist@gmail.com", "identification" => 13068070],
-            // ["fullname" => "Jenith Cristina Aguirre Bravo", "callName" => "55", "email" => "cristinaguirre@gmail.com", "identification" => 59826219],
-            // ["fullname" => "Lilia Del Carmen Rosales Romero", "callName" => "56", "email" => "lyly25.lili@gmail.com", "identification" => 36953216],
-            // ["fullname" => "Eduard Erazo", "callName" => "56", "email" => "eduardosociologist@gmail.com", "identification" => 13068070],
-            // ["fullname" => "Paula Riascos", "callName" => "56", "email" => "paulariascos12@gmail.com", "identification" => 1085324243],
-            // ["fullname" => "Jesus Hosmander Hidalgo Rengifo", "callName" => "60", "email" => "chuchoosc@gmail.com", "identification" => 13072704],
-            // ["fullname" => "Angie Sandalie Enriquez Jaramillo", "callName" => "60", "email" => "azandy18@gmail.com", "identification" => 1085312638],
-            // ["fullname" => "Luis Carlos Bravo Melo", "callName" => "60", "email" => "bravomelo.lc@gmail.com", "identification" => 1086329137],
+            [
+                "fullname" => "Sebastian de Belacazar",
+                "callName" => "60",
+                "email" => "luisportilla009@gmail.com",
+                "identification" => 45454545,
+                "date" => "27/01/2025",
+                "hour" => "3:00 PM",
+                "fulldate" => "Lunes 27 de Enero de 2025 a las 3:00 PM"
+            ],
+            [
+                "fullname" => "Dario Esteban Delgado Maigual",
+                "callName" => "58",
+                "email" => "estebandelgadoinc@gmail.com",
+                "identification" => 1085278208,
+                "date" => "27/01/2025",
+                "hour" => "3:00 PM",
+                "fulldate" => "Lunes 27 de Enero de 2025 a las 3:00 PM"
+            ],
+            [
+                "fullname" => "Helmer Fernando Jaguandoy Tobar",
+                "callName" => "58",
+                "email" => "hfjt822@gmail.com",
+                "identification" => 10852093813,
+                "date" => "28/01/2025",
+                "hour" => "3:40 PM",
+                "fulldate" => "Martes 28 de Enero de 2025 a las 3:40 PM"
+            ],
+            [
+                "fullname" => "Jim Dennis Benavides Melo",
+                "callName" => "52",
+                "email" => "jimbenavides@gmail.com",
+                "identification" => 98400008,
+                "date" => "28/01/2025",
+                "hour" => "8:00 AM",
+                "fulldate" => "Martes 28 de Enero de 2025 a las 8:00 AM"
+            ],
+            [
+                "fullname" => "Diego Mauricio Diaz Velásquez",
+                "callName" => "50",
+                "email" => "dmdiazv@gmail.com",
+                "identification" => 1085245429,
+                "date" => "28/01/2025",
+                "hour" => "8:40 AM",
+                "fulldate" => "Martes 28 de Enero de 2025 a las 8:40 AM"
+            ],
+            [
+                "fullname" => "Lisseth Vanessa Acosta Ordoñez",
+                "callName" => "50",
+                "email" => "lisethao1@gmail.com",
+                "identification" => 1085336288,
+                "date" => "28/01/2025",
+                "hour" => "9:20 AM",
+                "fulldate" => "Martes 28 de Enero de 2025 a las 9:20 AM"
+            ],
+            [
+                "fullname" => "María Paula Melo Delgado",
+                "callName" => "50",
+                "email" => "mariapaulamelo19@gmail.com",
+                "identification" => 1085335245,
+                "date" => "28/01/2025",
+                "hour" => "10:30 AM",
+                "fulldate" => "Martes 28 de Enero de 2025 a las 10:30 AM"
+            ]
         ];
+        
         
         foreach ($data as $key => $value) {
             try{
                 $email = (new TemplatedEmail())
                     ->from('convocatorias@unicatolicadelsur.edu.co')
                     ->to($value['email'])
-                    ->subject('Nueva fecha de citación en convocatoria')
+                    ->subject('Citación a entrevista')
                     ->htmlTemplate('email/recordatoryChangesToDates.html.twig')
                     ->context([
                         'fullname' => $value['fullname'],
                         'identification' => $value['identification'],
                         'callName' => $value['callName'],
+                        'fulldate' => $value['fulldate'],
+                        'hour' => $value['hour'],
+                        'date' => $value['date'],
                     ]);         
                 $mailer->send($email);
                 $message = 'La revisión fue enviada con éxito';
