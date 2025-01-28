@@ -1818,4 +1818,35 @@ class CallController extends AbstractController
         return new JsonResponse(['data'=>$message],200,[]);
     }
 
+    #[Route('/failed-or-deserted-call', name: 'app_failed_or_deserted_call')]
+    public function failedOrDesertedCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token= $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(!$user){
+            return new JsonResponse(['message' => 'El usuario no fue encontrado.']);
+        }
+        $callId = $request->request->get('callId');
+        $description = $request->request->get('description');
+        try {
+            $call = $doctrine->getRepository(TblCall::class)->find($callId);
+            $call->setState(7);
+            $callHistory = json_decode($call->getHistory(), true);
+            $entityManager = $doctrine->getManager();
+            $addToHistory = [
+                'user' => $user->getId(),
+                'responsible' => 'CTH',
+                'state' => 7,
+                'message' => "La convocatoria fue declarada como fallida o desierta por .{$user->getNames()} {$user->getLastNames()}. La razón de esto es la siguiente: $description",
+                'date' => date('Y-m-d H:i:s')
+            ];
+            $callHistory[] = $addToHistory;
+            $call->setHistory(json_encode($callHistory));
+            $entityManager->flush();
+            return new JsonResponse(['message' => 'La convocatoria ha sido declarada como fallida o desierta de manera exitosa.']);
+        } catch (\Throwable $th) {
+            return new JsonResponse(['message' => $th->getMessage()], 500);
+        }
+    }
+
 }
