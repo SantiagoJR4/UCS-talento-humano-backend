@@ -200,8 +200,8 @@ class UserController extends AbstractController
                 ->setParameter('user', $user)
                 ->setParameter('callOpenState', $callOpenState);
             $array = $query->getQuery()->getArrayResult();
-            $isUserInOpenCall = !empty($array) ? true : false; # TODO I should use this variable once calls are over
-            return createJwtResponse($user, false);
+            $isUserInOpenCall = !empty($array) ? true : false;
+            return createJwtResponse($user, $isUserInOpenCall);
         } catch (ORMException $e) {
             return new JsonResponse(['message' => 'Ha ocurrido un error durante el login'], 500);
         }

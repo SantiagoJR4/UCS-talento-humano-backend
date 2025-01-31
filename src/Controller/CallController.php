@@ -828,7 +828,6 @@ class CallController extends AbstractController
     #[Route('/test-email-call', name: 'app_test_email_call')]
     public function testEmailCall(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer): JsonResponse
     {
-        //Inicio Token
         $jwtKey = $_ENV['JWT_SECRET'];
         $token = $request->query->get('token');
         try {
@@ -1007,6 +1006,7 @@ class CallController extends AbstractController
         $date = $request->request->get('date');
         $hour = $request->request->get('hour');
         $step = $request->request->get('step');
+        
         $entityManager = $doctrine->getManager();
         $call = $entityManager->getRepository(TblCall::class)->find($callId);
         $callPercentage = $entityManager->getRepository(CallPercentage::class)->findOneBy(['call'=>$callId]);
@@ -1056,7 +1056,7 @@ class CallController extends AbstractController
                     }
                     $userInCall->setKnowledgeRating(number_format($value['knowledgeRating'], 3));
                     $fileKT = $request->files->get('knowledgeTestFile'.$value['id']);
-                    if ( $fileKT instanceof UploadedFile){
+                    if ( $fileKT !== NULL && $fileKT instanceof UploadedFile){
                         $directory = $this->getParameter('hv')
                         . '/'
                         . $user->getTypeIdentification()
@@ -1091,7 +1091,7 @@ class CallController extends AbstractController
                     $userInCall->setpsychoRating(number_format($value['psychoRating'],3));
                     $filePT = $request->files->get('psychoTestFile'.$value['id']);
                     $reportPT = $request->files->get('psychoTestReport'.$value['id']);
-                    if ( $filePT instanceof UploadedFile){
+                    if ( $filePT !== NULL && $filePT instanceof UploadedFile){
                         $directory = $this->getParameter('hv')
                         . '/'
                         . $user->getTypeIdentification()
@@ -1110,7 +1110,7 @@ class CallController extends AbstractController
                         $filePT = $user->getTypeIdentification().$user->getIdentification().'/'.$fileName;
                         $userInCall->setPsychoTestFile($filePT);
                     }
-                    if ( $reportPT instanceof UploadedFile){
+                    if ( $reportPT !== NULL && $reportPT instanceof UploadedFile){
                         $directory = $this->getParameter('hv')
                         . '/'
                         . $user->getTypeIdentification()
@@ -1144,7 +1144,7 @@ class CallController extends AbstractController
                     }
                     $userInCall->setInterviewRating(number_format($value['interviewRating'], 3));
                     $fileIN = $request->files->get('interviewFile'.$value['id']);
-                    if ( $fileIN instanceof UploadedFile){
+                    if ( $fileIN !== NULL && $fileIN instanceof UploadedFile){
                         $directory = $this->getParameter('hv')
                         . '/'
                         . $user->getTypeIdentification()
@@ -1850,68 +1850,51 @@ class CallController extends AbstractController
         $data = [
             [
                 "fullname" => "Luis David Portilla Barco",
-                "callName" => "60",
+                "identification" => "1085323630",
                 "email" => "luisportilla009@gmail.com",
-                "identification" => 45454545,
-                "date" => "27/01/2025",
-                "hour" => "3:00 PM",
-                "fulldate" => "Lunes 27 de Enero de 2025 a las 3:00 PM"
+                "hour" => "8:00 AM",
+                "date" => "30/01/2025",
+                "fulldate" => "Jueves, 30 de enero de 2025 a las 8:00 AM",
+                "callName" => "55"
             ],
             // [
-            //     "fullname" => "Dario Esteban Delgado Maigual",
-            //     "callName" => "53",
-            //     "email" => "estebandelgadoinc@gmail.com",
-            //     "identification" => 1085278208,
-            //     "date" => "27/01/2025",
-            //     "hour" => "3:00 PM",
-            //     "fulldate" => "Lunes 27 de Enero de 2025 a las 3:00 PM"
-            // ],
-            // [
-            //     "fullname" => "Helmer Fernando Jaguandoy Tobar",
-            //     "callName" => "53",
-            //     "email" => "hfjt822@gmail.com",
-            //     "identification" => 10852093813,
-            //     "date" => "28/01/2025",
-            //     "hour" => "3:40 PM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 3:40 PM"
-            // ],
-            // [
-            //     "fullname" => "Jim Dennis Benavides Melo",
-            //     "callName" => "53",
-            //     "email" => "jimbenavides@gmail.com",
-            //     "identification" => 98400008,
-            //     "date" => "28/01/2025",
+            //     "fullname" => "Nelson Felipe Benavides Paz",
+            //     "identification" => "1061705376",
+            //     "email" => "felipebenavidespaz@gmail.com",
             //     "hour" => "8:00 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 8:00 AM"
+            //     "date" => "30/01/2025",
+            //     "fulldate" => "Jueves, 30 de enero de 2025 a las 8:00 AM",
+            //     "callName" => "55"
             // ],
             // [
-            //     "fullname" => "Diego Mauricio Diaz Velasquez",
-            //     "callName" => "53",
-            //     "email" => "dmdiazv@gmail.com",
-            //     "identification" => 1085245429,
-            //     "date" => "28/01/2025",
-            //     "hour" => "8:40 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 8:40 AM"
+            //     "fullname" => "Eduard Erazo",
+            //     "identification" => "13068070",
+            //     "email" => "eduardosociologist@gmail.com",
+            //     "hour" => "8:30 AM",
+            //     "date" => "30/01/2025",
+            //     "fulldate" => "Jueves, 30 de enero de 2025 a las 8:30 AM",
+            //     "callName" => "55"
             // ],
             // [
-            //     "fullname" => "Lisseth Vanessa Acosta OrdoÑez",
-            //     "callName" => "53",
-            //     "email" => "lisethao1@gmail.com",
-            //     "identification" => 1085336288,
-            //     "date" => "28/01/2025",
-            //     "hour" => "9:20 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 9:20 AM"
+            //     "fullname" => "Maria Fernanda Ortega Sarria",
+            //     "identification" => "1085245666",
+            //     "email" => "mafesitaortga1@hotmail.com",
+            //     "hour" => "9:00 AM",
+            //     "date" => "30/01/2025",
+            //     "fulldate" => "Jueves, 30 de enero de 2025 a las 9:00 AM",
+            //     "callName" => "55"
             // ],
             // [
-            //     "fullname" => "María Paula Melo Delgado",
-            //     "callName" => "53",
-            //     "email" => "mariapaulamelo19@gmail.com",
-            //     "identification" => 1085335245,
-            //     "date" => "28/01/2025",
-            //     "hour" => "10:30 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 10:30 AM"
+            //     "fullname" => "Jenith Cristina Aguirre Bravo",
+            //     "identification" => "59826219",
+            //     "email" => "cristinaguirre@gmail.com",
+            //     "hour" => "9:30 AM",
+            //     "date" => "30/01/2025",
+            //     "fulldate" => "Jueves, 30 de enero de 2025 a las 9:30 AM",
+            //     "callName" => "55"
             // ]
         ];
+        
         
         
         foreach ($data as $key => $value) {
@@ -1919,13 +1902,13 @@ class CallController extends AbstractController
                 $email = (new TemplatedEmail())
                         ->from('convocatorias@unicatolicadelsur.edu.co')
                         ->to($value['email'])
-                        ->subject('Notificación de correo enviado por error')
-                        ->htmlTemplate('email/notSelectedForCall.html.twig')
+                        ->subject('Citación para entrevista')
+                        ->htmlTemplate('email/interviewCitationEmail.html.twig')
                         ->context([
                             'fullname' => $value['fullname'],
                             'callName' => $value['callName'],
-                            // 'date' => $value['date'],
-                            // 'hour' => $value['hour'],
+                            'date' => $value['date'],
+                            'hour' => $value['hour'],
                         ]);         
                     $mailer->send($email);
                     $message = 'El correo fue enviado con éxito';
@@ -1936,6 +1919,96 @@ class CallController extends AbstractController
         }
 
         return new JsonResponse(['data'=>'hecho'], 200, []);
+    }
+
+    #[Route('/reject-candidate-in-cv', name: 'app_reject_candidate_in_cv')]
+    public function rejectCandidateInCv(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $admin = $vToken->getUserIdFromToken($token);
+        $userInCallToRejectId = $request->request->get('userInCallToRejectId');
+        $callId = $request->request->get('callId');
+        $description = $request->request->get('description');
+
+        if(!$admin || ($admin->getSpecialUser() !== 'CTH')){
+            return new JsonResponse(['message' => 'CTH no fue encontrado.']);
+        }
+        $call = $doctrine->getRepository(TblCall::class)->find($callId);
+        if (!$call) {
+            return new JsonResponse(['message' => 'La convocatoria no existe o no fue encontrada.'], 404);
+        }
+        $userInCall = $doctrine->getRepository(UsersInCall::class)->find($userInCallToRejectId);
+        if (!$userInCall) {
+            return new JsonResponse(['message' => 'El candidato a rechazar no existe.'], 404);
+        }
+
+        
+        $candidate = $userInCall->getUser();
+        $callHistory = json_decode($call->getHistory(), true);
+        $userStatus = json_decode($userInCall->getUserStatus(), true);
+        $status = $userInCall->getStatus();
+
+        $addToHistory = json_encode(array(
+            'user' => $admin->getId(),
+            'responsible' => $admin->getSpecialUser(),
+            'state' => 4,
+            'message' => "CTH identificado como {$admin->getNames()} {$admin->getLastNames()} cuya
+                identificación es {$admin->getIdentification()} ha descalificado de manera DIRECTA
+                de la convocatoria a {$candidate->getName()} {$candidate->getLastnames()} cuya 
+                identificación es {$candidate->getIdentification()} por el siguiente motivo: 
+                \"$description\"",
+            'date' => date('Y-m-d H:i:s'),
+        ));
+        $callHistory[] = $addToHistory;
+
+        $status = preg_replace('/(?<!\d)0(?!\d)/', '2', $status, 1);
+
+        switch (end($userStatus)) {
+            case 'CV':
+                $hvRating = '{"total":0}';
+                $userInCall->setHvRating($hvRating);
+                break;
+            case 'KT':
+                $userInCall->setKnowledgeRating(0);
+                break;
+            case 'PT':
+                $userInCall->setPsychoRating(0);
+                break;
+            case 'IN':
+                $userInCall->setInteviewRating(0);
+                break;
+            case 'CL':
+                $userInCall->setClassRating(0);
+                break;
+            default:
+                return new JsonResponse(['message' => 'Ha ocurrido un error en cuanto a status en convocatoria.']);       
+        }
+
+        $userInCall->setStatus($status);
+        $call->setHistory(json_encode($callHistory));
+        
+        //TODO send rejected email
+        try{
+            $email = (new TemplatedEmail())
+                ->from('convocatorias@unicatolicadelsur.edu.co')
+                ->to($candidate->getEmail())
+                ->subject('Resultado de convocatoria')
+                ->htmlTemplate('email/notSelectedForCall.html.twig')
+                ->context([
+                    'fullname' => "{$candidate->getNames()} {$candidate->getLastNames()}",
+                    'callName' => $call->getName(),
+                ]);         
+            $mailer->send($email);
+
+            $entityManager = $doctrine->getManager();
+            $entityManager->flush();
+            
+            $message = 'El correo fue enviado con éxito';
+            return new JsonResponse(['message' => 'El candidato fue rechazado con éxito.']);
+        } catch (\Throwable $th) {
+            $message = 'Error al enviar el correo:'.$th->getMessage();
+            return new JsonResponse(['status'=>'Error','message'=>$message]);
+        }
     }
 
 }
