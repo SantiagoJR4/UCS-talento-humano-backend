@@ -166,7 +166,7 @@ class UserController extends AbstractController
         } catch (\Throwable $th) {
             return new JsonResponse([
                 'message' => 'Ha ocurrido un error, por favor intente de nuevo, si el error persiste por favor contactenos.',
-                'data' => $th
+                'data' => $th->getMessage()
             ], 500);
         }
     }

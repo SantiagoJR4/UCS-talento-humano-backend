@@ -2011,4 +2011,13 @@ class CallController extends AbstractController
         }
     }
 
+    #[Route('/call/get-salary', name: 'app_get_salary')]
+    public function getSalary(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer, ValidateToken $vToken): JsonResponse
+    {
+        $data = $request->request->all();
+        $profile = $data['profile'];
+        
+        return new JsonResponse(['message' => 'Traido con éxito', 'data' => []]);
+    }
+
 }
