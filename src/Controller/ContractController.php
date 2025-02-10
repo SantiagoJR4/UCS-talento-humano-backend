@@ -3414,7 +3414,7 @@ class ContractController extends AbstractController
 				case 'CRCAD':
 				case 'AOASIC':
 				case 'CTH':
-				case 'VPSB':
+				case 'VB':
 				case 'VAE':
 				case 'VII':
 				case 'ASIAC':
