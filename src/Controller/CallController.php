@@ -7,6 +7,7 @@ use App\Entity\CallPercentage;
 use App\Entity\Competence;
 use App\Entity\CompetencePercentage;
 use App\Entity\CompetenceProfile;
+use App\Entity\ContractCharges;
 use App\Entity\Factor;
 use App\Entity\FactorProfile;
 use App\Entity\FurtherTraining;
@@ -40,6 +41,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Serializer\SerializerInterface;
 
 function convertDateTimeToString2($data) {
@@ -208,42 +210,48 @@ class CallController extends AbstractController
     }
 
     #[Route('/get-all-profiles', name: 'app_get_all_profiles')]
-    public function getAllProfiles(ManagerRegistry $doctrine, SerializerInterface $serializer): JsonResponse
+    public function getAllProfiles(ManagerRegistry $doctrine): JsonResponse
     {
-        // $allProfiles = $doctrine->getRepository(Profile::class)->findAll();
-        // $serializerAllProfiles = $serializer->serialize($allProfiles, 'json');
-        // return new JsonResponse($serializerAllProfiles, 200, [], true);
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select(
             'p.id', 'p.name', 'p.underGraduateTraining', 'p.postGraduateTraining',
-            'p.previousExperience', 'p.furtherTraining', 'p.specialRequirements')
+            'p.workExperience', 'p.workExperienceTime', 'p.teachingExperience', 'p.teachingExperienceTime', 'p.furtherTraining', 'p.specialRequirements')
             ->from('App\Entity\Profile', 'p');
         $allProfiles = $query->getQuery()->getArrayResult();
+        foreach($allProfiles as &$profile) {
+            $profile['workExperienceTime'] = json_decode($profile['workExperienceTime'],true);
+            $profile['teachingExperienceTime'] = json_decode($profile['teachingExperienceTime'],true);
+        }
         return new JsonResponse($allProfiles, 200, []);
     }
 
     #[Route('/get-all-subprofiles', name: 'app_get_all_subprofiles')]
     public function getAllSubprofiles(ManagerRegistry $doctrine, SerializerInterface $serializer): JsonResponse
     {
-        $allSubprofiles = $doctrine->getRepository(Subprofile::class)->findAll();
-        $serializerAllSubprofiles = $serializer->serialize($allSubprofiles, 'json');
-        return new JsonResponse($serializerAllSubprofiles, 200, [], true);
+        $query = $doctrine->getManager()->createQueryBuilder();
+        $query->select(
+            'sp.id', 'sp.underGraduateTraining', 'sp.postGraduateTraining',
+            'sp.workExperience', 'sp.workExperienceTime', 'sp.teachingExperience', 'sp.teachingExperienceTime', 'sp.furtherTraining')
+            ->from('App\Entity\Subprofile', 'sp');
+        $allSubprofiles = $query->getQuery()->getArrayResult();
+        foreach($allSubprofiles as &$subprofile) {
+            $subprofile['workExperienceTime'] = json_decode($subprofile['workExperienceTime'],true);
+            $subprofile['teachingExperienceTime'] = json_decode($subprofile['teachingExperienceTime'],true);
+        }
+        return new JsonResponse($allSubprofiles, 200);
     }
 
-    #[Route('/get-all-materias', name: 'app_get_all_materias')]
-    public function getMaterias(ManagerRegistry $doctrine, SerializerInterface $serializer): JsonResponse
-    {
-        $allMaterias = $doctrine->getRepository(Materias::class)->findAll();
-        $allMaterias = $serializer->serialize($allMaterias, 'json');
-        return new JsonResponse($allMaterias, 200, [], true);
-    }
+    // #[Route('/get-all-materias', name: 'app_get_all_materias')]
+    // public function getMaterias(ManagerRegistry $doctrine, SerializerInterface $serializer): JsonResponse
+    // {
+    //     $allMaterias = $doctrine->getRepository(Materias::class)->findAll();
+    //     $allMaterias = $serializer->serialize($allMaterias, 'json');
+    //     return new JsonResponse($allMaterias, 200, [], true);
+    // }
 
     #[Route('/get-all-subjects', name: 'app_get_all_subjects')]
     public function getSubjects(ManagerRegistry $doctrine, SerializerInterface $serializer): JsonResponse
     {
-        // $allSubjects = $doctrine->getRepository(Subjects::class)->findAll();
-        // $allSubjects = $serializer->serialize($allSubjects, 'json');
-        // return new JsonResponse($allSubjects, 200, [], true);
         $query = $doctrine->getManager()->createQueryBuilder();
         $query->select('s.id', 'sb.id as subprofileId', 'm.id as materiaId', 'm.nombre as name', 'p.id as programaId')
             ->from('App\Entity\Subjects', 's')
@@ -255,6 +263,8 @@ class CallController extends AbstractController
         return new JsonResponse($allProfiles, 200, []);
     }
 
+
+    // TODO This one will be used in the future
     #[Route('/create-new-profile', name: 'app_create_new_profile')]
     public function createNewProfile(ManagerRegistry $doctrine, SerializerInterface $serializer, Request $request): JsonResponse
     {
@@ -370,9 +380,22 @@ class CallController extends AbstractController
         if($isEdited) {
             $newSpecialProfile = new SpecialProfile();
             $newSpecialProfile->setUnderGraduateTraining($special['specialUnderGraduate']);
-            $newSpecialProfile->setPostGraduateTraining($special['specialpostGraduate']);
-            $newSpecialProfile->setPreviousExperience($special['specialPreviousExperience']);
-            $newSpecialProfile->setFurtherTraining($special['specialfurtherTraining']);
+            $newSpecialProfile->setPostGraduateTraining($special['specialPostGraduate']);
+            $newSpecialProfile->setWorkExperience($special['specialWorkExperience']);
+            $newSpecialProfile->setTeachingExperience($special['specialTeachingExperience']);
+            $newSpecialProfile->setFurtherTraining($special['specialFurtherTraining']);
+            $workExperienceTime = json_encode([
+                'years' => intval($special['specialWorkExperienceTimeYears']),
+                'months' => intval($special['specialWorkExperienceTimeMonths']),
+                'days' => 0,
+            ]);
+            $teachingExperienceTime = json_encode([
+                'years' => intval($special['specialTeachingExperienceTimeYears']),
+                'months' => intval($special['specialTeachingExperienceTimeMonths']),
+                'days' => 0,
+            ]);
+            $newSpecialProfile->setWorkExperienceTime($workExperienceTime);
+            $newSpecialProfile->setTeachingExperience($teachingExperienceTime);
             $entityManager->persist($newSpecialProfile);
             $entityManager->flush();
             $newCall->setSpecialProfile($newSpecialProfile);
@@ -425,6 +448,7 @@ class CallController extends AbstractController
         return new JsonResponse($call, 200,[]);
     }
 
+    // TODO Need to filter the calls
     #[Route('/get-calls', name: 'app_get_active_calls')]
     public function getActiveCalls(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
     {
@@ -438,7 +462,11 @@ class CallController extends AbstractController
             ->from('App\Entity\TblCall', 'c')
             ->leftJoin('c.profile', 'p')
             ->leftJoin('c.subprofile', 'subp')
-            ->leftJoin('c.specialProfile', 'spec');
+            ->leftJoin('c.specialProfile', 'spec')
+        ;
+        if($specialUser !== 'CTH'){
+            $queryCommon->where('c.state IN (3,4)');
+        }
         // TODO: review private calls
         // if($specialUser === 'CTH'){
 
@@ -2014,10 +2042,23 @@ class CallController extends AbstractController
     #[Route('/call/get-salary', name: 'app_get_salary')]
     public function getSalary(ManagerRegistry $doctrine, Request $request, SerializerInterface $serializer, MailerInterface $mailer, ValidateToken $vToken): JsonResponse
     {
-        $data = $request->request->all();
-        $profile = $data['profile'];
+        $token = $request->query->get('token');
+        $user = $vToken->getUserIdFromToken($token);
+        if(!$user){
+            return new JsonResponse(['message' => 'Usuario no encontrado.'], 404);
+        }
+        try {
+            $profileId = $request->query->get('profileId');
+            $profile = $doctrine->getRepository(Profile::class)->find($profileId);
+            $profileCharges = $profile->getCharge();
+            $charge = $doctrine->getRepository(ContractCharges::class)->find(json_decode($profileCharges,true)[0]);
+            $salary = $charge->getSalary();
+            
+        } catch (\Throwable $th) {
+            return new JsonResponse(['message' => 'Error:'.$th->getMessage()], 404);
+        }
         
-        return new JsonResponse(['message' => 'Traido con éxito', 'data' => []]);
+        return new JsonResponse(['message' => 'Salario obtenido con éxito.', 'data' => ['salary' => $salary]]);
     }
 
 }
