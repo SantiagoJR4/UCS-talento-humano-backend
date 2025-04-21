@@ -264,50 +264,50 @@ class ContractController extends AbstractController
 	#[Route('/contract/list-medicalTestUser/{id}', name:'app_contract_medicaltTest_list_user')]
 	public function listMedicalTestUser(ManagerRegistry $doctrine, int $id) : JsonResponse
 	{
-			$user = $doctrine->getRepository(User::class)->find($id);
-			$medicalTest = $doctrine->getRepository(Medicaltest::class)->findBy(['user' => $user]);
+		$user = $doctrine->getRepository(User::class)->find($id);
+		$medicalTest = $doctrine->getRepository(Medicaltest::class)->findBy(['user' => $user]);
 
-			if(empty($medicalTest)){
-					return new JsonResponse(['status'=>false,'message' => 'No se encontraron citas medicas']);
-			}
+		if(empty($medicalTest)){
+			return new JsonResponse(['status'=>false,'message' => 'No se encontraron citas medicas']);
+		}
 
-			foreach($medicalTest as $medicalTest){
-					$response[] = [
-							'id' => $medicalTest->getId(),
-							'city' => $medicalTest->getCity(),
-							'date' => $medicalTest->getDate()->format('Y-m-d H:i'),
-							'address' => $medicalTest->getAddress(),
-							'medicalCenter' => $medicalTest->getMedicalCenter(),
-							'phone' => $medicalTest->getPhone(),
-							'typeTest' =>$medicalTest->getTypetest(),
-							'ocupationMedicalTest' => $medicalTest->getOcupationalmedicaltest(),
-							'state' => $medicalTest->getState(),
-							'userId'=>$medicalTest->getUser()->getId()
+		foreach($medicalTest as $medicalTest){
+			$response[] = [
+					'id' => $medicalTest->getId(),
+					'city' => $medicalTest->getCity(),
+					'date' => $medicalTest->getDate()->format('Y-m-d H:i'),
+					'address' => $medicalTest->getAddress(),
+					'medicalCenter' => $medicalTest->getMedicalCenter(),
+					'phone' => $medicalTest->getPhone(),
+					'typeTest' =>$medicalTest->getTypetest(),
+					'ocupationMedicalTest' => $medicalTest->getOcupationalmedicaltest(),
+					'state' => $medicalTest->getState(),
+					'userId'=>$medicalTest->getUser()->getId()
 
-					];
-			}
-			return new JsonResponse($response);
+			];
+		}
+		return new JsonResponse($response);
 	}
 
 	#[Route('/contract/delete-medicalTest/{id}',name:'app_contract_medicalTest_delete')]
 	public function delete(ManagerRegistry $doctrine,Request $request, ValidateToken $vToken, int $id): JsonResponse
 	{
-			$token = $request->query->get('token');
-			$user = $vToken->getUserIdFromToken($token);
-			$entiyManager = $doctrine->getManager();
+		$token = $request->query->get('token');
+		$user = $vToken->getUserIdFromToken($token);
+		$entiyManager = $doctrine->getManager();
 
-			$medicalTest = $entiyManager->getRepository(Medicaltest::class)->find($id);
+		$medicalTest = $entiyManager->getRepository(Medicaltest::class)->find($id);
 
-			if(!$medicalTest){
-					throw $this->createNotFoundException(
-							'No medicalTest found for id'.$id['id']
-					);
-			}
+		if(!$medicalTest){
+				throw $this->createNotFoundException(
+						'No medicalTest found for id'.$id['id']
+				);
+		}
 
-			$entiyManager->remove($medicalTest);
-			$entiyManager->flush();
+		$entiyManager->remove($medicalTest);
+		$entiyManager->flush();
 
-			return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Test Medico Eliminado']);
+		return new JsonResponse(['status' => 'Success', 'code' => '200', 'message' => 'Test Medico Eliminado']);
 	}
 
 	//-------------------------------------------------------------------------------
@@ -3939,7 +3939,7 @@ class ContractController extends AbstractController
 			pd.gender AS Sexo,
 
 			JSON_EXTRACT(pd.dataComplementary, '$[*]') AS complementary_data,
-			JSON_EXTRACT(pd.data_pet, '$[*]') AS pet_data
+			-- JSON_EXTRACT(pd.data_pet, '$[*]') AS pet_data
 
 			FROM user u
 			LEFT JOIN reemployment r ON u.id = r.user_id AND r.period LIKE '%$period%'
@@ -4412,7 +4412,7 @@ class ContractController extends AbstractController
 			ELSE inc.origin_incapacity
 		END AS incapacidad_origen
 		FROM incapacity inc JOIN user u ON inc.user_id = u.id
-		WHERE inc.state = 2;
+		WHERE inc.state IN (1,2);
 		";
 
 		$stmtIncapacities = $conn->executeQuery($sqlIncapacities);
