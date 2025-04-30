@@ -31,7 +31,7 @@ class InstitutionalDataController extends AbstractController
             $contractCharges -> setSalary($data['salary']);
 
             $entityManager->persist($contractCharges);
-            $entityManager->flush();
+            $entityManager->flush();    
 
             $message = 'Cargo nuevo creado correctamente';
         }
