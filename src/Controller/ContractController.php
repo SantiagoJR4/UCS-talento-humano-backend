@@ -1899,6 +1899,7 @@ class ContractController extends AbstractController
 			'entity' => 'incapacity'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
+		//TODO delete his after pull
 		switch($specialUser){
 			case 'CTH':
 				$newStateForIncapacity = 1;
