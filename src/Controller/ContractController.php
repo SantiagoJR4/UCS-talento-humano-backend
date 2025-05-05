@@ -1892,20 +1892,19 @@ class ContractController extends AbstractController
 		$newNotification->setSeen(0);
 		$userNames = $doctrine->getRepository(User::class)->find($applicant);
 	
-		$userNames= $userNames->getNames();
 		$relatedEntity = array(
 			'id' => $incapacityId,
 			'applicantId'=>$applicant,
-			'applicantName'=>$userNames,
+			'applicantName' => $userNames->getNames() . " " . $userNames->getLastNames(),
 			'entity' => 'incapacity'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
 		switch($specialUser){
 			case 'CTH':
 				$newStateForIncapacity = 1;
-				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'CTH','userType' => 8]);
+				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'ASS','userType' => 1]);
                 $newNotification->setUser($userForNotification);
-                $newNotification->setMessage('solicita la aprobación de una incapacidad por parte de Coordinación de talento humano');
+                $newNotification->setMessage('solicita la aprobación de una incapacidad por parte de Seguridad y Salud en el trabajo');
 				break;
 			case 'CTH':
 				$newStateForIncapacity = 2;
@@ -1920,7 +1919,8 @@ class ContractController extends AbstractController
 				$newNotification->setMessage('Revisión de incapacidad finalizada.');
 				break;
 			default:
-			return new JsonResponse(['message'=>'Usuario no autorizado'],403,[]);
+				break;
+
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
 		$notification->setSeen(1);
@@ -1963,23 +1963,22 @@ class ContractController extends AbstractController
 		$relatedEntity = array(
 			'id' => $incapacityId,
 			'applicantId' => $applicant,
-			'applicantName'=>$userNames,
+			'applicantName' => $userNames->getNames() . " " . $userNames->getLastNames(),
 			'entity' => 'incapacity'
 		);
 		$newNotification->setRelatedEntity(json_encode($relatedEntity));
 		switch($specialUser){
-			case 'ASS':
-				$userWhoMadeIncapacity = $incapacity->getUser();
-				$newNotification->setUser($userWhoMadeIncapacity);
-                $newNotification->setMessage('Incapacidad rechazada por Asistente seguridad y salud en el trabajo');
-				$newNotification->setSeen(1);
-				break;
 			case 'CTH':
 				$userWhoMadeIncapacity = $incapacity->getUser();
 				$newNotification->setUser($userWhoMadeIncapacity);
 				$newNotification->setMessage('Incapacidad rechazada por Talento humano');
-				$newNotification->setSeen(1);
 				break;
+			case 'ASS':
+				$userWhoMadeIncapacity = $incapacity->getUser();
+				$newNotification->setUser($userWhoMadeIncapacity);
+                $newNotification->setMessage('Incapacidad rechazada por Asistente seguridad y salud en el trabajo');
+				break;
+
 		}
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
 		$notification->setSeen(1);
@@ -3943,9 +3942,6 @@ class ContractController extends AbstractController
 			pd.bank_name AS Banco,
 			pd.bank_account_number AS No_Cuenta,
 			pd.gender AS Sexo,
-
-			JSON_EXTRACT(pd.dataComplementary, '$[*]') AS complementary_data,
-			-- JSON_EXTRACT(pd.data_pet, '$[*]') AS pet_data
 
 			FROM user u
 			LEFT JOIN reemployment r ON u.id = r.user_id AND r.period LIKE '%$period%'
