@@ -1907,7 +1907,13 @@ class ContractController extends AbstractController
                 $newNotification->setUser($userForNotification);
                 $newNotification->setMessage('solicita la aprobación de una incapacidad por parte de Seguridad y Salud en el trabajo');
 				break;
-			case 'ASS':
+			case 'CTH':
+				$newStateForIncapacity = 2;
+				$userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'ASS','userType' => 1]);
+				$newNotification->setUser($userForNotification);
+				$newNotification->setMessage('solicita la revisión de una incapacidad por parte de Seguridad y Salud en el Trabajo');
+				break;
+			default:
 				$newStateForIncapacity = 2;
 				$userWhoMadeIncapacity = $incapacity->getUser();
 				$newNotification->setUser($userWhoMadeIncapacity);
