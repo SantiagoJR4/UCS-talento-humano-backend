@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\ContractCharges;
+use App\Entity\Profile;
 use App\Service\ValidateToken;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -117,5 +118,143 @@ class InstitutionalDataController extends AbstractController
         }
 
         return new JsonResponse(['status'=>'Success','Code'=>'200', 'message' => 'Cargo eliminado correctamente']);
+    }
+
+    //----------------------------------------------------------------------------------------
+    //-------------------- CRUD PROFILES UNICATOLICA
+
+    #[Route('institutionalData/create-profile', name:'app_institutionalData_crate_profile')]
+    public function createProfile(ManagerRegistry $doctrine, Request $request): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $entityManager = $doctrine->getManager();
+        $data = $request->request->all();
+
+        if($token === false){
+            return new JsonResponse(['ERROR' => 'Token no válido']);
+        }else{
+            $profile = new Profile();
+            $profile -> setName($data['nameProfile']);
+            $profile -> setArea($data['areaProfile']);
+            $profile -> setCharge($data['chargeProfile']);
+            $profile -> setUnderGraduateTraining($data['underGraduateProfile']);
+            $profile -> setPostGraduateTraining($data['postGraduateProfile']);
+            $profile -> setPreviousExperience($data['previousExperienceProfile']);
+            $profile -> setFurtherTraining($data['furtherTrainingProfile']);
+            $profile -> setSpecialRequirements($data['specialRequirementsProfile']);
+            $profile -> setFunctions($data['functionsProfile']);
+
+            $entityManager->persist($profile);
+            $entityManager->flush();
+
+            $message = 'Perfil nuevo creado correctamente';
+        }
+
+        return new JsonResponse(['status'=>'Success','code'=>200,'message'=>$message]);
+    }
+
+    #[Route('institutionalData/update-profile', name:'app_institutionalData_update_profile')]
+    public function updateProfile(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $entityManager = $doctrine->getManager();
+        $data = $request->request->all();
+
+        if($token === false){
+            return new JsonResponse(['ERROR'=>'Token no válido']);
+        }else{
+            $profile = $entityManager->getRepository(Profile::class)->find($data['id']);
+
+            if(!$profile){
+                throw $this->createNotFoundException(
+                    'No profile found for id'.$data['id']
+                );
+            }
+
+            $profile -> setName($data['nameProfile']);
+            $profile -> setArea($data['areaProfile']);
+            $profile -> setCharge($data['chargeProfile']);
+            $profile -> setUnderGraduateTraining($data['underGraduateProfile']);
+            $profile -> setPostGraduateTraining($data['postGraduateProfile']);
+            $profile -> setPreviousExperience($data['previousExperienceProfile']);
+            $profile -> setFurtherTraining($data['furtherTrainingProfile']);
+            $profile -> setSpecialRequirements($data['specialRequirementsProfile']);
+            $profile -> setFunctions($data['functionsProfile']);
+
+            $entityManager->persist($profile);
+            $entityManager->flush();
+
+            $message = 'Perfil actualizado correctamente';
+        }
+        return new JsonResponse(['status'=>'Success','code'=>200,'message'=>$message]);
+    }
+
+    #[Route('institutionalData/get-all-profiles', name: 'app_institutionalData_get_all_profiles')]
+    public function getAllProfiles(ManagerRegistry $doctrine, Request $request): JsonResponse
+    {
+        $token = $request->query->get('token');
+
+        if($token === false){
+            return new JsonResponse(['ERROR' => 'Token no válido']);
+        }else{
+            $query = $doctrine->getManager()->createQueryBuilder();
+            $query->select(
+                'p.id', 'p.name', 'p.area', 'p.charge','p.underGraduateTraining', 'p.postGraduateTraining',
+                'p.previousExperience', 'p.furtherTraining', 'p.specialRequirements', 'p.functions')
+                ->from('App\Entity\Profile', 'p');
+            $allProfiles = $query->getQuery()->getArrayResult();
+
+            // Mapeo de valores de 'charge'
+            $chargeMap = [
+                '[1]' => 'Rector',
+                '[2]' => 'Vicerrectores',
+                '[4]' => 'Coordinación I',
+                '[3]' => 'Asesores',
+                '[5]' => 'Coordinación II',
+                '[6]' => 'Coordinación III',
+                '[7]' => 'Profesionales',
+                '[8]' => 'Instructores',
+                '[9]' => 'Auxiliares',
+                '[10,11]' => 'Director de Programa',
+                '[12,13,14,15,16,17]' => 'Profesor',
+                '[10]' => 'Profesor-Director/a del programa',
+                '[11]' => 'Profesor-Director del Programa Adm.SS',
+                '[12]' => 'Profesor Tiempo Completo',
+                '[13]' => 'Profesor Medio Tiempo',
+                '[14]' => 'Profesor Universitario HC',
+                '[15]' => 'Profesor Especialista HC',
+                '[16]' => 'Profesor Magister HC',
+                '[17]' => 'Profesor Doctorado HC',
+                '[18]' => 'Profesor supervisor practica hospitalaria',
+                '[19]' => 'Asistentes',
+                
+            ];
+
+            foreach ($allProfiles as &$profile) {
+                if (isset($chargeMap[$profile['charge']])) {
+                    $profile['charge'] = $chargeMap[$profile['charge']];
+                }
+            }
+        }
+        return new JsonResponse($allProfiles, 200, []);
+    }
+
+    #[Route('institutionalData/delete-profile', name:'app_institutionalData_delete_profile')]
+    public function deleteProfile(ManagerRegistry $doctrine, Request $request, int $id) : JsonResponse
+    {
+        $token = $request->query->get('token');
+        $entityManager = $doctrine->getManager();
+        if($token === false){
+            $profile = $entityManager->getRepository(Profile::class)->find($id);
+            if(!$profile){
+                throw $this->createNotFoundException(
+                    'No profile found for id'.$id['id']
+                );
+            }
+            $entityManager->remove($profile);
+            $entityManager->flush();
+        }
+
+        return new JsonResponse(['status'=>'Success','Code'=>'200','message'=>'Perfil eliminado']);
     }
 }
