@@ -134,15 +134,15 @@ class InstitutionalDataController extends AbstractController
             return new JsonResponse(['ERROR' => 'Token no válido']);
         }else{
             $profile = new Profile();
-            $profile -> setName($data['nameProfile']);
-            $profile -> setArea($data['areaProfile']);
-            $profile -> setCharge($data['chargeProfile']);
-            $profile -> setUnderGraduateTraining($data['underGraduateProfile']);
-            $profile -> setPostGraduateTraining($data['postGraduateProfile']);
-            $profile -> setPreviousExperience($data['previousExperienceProfile']);
-            $profile -> setFurtherTraining($data['furtherTrainingProfile']);
-            $profile -> setSpecialRequirements($data['specialRequirementsProfile']);
-            $profile -> setFunctions($data['functionsProfile']);
+            $profile -> setName($data['name']);
+            $profile -> setArea('TH');
+            $profile -> setCharge($data['charge']);
+            $profile -> setUnderGraduateTraining($data['underGraduateTraining']);
+            $profile -> setPostGraduateTraining($data['postGraduateTraining']);
+            $profile -> setPreviousExperience($data['previousExperience']);
+            $profile -> setFurtherTraining($data['furtherTraining']);
+            $profile -> setSpecialRequirements($data['specialRequirements']);
+            $profile -> setFunctions($data['functions']);
 
             $entityManager->persist($profile);
             $entityManager->flush();
@@ -171,15 +171,15 @@ class InstitutionalDataController extends AbstractController
                 );
             }
 
-            $profile -> setName($data['nameProfile']);
-            $profile -> setArea($data['areaProfile']);
-            $profile -> setCharge($data['chargeProfile']);
-            $profile -> setUnderGraduateTraining($data['underGraduateProfile']);
-            $profile -> setPostGraduateTraining($data['postGraduateProfile']);
-            $profile -> setPreviousExperience($data['previousExperienceProfile']);
-            $profile -> setFurtherTraining($data['furtherTrainingProfile']);
-            $profile -> setSpecialRequirements($data['specialRequirementsProfile']);
-            $profile -> setFunctions($data['functionsProfile']);
+            $profile -> setName($data['name']);
+            $profile -> setArea('TH');
+            $profile -> setCharge($data['charge']);
+            $profile -> setUnderGraduateTraining($data['underGraduateTraining']);
+            $profile -> setPostGraduateTraining($data['postGraduateTraining']);
+            $profile -> setPreviousExperience($data['previousExperience']);
+            $profile -> setFurtherTraining($data['furtherTraining']);
+            $profile -> setSpecialRequirements($data['specialRequirements']);
+            $profile -> setFunctions($data['functions']);
 
             $entityManager->persist($profile);
             $entityManager->flush();
@@ -239,12 +239,15 @@ class InstitutionalDataController extends AbstractController
         return new JsonResponse($allProfiles, 200, []);
     }
 
-    #[Route('institutionalData/delete-profile', name:'app_institutionalData_delete_profile')]
+    #[Route('institutionalData/delete-profile/{id}', name:'app_institutionalData_delete_profile')]
     public function deleteProfile(ManagerRegistry $doctrine, Request $request, int $id) : JsonResponse
     {
         $token = $request->query->get('token');
         $entityManager = $doctrine->getManager();
         if($token === false){
+            return new JsonResponse(['ERROR' => 'Token no válido']);
+
+        }else{
             $profile = $entityManager->getRepository(Profile::class)->find($id);
             if(!$profile){
                 throw $this->createNotFoundException(
