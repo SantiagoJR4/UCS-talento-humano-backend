@@ -7,6 +7,7 @@ use App\Entity\Profile;
 use App\Service\ValidateToken;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -259,5 +260,40 @@ class InstitutionalDataController extends AbstractController
         }
 
         return new JsonResponse(['status'=>'Success','Code'=>'200','message'=>'Perfil eliminado']);
+    }
+
+    #[Route('institutionalData/save-profile-file', name:'app_save_profile_file')]
+    public function saveProfileFile(ManagerRegistry $doctrine, Request $request) : JsonResponse
+    {
+        $token = $request->query->get('token');
+        $entityManager = $doctrine->getManager();
+
+        $data = $request->request->all();
+
+        if($token == false){
+            return new JsonResponse(['ERROR' => 'Token no válido']);
+        }else{
+            $profile = $entityManager->getRepository(Profile::class)->find($data['id']);
+            $file = $request->files->get('file');
+            $fileName = $data['fileName'];
+
+            $fileName = str_replace(' ', '_', $fileName);
+
+            if($file instanceof UploadedFile){
+                $folderDestination = $this->getParameter('profile');
+
+                try{
+                    $file->move($folderDestination, $fileName);
+                    $profile->setProfileFile($fileName);
+                } catch (\Exception $e){
+                    return new JsonResponse(['Error'=>'Error al guardar el archivo en el servidor']);
+                }
+            }
+
+            $entityManager->persist($profile);
+            $entityManager->flush();
+
+            return new JsonResponse(['status' => 'Success', 'Code' => '200', 'message' => 'Perfile cargado correctamente']);
+        }
     }
 }
