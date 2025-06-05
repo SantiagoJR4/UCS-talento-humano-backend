@@ -3935,7 +3935,7 @@ class ContractController extends AbstractController
 			0 AS También_tiene_contrato_administrativo,
 			pd.bank_name AS Banco,
 			pd.bank_account_number AS No_Cuenta,
-			pd.gender AS Sexo,
+			pd.gender AS Sexo
 
 			FROM user u
 			LEFT JOIN reemployment r ON u.id = r.user_id AND r.period LIKE '%$period%'
