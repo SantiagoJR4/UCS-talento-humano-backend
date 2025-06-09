@@ -201,7 +201,7 @@ class InstitutionalDataController extends AbstractController
             $query = $doctrine->getManager()->createQueryBuilder();
             $query->select(
                 'p.id', 'p.name', 'p.area', 'p.charge','p.underGraduateTraining', 'p.postGraduateTraining',
-                'p.previousExperience', 'p.furtherTraining', 'p.specialRequirements', 'p.functions')
+                'p.previousExperience', 'p.furtherTraining', 'p.specialRequirements', 'p.functions', 'p.profileFile')
                 ->from('App\Entity\Profile', 'p');
             $allProfiles = $query->getQuery()->getArrayResult();
 

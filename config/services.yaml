@@ -7,6 +7,7 @@ parameters:
     uploads_directory: '%kernel.project_dir%/public/uploads/pdfs'
     hv: '%kernel.project_dir%/public/hv'
     contract: '%kernel.project_dir%/public/contracts'
+    profile: '%kernel.project_dir%/public/profiles'
 
 services:
     # default configuration for services in *this* file
