@@ -940,7 +940,7 @@ class ContractController extends AbstractController
 	//--------------------------------------------------------------------------------------------
 	// PERMISOS Y LICENCIAS.
 	#[Route('/contract/create-permission', name:'app_contract_create_permission')]
-	public function createPermission( ManagerRegistry $doctrine,Request $request): JsonResponse
+	public function createPermission( ManagerRegistry $doctrine,Request $request, MailerInterface $mailer): JsonResponse
 	{
 		$isValidToken = $this->validateTokenSuper($request)->getContent();
 		$entityManager = $doctrine->getManager();
@@ -949,6 +949,7 @@ class ContractController extends AbstractController
 			return new JsonResponse(['ERROR' => 'Token no válido']);
 		}else{
 			$user = $entityManager->getRepository(User::class)->find($data['user']);
+			$emailUser = $user->getEmail();
 			if (!$user) {
 					throw $this->createNotFoundException('No user found for id' . $data['id']);
 			}
@@ -1005,6 +1006,7 @@ class ContractController extends AbstractController
 			foreach ($immediateBossArray as $boss) {
 				$bossID = $boss['id'];
 				$immediateBossUsers = $doctrine->getRepository(User::class)->find($bossID);
+				$specialUserBoss = $immediateBossUsers->getSpecialUser();
 				$newNotification = new Notification();
 				$newNotification->setSeen(0);
 				$newNotification->setUser($immediateBossUsers);
@@ -1020,6 +1022,25 @@ class ContractController extends AbstractController
 				
 				$entityManager->persist($newNotification);
 			}
+
+			// try{
+			// 	$email = (new TemplatedEmail())
+			// 			->from($user->getEmail())
+			// 			->to($user->getEmail(),'auxiliar2.oasic@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
+			// 			->subject('Solicitud de Permiso')
+			// 			->htmlTemplate('email/medicalTestUpdateEmail.html.twig')
+			// 			->context([
+			// 					'user' => $user,
+			// 					'fields' => $fields,
+			// 			]);   
+			// 	$email->getHeaders()->addTextHeader('X-Transport','alternative');         
+			// 	$mailer->send($email);
+			// 	$message = 'El examén médico fue actualizado con éxito, se envío un correo con la información a ' . $user->getEmail();
+			// } catch (\Throwable $th) {
+			// 	$message = 'Error al enviar el correo:'.$th->getMessage();
+			// 	return new JsonResponse(['status'=>'Error','message'=>$message]);
+			// }
+
 
 			$entityManager->flush();
 
