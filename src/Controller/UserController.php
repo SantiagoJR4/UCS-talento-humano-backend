@@ -98,7 +98,8 @@ class UserController extends AbstractController
                 'identification' => $user->getIdentification(),
                 'email' => $user->getEmail(),
                 'phone' => $user->getPhone(),
-                'url_photo' => $user->getUrlPhoto()
+                'url_photo' => $user->getUrlPhoto(),
+                'user_type' => $user->getUserType()
             ];
         }
 
@@ -133,6 +134,34 @@ class UserController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Actualización de datos Correctamente']);
+    }
+
+    #[Route('/update-user-type', name:'app_update_user_type')]
+    public function updateUserType(ManagerRegistry $doctrine, Request $request, validateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+
+        if ($token === false) {
+		  throw new \Exception('Token no válido'); // Puedes manejar los errores de otra manera si prefieres
+	    }
+
+        $data = json_decode($request->getContent(),true);
+        $userId = $data['userId'];
+        $entityManager = $doctrine->getManager();
+        $user = $entityManager->getRepository(User::class)->find($userId);
+
+        if (!$user) {
+            throw $this->createNotFoundException('El usuario no fue encontrado.');
+        }
+
+        $user->setUserType($data['userType']);
+
+        $entityManager = $doctrine->getManager();
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Actualización de datos Correctamente']);
+
     }
     
     #[Route('/register', name:'app_user_register')]

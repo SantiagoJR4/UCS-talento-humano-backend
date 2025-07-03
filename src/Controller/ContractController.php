@@ -3883,6 +3883,7 @@ class ContractController extends AbstractController
 			
 			-- Datos personales
 			JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_expedition, '$.nom_mpio')) AS LUGAR_EXPEDICION,
+			pd.expedition_date AS FECHA_EXPEDICION,
 			pd.birthday AS FECHA_NACIMIENTO,
 			JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.nom_mpio')) AS LUGAR_NACIMIENTO,
 			JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.cod_mpio')) AS ID_MUNICIPIO_NACIMIENTO,
@@ -4048,7 +4049,7 @@ class ContractController extends AbstractController
   
 	  // Agregar encabezados
 	  $headers = [
-		  'Tipo de vinculación','Nombre', 'Apellido', 'NUM_DOCUMENTO', 'Periodo', 'Tipo de Contrato' ,'LUGAR_EXPEDICION', 'FECHA_NACIMIENTO',
+		  'Tipo de vinculación','Nombre', 'Apellido', 'NUM_DOCUMENTO', 'Periodo', 'Tipo de Contrato' ,'LUGAR_EXPEDICION', 'FECHA_EXPEDICION' ,'FECHA_NACIMIENTO',
 		  'LUGAR_NACIMIENTO', 'ID_MUNICIPIO_NACIMIENTO', 'ID_NIVEL_MAXESTUDIO',
 		  'TITULO_RECIBIDO', 'FECHA_GRADO', 'TITULO_CONVALIDADO', 'NOMBRE_INSTITUCION_ESTUDIO',
 		  'ID_METODOLOGIA_PROGRAMA', 'ID_TIPO_CONTRATO', 'ID_DEDICACION',

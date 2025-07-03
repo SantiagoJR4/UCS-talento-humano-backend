@@ -1624,9 +1624,12 @@ class CallController extends AbstractController
             case 'CTH':
                 $newStateForCall = 3;
                 break;
-            
             default:
-                return new JsonResponse(['message' => 'Usuario no autorizado.'], 403, []);
+                $newStateForCall = 1;
+                $userForNotification = $doctrine->getRepository(User::class)->findOneBy(['specialUser'=>'VF','userType' => 1]);
+                $newNotification->setUser($userForNotification);
+                $newNotification->setMessage('solicita la aprobación de una convocatoria.');
+                break;
         }
         $notification = $doctrine->getRepository(Notification::class)->find($notificationId);
         $notification->setSeen(1);
