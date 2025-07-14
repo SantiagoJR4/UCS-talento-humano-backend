@@ -136,33 +136,55 @@ class UserController extends AbstractController
         return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Actualización de datos Correctamente']);
     }
 
-    #[Route('/update-user-type', name:'app_update_user_type')]
+    #[Route('/update-user-type', name: 'app_update_user_type', methods: ['POST'])]
     public function updateUserType(ManagerRegistry $doctrine, Request $request, validateToken $vToken): JsonResponse
     {
         $token = $request->query->get('token');
 
-        if ($token === false) {
-		  throw new \Exception('Token no válido'); // Puedes manejar los errores de otra manera si prefieres
-	    }
+        if (empty($token)) {
+            return new JsonResponse([
+                'status' => 'Error',
+                'code' => 400,
+                'message' => 'Token no válido'
+            ], 400);
+        }
 
-        $data = json_decode($request->getContent(),true);
+        $data = $request->request->all();
+
+        if (!isset($data['userId'], $data['userType'])) {
+            return new JsonResponse([
+                'status' => 'Error',
+                'code' => 400,
+                'message' => 'Datos incompletos: userId o userType faltante.'
+            ], 400);
+        }
+
         $userId = $data['userId'];
+        $userType = $data['userType'];
+
         $entityManager = $doctrine->getManager();
         $user = $entityManager->getRepository(User::class)->find($userId);
 
         if (!$user) {
-            throw $this->createNotFoundException('El usuario no fue encontrado.');
+            return new JsonResponse([
+                'status' => 'Error',
+                'code' => 404,
+                'message' => 'El usuario no fue encontrado.'
+            ], 404);
         }
 
-        $user->setUserType($data['userType']);
+        $user->setUserType($userType);
 
-        $entityManager = $doctrine->getManager();
         $entityManager->persist($user);
         $entityManager->flush();
 
-        return new JsonResponse(['status'=>'Success','code'=>'200','message'=>'Actualización de datos Correctamente']);
-
+        return new JsonResponse([
+            'status' => 'Success',
+            'code' => 200,
+            'message' => 'Actualización de datos correctamente'
+        ], 200);
     }
+
     
     #[Route('/register', name:'app_user_register')]
     public function registerUser(ManagerRegistry $doctrine, Request $request): JsonResponse
