@@ -3107,7 +3107,7 @@ class ContractController extends AbstractController
 			return new JsonResponse(['ERROR' => 'Token no válido']);
 		}else{
 			$newNotification = new Notification();
-			$newNotification->setSeen(1);
+			$newNotification->setSeen(0);
 			$relatedEntity = array(
 				'applicantId'=>$user->getId(),
 				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
@@ -3184,7 +3184,7 @@ class ContractController extends AbstractController
 		}
 
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
-		$notification->setSeen(1);
+		$notification->setSeen(0);
 		$history = $reemployment->getHistory();
 		date_default_timezone_set('America/Bogota');
 		$addToHistory = json_encode(array(
