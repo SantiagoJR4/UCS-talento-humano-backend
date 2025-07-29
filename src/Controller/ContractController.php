@@ -940,7 +940,7 @@ class ContractController extends AbstractController
 	//--------------------------------------------------------------------------------------------
 	// PERMISOS Y LICENCIAS.
 	#[Route('/contract/create-permission', name:'app_contract_create_permission')]
-	public function createPermission( ManagerRegistry $doctrine,Request $request): JsonResponse
+	public function createPermission( ManagerRegistry $doctrine,Request $request, MailerInterface $mailer): JsonResponse
 	{
 		$isValidToken = $this->validateTokenSuper($request)->getContent();
 		$entityManager = $doctrine->getManager();
@@ -949,6 +949,7 @@ class ContractController extends AbstractController
 			return new JsonResponse(['ERROR' => 'Token no válido']);
 		}else{
 			$user = $entityManager->getRepository(User::class)->find($data['user']);
+			$emailUser = $user->getEmail();
 			if (!$user) {
 					throw $this->createNotFoundException('No user found for id' . $data['id']);
 			}
@@ -1005,6 +1006,7 @@ class ContractController extends AbstractController
 			foreach ($immediateBossArray as $boss) {
 				$bossID = $boss['id'];
 				$immediateBossUsers = $doctrine->getRepository(User::class)->find($bossID);
+				$specialUserBoss = $immediateBossUsers->getSpecialUser();
 				$newNotification = new Notification();
 				$newNotification->setSeen(0);
 				$newNotification->setUser($immediateBossUsers);
@@ -1020,6 +1022,25 @@ class ContractController extends AbstractController
 				
 				$entityManager->persist($newNotification);
 			}
+
+			// try{
+			// 	$email = (new TemplatedEmail())
+			// 			->from($user->getEmail())
+			// 			->to($user->getEmail(),'auxiliar2.oasic@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
+			// 			->subject('Solicitud de Permiso')
+			// 			->htmlTemplate('email/medicalTestUpdateEmail.html.twig')
+			// 			->context([
+			// 					'user' => $user,
+			// 					'fields' => $fields,
+			// 			]);   
+			// 	$email->getHeaders()->addTextHeader('X-Transport','alternative');         
+			// 	$mailer->send($email);
+			// 	$message = 'El examén médico fue actualizado con éxito, se envío un correo con la información a ' . $user->getEmail();
+			// } catch (\Throwable $th) {
+			// 	$message = 'Error al enviar el correo:'.$th->getMessage();
+			// 	return new JsonResponse(['status'=>'Error','message'=>$message]);
+			// }
+
 
 			$entityManager->flush();
 
@@ -2464,9 +2485,10 @@ class ContractController extends AbstractController
 				$state = $userInRequisition->getState();
 	
 				$existingDirectContract = $entityManager->getRepository(DirectContract::class)->findOneBy([
-					'requisition' => $requisition
+					'requisition' => $requisition,
+					'state' => 1
 				]);
-	
+
 				if ($user) {
 					$userData = [
 						'user' => $user->getNames().' '.$user->getLastNames(),
@@ -3862,6 +3884,7 @@ class ContractController extends AbstractController
 			
 			-- Datos personales
 			JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_expedition, '$.nom_mpio')) AS LUGAR_EXPEDICION,
+			pd.expedition_date AS FECHA_EXPEDICION,
 			pd.birthday AS FECHA_NACIMIENTO,
 			JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.nom_mpio')) AS LUGAR_NACIMIENTO,
 			JSON_UNQUOTE(JSON_EXTRACT(pd.place_of_birth, '$.cod_mpio')) AS ID_MUNICIPIO_NACIMIENTO,
@@ -4027,7 +4050,7 @@ class ContractController extends AbstractController
   
 	  // Agregar encabezados
 	  $headers = [
-		  'Tipo de vinculación','Nombre', 'Apellido', 'NUM_DOCUMENTO', 'Periodo', 'Tipo de Contrato' ,'LUGAR_EXPEDICION', 'FECHA_NACIMIENTO',
+		  'Tipo de vinculación','Nombre', 'Apellido', 'NUM_DOCUMENTO', 'Periodo', 'Tipo de Contrato' ,'LUGAR_EXPEDICION', 'FECHA_EXPEDICION' ,'FECHA_NACIMIENTO',
 		  'LUGAR_NACIMIENTO', 'ID_MUNICIPIO_NACIMIENTO', 'ID_NIVEL_MAXESTUDIO',
 		  'TITULO_RECIBIDO', 'FECHA_GRADO', 'TITULO_CONVALIDADO', 'NOMBRE_INSTITUCION_ESTUDIO',
 		  'ID_METODOLOGIA_PROGRAMA', 'ID_TIPO_CONTRATO', 'ID_DEDICACION',
