@@ -1972,6 +1972,7 @@ class ContractController extends AbstractController
 			return new JsonResponse(['message'=>'No existe ninguna incapacidad solicitada'],400,[]);
 		}
 		$newNotification = new Notification();
+		$newNotification->setSeen(0);
 		$userNames = $doctrine->getRepository(User::class)->find($applicant);
 	
 		$relatedEntity = array(
