@@ -1974,7 +1974,6 @@ class ContractController extends AbstractController
 		$newNotification = new Notification();
 		$userNames = $doctrine->getRepository(User::class)->find($applicant);
 	
-		$userNames= $userNames->getNames();
 		$relatedEntity = array(
 			'id' => $incapacityId,
 			'applicantId' => $applicant,
