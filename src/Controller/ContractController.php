@@ -214,7 +214,7 @@ class ContractController extends AbstractController
 			try{
 					$email = (new TemplatedEmail())
 							->from('sgsst@unicatolicadelsur.edu.co')
-							->to($user->getEmail(),'pasante.santiago@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
+							->to($user->getEmail()) //remplazar correo de seguridad y salud
 							->subject('Actualización Cita Médica')
 							->htmlTemplate('email/medicalTestUpdateEmail.html.twig')
 							->context([
@@ -1972,9 +1972,9 @@ class ContractController extends AbstractController
 			return new JsonResponse(['message'=>'No existe ninguna incapacidad solicitada'],400,[]);
 		}
 		$newNotification = new Notification();
+		$newNotification->setSeen(0);
 		$userNames = $doctrine->getRepository(User::class)->find($applicant);
 	
-		$userNames= $userNames->getNames();
 		$relatedEntity = array(
 			'id' => $incapacityId,
 			'applicantId' => $applicant,
@@ -3129,7 +3129,7 @@ class ContractController extends AbstractController
 			return new JsonResponse(['ERROR' => 'Token no válido']);
 		}else{
 			$newNotification = new Notification();
-			$newNotification->setSeen(1);
+			$newNotification->setSeen(0);
 			$relatedEntity = array(
 				'applicantId'=>$user->getId(),
 				'applicantName'=>$user->getNames()." ".$user->getLastNames(),
@@ -3206,7 +3206,7 @@ class ContractController extends AbstractController
 		}
 
 		$notification = $doctrine->getRepository(Notification::class)->find($notificationId);
-		$notification->setSeen(1);
+		$notification->setSeen(0);
 		$history = $reemployment->getHistory();
 		date_default_timezone_set('America/Bogota');
 		$addToHistory = json_encode(array(
