@@ -1686,67 +1686,13 @@ class CallController extends AbstractController
         $data = [
             [
                 "fullname" => "Sebastian de Belacazar",
-                "callName" => "60",
+                "callName" => "65",
                 "email" => "luisportilla009@gmail.com",
                 "identification" => 45454545,
-                "date" => "27/01/2025",
-                "hour" => "3:00 PM",
-                "fulldate" => "Lunes 27 de Enero de 2025 a las 3:00 PM"
-            ],
-            // [
-            //     "fullname" => "Dario Esteban Delgado Maigual",
-            //     "callName" => "58",
-            //     "email" => "estebandelgadoinc@gmail.com",
-            //     "identification" => 1085278208,
-            //     "date" => "27/01/2025",
-            //     "hour" => "3:00 PM",
-            //     "fulldate" => "Lunes 27 de Enero de 2025 a las 3:00 PM"
-            // ],
-            // [
-            //     "fullname" => "Helmer Fernando Jaguandoy Tobar",
-            //     "callName" => "58",
-            //     "email" => "hfjt822@gmail.com",
-            //     "identification" => 10852093813,
-            //     "date" => "28/01/2025",
-            //     "hour" => "3:40 PM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 3:40 PM"
-            // ],
-            // [
-            //     "fullname" => "Jim Dennis Benavides Melo",
-            //     "callName" => "52",
-            //     "email" => "jimbenavides@gmail.com",
-            //     "identification" => 98400008,
-            //     "date" => "28/01/2025",
-            //     "hour" => "8:00 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 8:00 AM"
-            // ],
-            // [
-            //     "fullname" => "Diego Mauricio Diaz Velásquez",
-            //     "callName" => "50",
-            //     "email" => "dmdiazv@gmail.com",
-            //     "identification" => 1085245429,
-            //     "date" => "28/01/2025",
-            //     "hour" => "8:40 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 8:40 AM"
-            // ],
-            // [
-            //     "fullname" => "Lisseth Vanessa Acosta Ordoñez",
-            //     "callName" => "50",
-            //     "email" => "lisethao1@gmail.com",
-            //     "identification" => 1085336288,
-            //     "date" => "28/01/2025",
-            //     "hour" => "9:20 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 9:20 AM"
-            // ],
-            // [
-            //     "fullname" => "María Paula Melo Delgado",
-            //     "callName" => "50",
-            //     "email" => "mariapaulamelo19@gmail.com",
-            //     "identification" => 1085335245,
-            //     "date" => "28/01/2025",
-            //     "hour" => "10:30 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 10:30 AM"
-            // ]
+                "date" => "22/07/2025",
+                "hour" => "8:00 AM",
+                "fulldate" => "Martes 22 de Julio de 2025 a las 8:00 AM"
+            ]
         ];
         
         
@@ -1755,8 +1701,8 @@ class CallController extends AbstractController
                 $email = (new TemplatedEmail())
                     ->from('convocatorias@unicatolicadelsur.edu.co')
                     ->to($value['email'])
-                    ->subject('Citación a entrevista')
-                    ->htmlTemplate('email/recordatoryChangesToDates.html.twig')
+                    ->subject('Citación a Prueba de conocimientos')
+                    ->htmlTemplate('email/knowledgeTestCitationEmail.html.twig')
                     ->context([
                         'fullname' => $value['fullname'],
                         'identification' => $value['identification'],
@@ -1816,7 +1762,7 @@ class CallController extends AbstractController
     }
 
     #[Route('/failed-or-deserted-call', name: 'app_failed_or_deserted_call')]
-    public function failedOrDesertedCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    public function failedOrDesertedCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken, MailerInterface $mailer): JsonResponse
     {
         $token= $request->query->get('token');
         $user =  $vToken->getUserIdFromToken($token);
@@ -1839,6 +1785,52 @@ class CallController extends AbstractController
             ];
             $callHistory[] = $addToHistory;
             $call->setHistory(json_encode($callHistory));
+            // First, find the maximum length
+            $connection = $doctrine->getConnection();
+
+            $sql = '
+                SELECT MAX(JSON_LENGTH(user_status)) AS maxLength
+                FROM users_in_call
+                WHERE call_id = :callId
+            ';
+
+            $maxLength = $connection->fetchOne($sql, ['callId' => $callId]);
+
+            // Then, get all users with that length
+            $sql = '
+                SELECT u.email, CONCAT(u.names, " ", u.last_names) AS fullName
+                FROM users_in_call uic
+                INNER JOIN user u ON uic.user_id = u.id
+                WHERE uic.call_id = :callId
+                AND JSON_LENGTH(uic.user_status) = :maxLength
+            ';
+
+            $usersInCall = $connection->fetchAllAssociative($sql, [
+                'callId' => $callId,
+                'maxLength' => $maxLength,
+            ]);
+
+                        
+            $callName = $call->getName();
+            
+            foreach ($usersInCall as $user) {
+                try {
+                    $email = (new TemplatedEmail())
+                        ->from('convocatorias@unicatolicadelsur.edu.co')
+                        ->to($user['email'])
+                        ->subject('Notificación de convocatoria fallida o desierta')
+                        ->htmlTemplate('email/notSelectedForCall.html.twig')
+                        ->context([
+                            'fullname' => $user['fullName'],
+                            'callName' => $callName,
+                            'description' => $description
+                        ]);
+                    $mailer->send($email);
+                } catch (\Throwable $th) {
+                    return new JsonResponse(['message' => $th->getMessage()], 500);
+                }
+            }
+
             $entityManager->flush();
             return new JsonResponse(['message' => 'La convocatoria ha sido declarada como fallida o desierta de manera exitosa.']);
         } catch (\Throwable $th) {
@@ -1860,60 +1852,6 @@ class CallController extends AbstractController
                 "hour" => "3:00 PM",
                 "fulldate" => "Lunes 27 de Enero de 2025 a las 3:00 PM"
             ],
-            // [
-            //     "fullname" => "Dario Esteban Delgado Maigual",
-            //     "callName" => "53",
-            //     "email" => "estebandelgadoinc@gmail.com",
-            //     "identification" => 1085278208,
-            //     "date" => "27/01/2025",
-            //     "hour" => "3:00 PM",
-            //     "fulldate" => "Lunes 27 de Enero de 2025 a las 3:00 PM"
-            // ],
-            // [
-            //     "fullname" => "Helmer Fernando Jaguandoy Tobar",
-            //     "callName" => "53",
-            //     "email" => "hfjt822@gmail.com",
-            //     "identification" => 10852093813,
-            //     "date" => "28/01/2025",
-            //     "hour" => "3:40 PM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 3:40 PM"
-            // ],
-            // [
-            //     "fullname" => "Jim Dennis Benavides Melo",
-            //     "callName" => "53",
-            //     "email" => "jimbenavides@gmail.com",
-            //     "identification" => 98400008,
-            //     "date" => "28/01/2025",
-            //     "hour" => "8:00 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 8:00 AM"
-            // ],
-            // [
-            //     "fullname" => "Diego Mauricio Diaz Velasquez",
-            //     "callName" => "53",
-            //     "email" => "dmdiazv@gmail.com",
-            //     "identification" => 1085245429,
-            //     "date" => "28/01/2025",
-            //     "hour" => "8:40 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 8:40 AM"
-            // ],
-            // [
-            //     "fullname" => "Lisseth Vanessa Acosta OrdoÑez",
-            //     "callName" => "53",
-            //     "email" => "lisethao1@gmail.com",
-            //     "identification" => 1085336288,
-            //     "date" => "28/01/2025",
-            //     "hour" => "9:20 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 9:20 AM"
-            // ],
-            // [
-            //     "fullname" => "María Paula Melo Delgado",
-            //     "callName" => "53",
-            //     "email" => "mariapaulamelo19@gmail.com",
-            //     "identification" => 1085335245,
-            //     "date" => "28/01/2025",
-            //     "hour" => "10:30 AM",
-            //     "fulldate" => "Martes 28 de Enero de 2025 a las 10:30 AM"
-            // ]
         ];
         
         
@@ -1939,6 +1877,33 @@ class CallController extends AbstractController
         }
 
         return new JsonResponse(['data'=>'hecho'], 200, []);
+    }
+
+    #[Route('/change-call-dates', name: 'app_change_call_dates')]
+    public function changeCallDates(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        $dates = $request->request->all();
+        if(!$user) {
+            return new JsonResponse(['message' => 'Usuario no autorizado.'], 403, []);
+        }
+        $callId = $request->request->get('id');
+        try {
+            $call = $doctrine->getRepository(TblCall::class)->find($callId);
+            foreach( $dates as $key => $value) {
+                if($key !== 'id'){
+                    $dateTime = new DateTime($value);
+                    $call->{'set'.$key}($dateTime);
+                }
+            }
+            $entityManager = $doctrine->getManager();
+            $entityManager->flush();
+    
+            return new JsonResponse(['message' => 'Fechas de la convocatoria actualizadas con éxito.'], 200, []);
+        } catch (\Throwable $th) {
+            return new JsonResponse(['message' => 'Error al cambiar las fechas de la convocatoria.'], 500, []);
+        }
     }
 
 }
