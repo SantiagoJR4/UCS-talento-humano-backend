@@ -1906,4 +1906,46 @@ class CallController extends AbstractController
         }
     }
 
+    #[Route('/zero-hv-score-for-user-in-call', name: 'app_zero_hv_score_for_user_in_call')]
+    public function zeroHvScoreForUserInCall(ManagerRegistry $doctrine, Request $request, ValidateToken $vToken): JsonResponse
+    {
+        $token = $request->query->get('token');
+        $user =  $vToken->getUserIdFromToken($token);
+        if(!$user) {
+            return new JsonResponse(['message' => 'Usuario no autorizado.'], 403, []);
+        }
+        $userInCallId = $request->request->get('userInCallId');
+        try {
+            $userInCall = $doctrine->getRepository(UsersInCall::class)->find($userInCallId);
+            $ratedUser = $userInCall->getUser();
+            $userInCall->setHvRating('{"total":0}');
+            // $userInCall->
+            
+            $call = $userInCall->getCall();
+
+            $userInCallStatus = json_decode($userInCall->getStatus(), true);
+            $userInCallStatus['CVSTATUS'] = 3;
+            $userInCall->setStatus(json_encode($userInCallStatus));
+
+            $history = json_decode($call->getHistory(), true);
+            date_default_timezone_set('America/Bogota');
+            $addToHistory = array(
+                'user' => $user->getId(),
+                'responsible' => $user->getSpecialUser(),
+                'state' => 0,
+                'message' => $user->getNames()." ".$user->getLastNames().' le ha colocado directamente una nota de CERO al usuario '.$ratedUser->getNames()." ".$ratedUser->getLastNames().'.',
+                'date' => date('Y-m-d H:i:s'),
+            );
+            $history[] = $addToHistory;
+            $call->setHistory(json_encode($history));
+
+            $entityManager = $doctrine->getManager();
+            $entityManager->flush();
+    
+            return new JsonResponse(['message' => 'Puntaje de hoja de vida actualizado con éxito.'], 200, []);
+        } catch (\Throwable $th) {
+            return new JsonResponse(['message' => 'Error al actualizar el puntaje de hoja de vida.'], 500, []);
+        }
+    }
+
 }
