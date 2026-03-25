@@ -3,3 +3,4 @@ framework:
         transports:
             main: '%env(MAILER_DSN)%'
             alternative: '%env(MAILER_DSN_ALT)%'
+            alternative2: '%env(MAILER_DSN_ALT2)%'
