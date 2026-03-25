@@ -29,6 +29,7 @@ class IctusController extends AbstractController
             $email = (new TemplatedEmail())
                 ->from('webmaster@unicatolicadelsur.edu.co')
                 ->to($data['email'])
+                ->cc('mercadeo@unicatolicadelsur.edu.co')
                 ->subject('Confirmación de Registro')
                 ->htmlTemplate('ictus/verification_email.twig')
                 ->context([
