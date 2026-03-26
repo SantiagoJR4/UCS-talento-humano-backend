@@ -48,4 +48,34 @@ class IctusController extends AbstractController
 
         return new JsonResponse(['message' => $message], Response::HTTP_OK);
     }
+
+    #[Route('/ictus/send-risk-email', name: 'app_ictus_send_risk_email')]
+    public function sendRiskEmail(MailerInterface $mailer, Request $request): JsonResponse
+    {
+        $data = $request->request->all();
+        
+        try {
+            $email = (new TemplatedEmail())
+                ->from('webmaster@unicatolicadelsur.edu.co')
+                ->to($data['correoDocente'])
+                ->cc($data['directorPrograma'])
+                ->bcc('permanencia@unicatolicadelsur.edu.co')
+                ->subject($data['mensaje'])
+                ->htmlTemplate('ictus/risk.html.twig')
+                ->context([
+                    'mensaje' => $data['mensaje'],
+                    'programa' => $data['programa'],
+                    'datos' => $data['datos']
+                ])
+            ;
+            $email->getHeaders()->addTextHeader('X-transport', 'alternative2');
+            $mailer->send($email);
+            $message = 'Correo de alerta de riesgo enviado exitosamente.';
+        } catch (\Throwable $th) {
+            $message = 'Error al enviar el correo de alerta de riesgo.';
+            return new JsonResponse(['error' => $message, 'details' => $th->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }   
+
+        return new JsonResponse(['message' => $message], Response::HTTP_OK);
+    }
 }

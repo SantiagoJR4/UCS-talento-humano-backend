@@ -1,0 +1,35 @@
+<h3 class="headEmail">{{mensaje}}</h3>
+
+<table style="font-size:13px; border:1pt solid windowtext; color:#000;" border="0">
+	<tbody>
+		<tr>
+			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Programa:</td>
+			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">{{programa}}</td>
+		</tr>
+		<tr>
+			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Semestre:</td>
+			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">{{datos.semestre}}</td>
+		</tr>
+		<tr>
+			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Estudiante:</td>
+			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">{{datos.nombres}} {{datos.apellidos}}</td>
+		</tr>
+		<tr>
+			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Materia:</td>
+			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">{{datos.nombre}}</td>
+		</tr>
+		<tr>
+			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Docente:</td>
+			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">{{datos.nombresdocente}} {{datos.apellidosdocente}}</td>
+		</tr>
+		<tr>
+			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Horas Acumuladas:</td>
+			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">{{datos.faltas}}</td>
+		</tr>
+		<tr>
+			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">20% de las Horas:</td>
+			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">{{datos.horas * 0.2}}</td>
+		</tr>
+	</tbody>
+</table>
+<br>
