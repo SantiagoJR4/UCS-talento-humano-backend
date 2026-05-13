@@ -78,4 +78,39 @@ class IctusController extends AbstractController
 
         return new JsonResponse(['message' => $message], Response::HTTP_OK);
     }
+
+    #[Route('/ictus/send-admitted-student-email', name: 'app_ictus_send_admitted_student_email')]
+    public function sendAdmittedStudentEmail(MailerInterface $mailer, Request $request): JsonResponse
+    {
+        $data = $request->request->all();
+        
+        try {
+            $email = (new TemplatedEmail())
+                ->from('webmaster@unicatolicadelsur.edu.co')
+                ->to($data['correoEstudiante'])
+                ->cc($data['correoMercadeo'])
+                // ->bcc('permanencia@unicatolicadelsur.edu.co')
+                ->subject($data['mensaje'])
+                ->htmlTemplate('ictus/admitted_student.html.twig')
+                ->context([
+                    'nombres' => $data['nombres'],
+                    'apellidos' => $data['apellidos'],
+                    'numero' => $data['numero'],
+                    'tipoIdentificacion' => $data['tipoIdentificacion'],
+                    'programa' => $data['programa'],
+                    'inscrito' => $data['inscrito'],
+                ])
+            ;
+            $email->getHeaders()->addTextHeader('X-transport', 'alternative2');
+            $mailer->send($email);
+            $message = 'Correo de estudiante admitido enviado exitosamente.';
+        } catch (\Throwable $th) {
+            $message = 'Error al enviar el correo de estudiante admitido.';
+            return new JsonResponse(['error' => $message, 'details' => $th->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }   
+
+        return new JsonResponse(['message' => $message], Response::HTTP_OK);
+    }
+
+    
 }
