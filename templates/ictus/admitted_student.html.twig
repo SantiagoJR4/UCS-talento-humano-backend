@@ -1,80 +1,146 @@
 {# app/Resources/views/email/asistencia.html.twig #}
-<h2>Información de Admisión {{nombres}} {{apellidos}}</h2>
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="margin:0; padding:20px; background-color:#f4f7f5; font-family:Arial,sans-serif;">
 
-<table style="font-size:13px; border:1pt solid windowtext; color:#000;" border="0">
-	<tbody>
-		<tr>
-			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Programa:</td>
-			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">{{programa}}</td>
-		</tr>
-		<tr>
-			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Estado:</td>
-			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">Estudiante ADMITIDO</td>
-		</tr>
-		<tr>
-			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Semestre:</td>
-			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">Primero</td>
-		</tr>
-		<tr>
-			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Nombres</td>
-			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">{{nombres}} {{apellidos}}</td>
-		</tr>
-		<tr>
-			<td style="width:120px; padding:0pt 5pt; font-weight:bold; border:1pt solid windowtext;">Documento</td>
-			<td style="width:411px; padding:0pt 5pt; border:1pt solid windowtext;">{{tipoIdentificacion}} {{numero}}</td>
-		</tr>
-	</tbody>
+<table width="600" cellpadding="0" cellspacing="0" style="margin:0 auto; background:#ffffff; border-radius:8px; overflow:hidden; border:1px solid #c8e6d5;">
+
+  {{# ── Header ── #}}
+  <tr>
+    <td style="background:#1a5c38; padding:28px 32px 22px;">
+      <p style="margin:0 0 6px; font-size:11px; color:#a8d5b8; letter-spacing:0.08em; text-transform:uppercase;">Fundación Universitaria Católica del Sur</p>
+      <p style="margin:0; font-size:22px; font-weight:bold; color:#ffffff;">Información de Admisión</p>
+      <p style="margin:4px 0 0; font-size:17px; color:#c5e8d2;">{{ nombres }} {{ apellidos }}</p>
+    </td>
+  </tr>
+
+  {{# ── Admitted badge ── #}}
+  <tr>
+    <td style="background:#f0f8f3; border-bottom:1px solid #c8e6d5; padding:12px 32px;">
+      <span style="display:inline-block; background:#d4edde; border:1px solid #a8d5b8; border-radius:20px; padding:5px 16px; font-size:13px; font-weight:bold; color:#1a5c38;">
+        &#10003;&nbsp; Estudiante ADMITIDO — Semestre 1
+      </span>
+    </td>
+  </tr>
+
+  {{# ── Student info ── #}}
+  <tr>
+    <td style="padding:24px 32px 8px;">
+      <p style="margin:0 0 12px; font-size:11px; color:#6b7c6f; text-transform:uppercase; letter-spacing:0.07em;">Datos del estudiante</p>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr style="border-bottom:1px solid #e8f0eb;">
+          <td style="padding:9px 0; font-size:13px; color:#6b7c6f; width:140px;">Programa</td>
+          <td style="padding:9px 0; font-size:14px; font-weight:bold; color:#1a2e22;">{{ programa }}</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e8f0eb;">
+          <td style="padding:9px 0; font-size:13px; color:#6b7c6f;">Nombre completo</td>
+          <td style="padding:9px 0; font-size:14px; font-weight:bold; color:#1a2e22;">{{ nombres }} {{ apellidos }}</td>
+        </tr>
+        <tr>
+          <td style="padding:9px 0; font-size:13px; color:#6b7c6f;">Documento</td>
+          <td style="padding:9px 0; font-size:14px; font-weight:bold; color:#1a2e22;">{{ tipoIdentificacion }} {{ numero }}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  {{# ── Welcome ── #}}
+  <tr>
+    <td style="padding:16px 32px 20px;">
+      <p style="margin:0 0 10px; font-size:17px; font-weight:bold; color:#1a5c38;">¡Bienvenido(a) a Unicatólica del Sur!</p>
+      <p style="margin:0 0 10px; font-size:14px; color:#3d4f45; line-height:1.7;">
+        Ha sido admitido(a) para cursar el primer semestre del programa de <strong>{{ programa }}</strong> en el periodo <strong>{{ periodo }}</strong>.
+      </p>
+      <p style="margin:0 0 18px; font-size:14px; color:#3d4f45; line-height:1.7;">
+        Ingrese a la plataforma de inscripciones para descargar su recibo de pago y ver las instrucciones de matrícula:
+      </p>
+      <table cellpadding="0" cellspacing="0" style="margin:0 auto;">
+        <tr>
+          <td style="background:#1a5c38; border-radius:6px; padding:11px 28px; text-align:center;">
+            <a href="http://inscripciones.unicatolicadelsur.edu.co" target="_blank" style="color:#ffffff; font-size:14px; font-weight:bold; text-decoration:none;">
+              Ver instrucciones de matrícula &rarr;
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  {{# ── Financing ── #}}
+  <tr>
+    <td style="background:#fffdf0; border-top:1px solid #f0e9b5; border-bottom:1px solid #f0e9b5; padding:20px 32px;">
+      <p style="margin:0 0 12px; font-size:11px; color:#8a7d2e; text-transform:uppercase; letter-spacing:0.07em;">Opciones de financiación</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px; color:#4a4020;">
+        <tr style="border-bottom:1px solid #f0e9b5;">
+          <td style="padding:8px 0; font-weight:bold; width:130px;">Davivienda</td>
+          <td style="padding:8px 0; color:#6b5e2a;">Asesor: Eli Oliva &mdash; Cel. 321 811 7627</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f0e9b5;">
+          <td style="padding:8px 0; font-weight:bold;">Sufi</td>
+          <td style="padding:8px 0; color:#6b5e2a;">Chatbot Susi &mdash; Cel. 318 752 8722</td>
+        </tr>
+        <tr style="border-bottom:1px solid #f0e9b5;">
+          <td style="padding:8px 0; font-weight:bold;">Coop. Comuna</td>
+          <td style="padding:8px 0; color:#6b5e2a;">Asesora: Adriana Revelo &mdash; Cel. 300 791 3312</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0; font-weight:bold;">Icetex</td>
+          <td style="padding:8px 0; color:#6b5e2a;">Cel. 333 602 5656</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  {{# ── Address & contact (conditional) ── #}}
+  <tr>
+    <td style="padding:20px 32px;">
+      <p style="margin:0 0 12px; font-size:11px; color:#6b7c6f; text-transform:uppercase; letter-spacing:0.07em;">Sede y contacto</p>
+      {% if programaId == 6 %}
+        <p style="margin:0 0 12px; font-size:13px; color:#3d4f45; line-height:1.6;">
+          &#128205; Normal Superior San Carlos<br><span style="color:#6b7c6f;">Cl. 12 #4-24, La Unión</span>
+        </p>
+      {% elseif programaId == 7 %}
+        <p style="margin:0 0 12px; font-size:13px; color:#3d4f45; line-height:1.6;">
+          &#128205; Colegio Seminario<br><span style="color:#6b7c6f;">Cl. 10 #7a Norte, Ipiales</span>
+        </p>
+      {% else %}
+        <p style="margin:0 0 12px; font-size:13px; color:#3d4f45; line-height:1.6;">
+          &#128205; Fundación Universitaria Católica del Sur<br><span style="color:#6b7c6f;">Cl. 18 #56-02, Pasto</span>
+        </p>
+      {% endif %}
+      <table style="font-size:13px; color:#3d4f45;" cellpadding="0" cellspacing="0">
+        {% if programaId == 6 %}
+        <tr>
+          <td style="padding:4px 0;">&#128242; Celular:</td>
+          <td style="padding:4px 0 4px 12px; font-weight:bold;">321 617 4929</td>
+        </tr>
+        {% elseif programaId == 7 %}
+        <tr>
+          <td style="padding:4px 0;">&#128242; Celular:</td>
+          <td style="padding:4px 0 4px 12px; font-weight:bold;">321 617 4886</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td style="padding:4px 0;">&#128242; Celular:</td>
+          <td style="padding:4px 0 4px 12px; font-weight:bold;">314 778 3658</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  {{# ── Footer ── #}}
+  <tr>
+    <td style="background:#f0f8f3; border-top:1px solid #c8e6d5; padding:18px 32px;">
+      <p style="margin:0; font-size:13px; color:#6b7c6f; line-height:1.6;">
+        ¿Tiene dudas? Escríbanos a
+        <a href="mailto:mercadeo@unicatolicadelsur.edu.co" style="color:#1a5c38; text-decoration:none;">mercadeo@unicatolicadelsur.edu.co</a>
+        &nbsp;o consulte la plataforma en
+        <a href="http://inscripciones.unicatolicadelsur.edu.co" target="_blank" style="color:#1a5c38; text-decoration:none;">inscripciones.unicatolicadelsur.edu.co</a>
+      </p>
+    </td>
+  </tr>
+
 </table>
-<br>
-<hr>
-<div style="font-size:13px;">
-	<p style="font-size:16px; color:#000;">La Fundación Universitaria Católica del Sur le da la BIENVENIDA a nuestra institución educativa!</p>
-	<p style="font-size:13px; color:#000;">Usted ha sido admitido (a) para cursar el primer semestre del programa de {{programa}} {{periodo}}, Ingresa a la plataforma de inscripciones <a href="http://inscripciones.unicatolicadelsur.edu.co" target="_blank"> Aquí</a> para descargar tu recibo de pago y ver más instrucciones:</p>
-	<br>
-	{# <ol> #}
-		{# <li> #}
-	Si Ud. desea financiar su matrícula, la Unicatólica del Sur tiene convenios de financiación con:<br><br>
-	<ul class="list-group">
-		<li class="list-group-item">Davivienda Asesor: Eli Oliva al Cel. 321 811 7627</li>
-		<li class="list-group-item">Sufi Chatbot: Susi al Cel. 318 752 8722</li>
-		<li class="list-group-item">Cooperativa Comuna Asesor Adriana Revelo al Cel. 300 791 3312</li>
-		<li class="list-group-item">Icetex al Cel. 333 602 5656</li>
-		{# <li class="list-group-item">Bancolombia – Crédito Sufi. Asesor DARIO OVIEDO, celular 3173714284</li> #}
-	</ul>
-		{# </li> #}
-		<br>
-		{# <li>
-			Información de cursos nivelatorios y uniforme lo puedes encontrar en nuestra página web o en esté enlace <a href="https://www.unicatolicadelsur.edu.co/catsur/wp-content/uploads/2021/08/informacionProgramas.pdf" target="_blank">Descargar</a>
-		</li> #}
-	{# </ol> #}
-
-	{% if programaId == 6 %}
-	<p style="font-size:13px; color:#000;">Dirección: Normal Superior San Carlos, Cl. 12 #4-24, La Unión</p>
-	{% elseif programaId == 7 %}
-	<p style="font-size:13px; color:#000;">Dirección: Colegio Seminario, Cl. 10 #7a Norte-2 a 7a Norte-54, Ipiales</p>
-	{% else %}
-	<p style="font-size:13px; color:#000;">Dirección: Fundación Universitaria Católica del Sur, Cl 18 #56-02, Pasto</p>
-	{% endif %}
-	<br>
-	<p style="font-size:13px; color:#000;">Si se presenta alguna duda con esta información, por favor hacerlo saber a través de este correo 📧 mercadeo@unicatolicadelsur.edu.co o comunicándose a los números de teléfono relacionados a continuación.</p>
-	<ul class="list-group col-md-4">
-	{% if programaId == 6 %}
-	<li class="list-group-item d-flex justify-content-between align-items-center">
-		📱Celular:
-		<span class="badge badge-primary badge-pill"> 321 617 4929</span>
-	</li>
-	{% elseif programaId == 7 %}
-	<li class="list-group-item d-flex justify-content-between align-items-center">
-		📱Celular:
-		<span class="badge badge-primary badge-pill"> 321 617 4886</span>
-	</li>
-	{% endif %}
-	<li class="list-group-item d-flex justify-content-between align-items-center">
-		📱Celular:
-		<span class="badge badge-primary badge-pill"> 314 778 3658</span>
-	</li>
-	</ul>
-	<br>
-
-	<p style="font-size:13px; color:#000;">Esta información también está disponible a través de la plataforma <a href="http://inscripciones.unicatolicadelsur.edu.co" target="_blank">inscripciones.unicatolicadelsur.edu.co</a></p>
-</div>
+</body>
+</html>
