@@ -99,6 +99,7 @@ class IctusController extends AbstractController
                     'tipoIdentificacion' => $data['tipoIdentificacion'],
                     'programa' => $data['programa'],
                     'inscrito' => $data['inscrito'],
+                    'periodo' => $data['periodo']
                 ])
             ;
             $email->getHeaders()->addTextHeader('X-transport', 'alternative2');
