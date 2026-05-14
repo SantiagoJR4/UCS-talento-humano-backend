@@ -30,27 +30,49 @@
 <div style="font-size:13px;">
 	<p style="font-size:16px; color:#000;">La Fundación Universitaria Católica del Sur le da la BIENVENIDA a nuestra institución educativa!</p>
 	<p style="font-size:13px; color:#000;">Usted ha sido admitido (a) para cursar el primer semestre del programa de {{programa}} {{periodo}}, Ingresa a la plataforma de inscripciones <a href="http://inscripciones.unicatolicadelsur.edu.co" target="_blank"> Aquí</a> para descargar tu recibo de pago y ver más instrucciones:</p>
-	<ol>
-		<li>
-			Si Ud. desea financiar su matrícula, la Unicatólica del Sur tiene convenios de financiación con:<br><br>
-			<ul class="list-group">
-				<li class="list-group-item">Cooperativa Comuna (Carrera 45 No. 18-38 Edificio Alicante Barrio Pandiaco) asesor RODRIGO GARCIA CARDONA al Cel. 3012978386</li>
-				<li class="list-group-item">Bancolombia – Crédito Sufi. Asesor DARIO OVIEDO, celular 3173714284</li>
-				<li class="list-group-item">ICETEX Calle 18 No. 24-29, oficina 302 y 303, edificio Los Andes. 8:00 am a 12:30 pm, 2:00 pm a 4:30 pm.</li>
-			</ul>
-		</li>	
+	<br>
+	{# <ol> #}
+		{# <li> #}
+	Si Ud. desea financiar su matrícula, la Unicatólica del Sur tiene convenios de financiación con:<br><br>
+	<ul class="list-group">
+		<li class="list-group-item">Davivienda Asesor: Eli Oliva al Cel. 321 811 7627</li>
+		<li class="list-group-item">Sufi Chatbot: Susi al Cel. 318 752 8722</li>
+		<li class="list-group-item">Cooperativa Comuna Asesor Adriana Revelo al Cel. 300 791 3312</li>
+		<li class="list-group-item">Icetex al Cel. 333 602 5656</li>
+		{# <li class="list-group-item">Bancolombia – Crédito Sufi. Asesor DARIO OVIEDO, celular 3173714284</li> #}
+	</ul>
+		{# </li> #}
 		<br>
-		<li>
+		{# <li>
 			Información de cursos nivelatorios y uniforme lo puedes encontrar en nuestra página web o en esté enlace <a href="https://www.unicatolicadelsur.edu.co/catsur/wp-content/uploads/2021/08/informacionProgramas.pdf" target="_blank">Descargar</a>
-		</li>
-	</ol>
+		</li> #}
+	{# </ol> #}
 
-	<p style="font-size:13px; color:#000;">Si se presenta alguna duda con esta información, por favor hacerlo saber a través de este correo <i class="far fa-envelope"></i> asistente.mercadeo@unicatolicadelsur.edu.co o comunicándose a los números de teléfono relacionados a continuación.</p>
+	{% if programaId == 6 %}
+	<p style="font-size:13px; color:#000;">Dirección: Normal Superior San Carlos, Cl. 12 #4-24, La Unión</p>
+	{% elseif programaId == 7 %}
+	<p style="font-size:13px; color:#000;">Dirección: Colegio Seminario, Cl. 10 #7a Norte-2 a 7a Norte-54, Ipiales</p>
+	{% else %}
+	<p style="font-size:13px; color:#000;">Dirección: Fundación Universitaria Católica del Sur, Cl 18 #56-02, Pasto</p>
+	{% endif %}
+	<br>
+	<p style="font-size:13px; color:#000;">Si se presenta alguna duda con esta información, por favor hacerlo saber a través de este correo 📧 mercadeo@unicatolicadelsur.edu.co o comunicándose a los números de teléfono relacionados a continuación.</p>
 	<ul class="list-group col-md-4">
-		<li class="list-group-item d-flex justify-content-between align-items-center">
-			<i class="fas fa-headset"></i> Celular
-			<span class="badge badge-primary badge-pill"><i class="fas fa-phone"></i> 314 778 3658</span>
-		</li>
+	{% if programaId == 6 %}
+	<li class="list-group-item d-flex justify-content-between align-items-center">
+		📱Celular:
+		<span class="badge badge-primary badge-pill"> 321 617 4929</span>
+	</li>
+	{% elseif programaId == 7 %}
+	<li class="list-group-item d-flex justify-content-between align-items-center">
+		📱Celular:
+		<span class="badge badge-primary badge-pill"> 321 617 4886</span>
+	</li>
+	{% endif %}
+	<li class="list-group-item d-flex justify-content-between align-items-center">
+		📱Celular:
+		<span class="badge badge-primary badge-pill"> 314 778 3658</span>
+	</li>
 	</ul>
 	<br>
 

@@ -98,6 +98,7 @@ class IctusController extends AbstractController
                     'numero' => $data['numero'],
                     'tipoIdentificacion' => $data['tipoIdentificacion'],
                     'programa' => $data['programa'],
+                    'programaId' => $data['programaId'],
                     'inscrito' => $data['inscrito'],
                     'periodo' => $data['periodo']
                 ])
