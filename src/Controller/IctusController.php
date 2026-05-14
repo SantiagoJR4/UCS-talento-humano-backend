@@ -27,7 +27,7 @@ class IctusController extends AbstractController
         
         try {
             $email = (new TemplatedEmail())
-                ->from('auxiliar1.oasic@unicatolicadelsur.edu.co')
+                ->from('webmaster@unicatolicadelsur.edu.co')
                 ->to($data['email'])
                 ->cc('mercadeo@unicatolicadelsur.edu.co')
                 ->subject('Confirmación de Registro')
@@ -56,7 +56,7 @@ class IctusController extends AbstractController
         
         try {
             $email = (new TemplatedEmail())
-                ->from('auxiliar1.oasic@unicatolicadelsur.edu.co')
+                ->from('webmaster@unicatolicadelsur.edu.co')
                 ->to($data['correoDocente'])
                 ->cc($data['directorPrograma'])
                 ->bcc('permanencia@unicatolicadelsur.edu.co')
@@ -86,7 +86,7 @@ class IctusController extends AbstractController
         
         try {
             $email = (new TemplatedEmail())
-                ->from('auxiliar1.oasic@unicatolicadelsur.edu.co')
+                ->from('webmaster@unicatolicadelsur.edu.co')
                 ->to($data['correoEstudiante'])
                 ->cc($data['correoMercadeo'])
                 // ->bcc('permanencia@unicatolicadelsur.edu.co')
@@ -112,7 +112,7 @@ class IctusController extends AbstractController
         return new JsonResponse(['message' => $message], Response::HTTP_OK);
     }
 
-    // rmvthmhxjpwwzpqt
+    // cquyvrrhiedhshnt
 
     
 }
