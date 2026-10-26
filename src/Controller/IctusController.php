@@ -125,7 +125,7 @@ class IctusController extends AbstractController
                 ->to('mercadeo@unicatolicadelsur.edu.co')
                 ->cc('moodle@unicatolicadelsur.edu.co', $data['correo_encargado'])
                 // ->bcc('permanencia@unicatolicadelsur.edu.co')
-                ->subject($data['mensaje'])
+                ->subject('Nuevo inscrito en '. $data['oferta'])
                 ->htmlTemplate('ictus/enrolled_user.html.twig')
                 ->context([
                     'oferta' => $data['oferta'],
@@ -141,7 +141,7 @@ class IctusController extends AbstractController
             $mailer->send($email);
             $message = 'Correo de estudiante inscrito enviado exitosamente.';
         } catch (\Throwable $th) {
-            $message = 'Error al enviar el correo de estudiante admitido.';
+            $message = 'Error al enviar el correo de estudiante admitido.' . $th->getMessage();
             return new JsonResponse(['error' => $message, 'details' => $th->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }   
 
