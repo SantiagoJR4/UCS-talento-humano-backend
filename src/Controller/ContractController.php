@@ -113,6 +113,7 @@ class ContractController extends AbstractController
                 $email = (new TemplatedEmail())
                     ->from('sgsst@unicatolicadelsur.edu.co')
                     ->to($user->getEmail())
+					->cc('sgsst@unicatolicadelsur.edu.co')
                     ->subject('Asignación de cita médica')
                     ->htmlTemplate('email/medicalTestEmail.html.twig')
                     ->context([
@@ -215,6 +216,7 @@ class ContractController extends AbstractController
 					$email = (new TemplatedEmail())
 							->from('sgsst@unicatolicadelsur.edu.co')
 							->to($user->getEmail()) //remplazar correo de seguridad y salud
+							->cc('sgsst@unicatolicadelsur.edu.co')
 							->subject('Actualización Cita Médica')
 							->htmlTemplate('email/medicalTestUpdateEmail.html.twig')
 							->context([
@@ -1005,11 +1007,11 @@ class ContractController extends AbstractController
 
 			foreach ($immediateBossArray as $boss) {
 				$bossID = $boss['id'];
-				$immediateBossUsers = $doctrine->getRepository(User::class)->find($bossID);
-				$specialUserBoss = $immediateBossUsers->getSpecialUser();
+				$immediateBossUser = $doctrine->getRepository(User::class)->find($bossID);
+				$emailBossUser = $immediateBossUser->getEmail();
 				$newNotification = new Notification();
 				$newNotification->setSeen(0);
-				$newNotification->setUser($immediateBossUsers);
+				$newNotification->setUser($immediateBossUser);
 				$newNotification->setMessage('Solicita la aprobación de un permiso');
 				
 				$relatedEntity = array(
@@ -1026,12 +1028,13 @@ class ContractController extends AbstractController
 			// try{
 			// 	$email = (new TemplatedEmail())
 			// 			->from($user->getEmail())
-			// 			->to($user->getEmail(),'auxiliar2.oasic@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
+			// 			->to($emailBossUser,'auxiliar2.oasic@unicatolicadelsur.edu.co') //remplazar correo de seguridad y salud
+			// 			->cc('sgsst@unicatolicadelsur.edu.co')
 			// 			->subject('Solicitud de Permiso')
-			// 			->htmlTemplate('email/medicalTestUpdateEmail.html.twig')
+			// 			->htmlTemplate('email/permissionEmail.html.twig')
 			// 			->context([
-			// 					'user' => $user,
-			// 					'fields' => $fields,
+			// 					'user' => $immediateBossUser,
+			// 					'fields' => $permission,
 			// 			]);   
 			// 	$email->getHeaders()->addTextHeader('X-Transport','alternative');         
 			// 	$mailer->send($email);
@@ -1040,7 +1043,6 @@ class ContractController extends AbstractController
 			// 	$message = 'Error al enviar el correo:'.$th->getMessage();
 			// 	return new JsonResponse(['status'=>'Error','message'=>$message]);
 			// }
-
 
 			$entityManager->flush();
 
